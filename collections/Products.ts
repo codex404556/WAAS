@@ -1,0 +1,211 @@
+import type { CollectionConfig } from "payload";
+
+// If you already have a slug field elsewhere, you can reuse it.
+// This keeps it explicit and close to your Sanity schema.
+const Products: CollectionConfig = {
+  slug: "products",
+  labels: {
+    singular: "Product",
+    plural: "Products",
+  },
+  admin: {
+    useAsTitle: "name",
+    defaultColumns: [
+      "name",
+      "price",
+      "status",
+      "variant",
+      "stock",
+      "updatedAt",
+    ],
+  },
+  fields: [
+    // Product Name
+    {
+      name: "name",
+      label: "Product Name",
+      type: "text",
+      required: true,
+    },
+
+    // Slug (similar to Sanity: type: "slug", source: "name", required)
+    // In Payload: use `hooks` to auto-generate from name.
+    {
+      name: "slug",
+      label: "Slug",
+      type: "text",
+      required: true,
+      unique: true,
+      index: true,
+      admin: {
+        description: "Auto-generated from Product Name (you can edit it).",
+      },
+      hooks: {
+        beforeValidate: [
+          ({ data, value }) => {
+            // Keep existing slug if user already typed one
+            const input = (value ?? data?.slug) as string | undefined;
+
+            // Generate from name if missing
+            const source = (data?.name ?? "") as string;
+
+            const toSlug = (str: string) =>
+              str
+                .toLowerCase()
+                .trim()
+                .replace(/[\s\_]+/g, "-")
+                .replace(/[^\w\-]+/g, "")
+                .replace(/\-\-+/g, "-")
+                .slice(0, 96);
+
+            if (input && input.trim().length > 0) return toSlug(input);
+            if (source && source.trim().length > 0) return toSlug(source);
+
+            // If both are empty, let required validation handle it
+            return input;
+          },
+        ],
+      },
+    },
+
+    // Product Images (Sanity: array of image with hotspot)
+    // Payload: relationship to Media collection (recommended)
+    {
+      name: "images",
+      label: "Product Images",
+      type: "relationship",
+      relationTo: "media",
+      hasMany: true,
+    },
+
+    // Description
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+    },
+
+    // Additional Information
+    {
+      name: "additionalInformation",
+      label: "Additional Information",
+      type: "textarea",
+    },
+
+    // Price (required, min 0)
+    {
+      name: "price",
+      label: "Price",
+      type: "number",
+      required: true,
+      min: 0,
+    },
+
+    // Discount (required, min 0)
+    {
+      name: "discount",
+      label: "Discount",
+      type: "number",
+      required: true,
+      min: 0,
+      defaultValue: 0,
+    },
+
+    // Categories (Sanity: array of references to category)
+    {
+      name: "categories",
+      label: "Categories",
+      type: "relationship",
+      relationTo: "categories",
+      hasMany: true,
+    },
+
+    // Stock (required, min 0)
+    {
+      name: "stock",
+      label: "Stock",
+      type: "number",
+      required: true,
+      min: 0,
+      defaultValue: 0,
+    },
+
+    // Brand 
+    {
+      name: "brand",
+      label: "Brand",
+      type: "relationship",
+      relationTo: "brands",
+    },
+
+    // Reviews (Sanity: array of objects)
+    {
+      name: "reviews",
+      label: "Reviews",
+      type: "array",
+      fields: [
+        {
+          name: "userName",
+          label: "User Name",
+          type: "text",
+          required: true,
+        },
+        // userImage (Sanity: image)
+        // Payload: use Media relationship
+        {
+          name: "userImage",
+          label: "User Image",
+          type: "relationship",
+          relationTo: "media",
+        },
+        {
+          name: "rating",
+          label: "Star Rating",
+          type: "number",
+          required: true,
+          min: 1,
+          max: 5,
+        },
+        {
+          name: "comment",
+          label: "Review Comment",
+          type: "textarea",
+          required: true,
+        },
+        {
+          name: "date",
+          label: "Review Date",
+          type: "date",
+          required: true,
+        },
+      ],
+    },
+
+    // Product Status (Sanity list)
+    {
+      name: "status",
+      label: "Product Status",
+      type: "select",
+      options: [
+        { label: "New", value: "new" },
+        { label: "Hot", value: "hot" },
+        { label: "Sale", value: "sale" },
+      ],
+    },
+
+    // Product Type / Variant (Sanity list)
+    {
+      name: "variant",
+      label: "Product Type",
+      type: "select",
+      options: [
+        { label: "Monitors", value: "monitors" },
+        { label: "Laptops", value: "laptops" },
+        { label: "Refriferators", value: "refriferators" },
+        { label: "Others", value: "others" },
+      ],
+    },
+  ],
+};
+
+export default Products;
