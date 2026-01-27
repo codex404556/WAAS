@@ -4,6 +4,9 @@ import type { CollectionConfig } from "payload";
 // This keeps it explicit and close to your Sanity schema.
 const Products: CollectionConfig = {
   slug: "products",
+  access: {
+    read: () => true,
+  },
   labels: {
     singular: "Product",
     plural: "Products",
@@ -16,7 +19,7 @@ const Products: CollectionConfig = {
       "status",
       "variant",
       "stock",
-      "updatedAt",
+      "updated At",
     ],
   },
   fields: [
@@ -69,11 +72,11 @@ const Products: CollectionConfig = {
     },
 
     // Product Images (Sanity: array of image with hotspot)
-    // Payload: relationship to Media collection (recommended)
+    // Payload: upload field shows thumbnails for media selection
     {
       name: "images",
       label: "Product Images",
-      type: "relationship",
+      type: "upload",
       relationTo: "media",
       hasMany: true,
     },
