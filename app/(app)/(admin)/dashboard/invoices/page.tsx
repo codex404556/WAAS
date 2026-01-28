@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { FileText } from "lucide-react";
 import PremiumFeature from "@/components/common/PremiumFeature";

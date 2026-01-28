@@ -1,7 +1,10 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+"use client";
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useAxiosPrivate } from "@/hooks/useAxiosPrivate";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
+import { payloadFetch } from "@/lib/payload-client";
 import {
   Table,
   TableBody,
@@ -91,8 +94,23 @@ export default function OrdersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
 
-  const axiosPrivate = useAxiosPrivate();
-  const { toast } = useToast();
+  const buildOrdersQuery = () => {
+    const searchParams = new URLSearchParams({
+      page: String(page),
+      limit: String(perPage),
+      sort: "-createdAt",
+      depth: "1",
+    });
+
+    if (statusFilter !== "all") {
+      searchParams.set("where[status][equals]", statusFilter);
+    }
+    if (paymentFilter !== "all") {
+      searchParams.set("where[paymentStatus][equals]", paymentFilter);
+    }
+
+    return searchParams.toString();
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -100,25 +118,18 @@ export default function OrdersPage() {
       // Add a small delay to demonstrate the skeleton loading state
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const response = await axiosPrivate.get("/orders/admin", {
-        params: {
-          page,
-          perPage,
-          sortOrder: "desc",
-          status: statusFilter === "all" ? undefined : statusFilter,
-          paymentStatus: paymentFilter === "all" ? undefined : paymentFilter,
-        },
-      });
-      setOrders(response.data.orders || []);
-      setTotal(response.data.total || 0);
-      setTotalPages(response.data.totalPages || 1);
+      const query = buildOrdersQuery();
+      const response = await payloadFetch<{
+        docs?: Order[];
+        totalDocs?: number;
+        totalPages?: number;
+      }>(`/api/orders?${query}`);
+      setOrders(response.docs || []);
+      setTotal(response.totalDocs || 0);
+      setTotalPages(response.totalPages || 1);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load orders",
-      });
+      toast.error("Failed to load orders");
     } finally {
       setLoading(false);
     }
@@ -127,29 +138,19 @@ export default function OrdersPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await axiosPrivate.get("/orders/admin", {
-        params: {
-          page,
-          perPage,
-          sortOrder: "desc",
-          status: statusFilter === "all" ? undefined : statusFilter,
-          paymentStatus: paymentFilter === "all" ? undefined : paymentFilter,
-        },
-      });
-      setOrders(response.data.orders || []);
-      setTotal(response.data.total || 0);
-      setTotalPages(response.data.totalPages || 1);
-      toast({
-        title: "Success",
-        description: "Orders refreshed successfully",
-      });
+      const query = buildOrdersQuery();
+      const response = await payloadFetch<{
+        docs?: Order[];
+        totalDocs?: number;
+        totalPages?: number;
+      }>(`/api/orders?${query}`);
+      setOrders(response.docs || []);
+      setTotal(response.totalDocs || 0);
+      setTotalPages(response.totalPages || 1);
+      toast.success("Orders refreshed successfully");
     } catch (error) {
       console.error("Failed to refresh orders:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh orders",
-      });
+      toast.error("Failed to refresh orders");
     } finally {
       setRefreshing(false);
     }
@@ -218,25 +219,19 @@ export default function OrdersPage() {
   const handleUpdateOrder = async (updatedOrder: Order) => {
     setIsUpdating(true);
     try {
-      await axiosPrivate.put(`/orders/${updatedOrder._id}/status`, {
-        status: updatedOrder.status,
+      await payloadFetch(`/api/orders/${updatedOrder._id}`, {
+        method: "PATCH",
+        body: { status: updatedOrder.status },
       });
 
-      toast({
-        title: "Success",
-        description: "Order updated successfully",
-      });
+      toast.success("Order updated successfully");
 
       setIsEditOpen(false);
       setSelectedOrder(null);
       fetchOrders(); // Refresh the orders list
     } catch (error) {
       console.error("Failed to update order:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update order",
-      });
+      toast.error("Failed to update order");
     } finally {
       setIsUpdating(false);
     }
@@ -245,23 +240,18 @@ export default function OrdersPage() {
   const handleDeleteOrder = async (orderId: string) => {
     setIsDeleting(true);
     try {
-      await axiosPrivate.delete(`/orders/${orderId}`);
-
-      toast({
-        title: "Success",
-        description: "Order deleted successfully",
+      await payloadFetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
       });
+
+      toast.success("Order deleted successfully");
 
       setIsDeleteOpen(false);
       setSelectedOrder(null);
       fetchOrders(); // Refresh the orders list
     } catch (error) {
       console.error("Failed to delete order:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete order",
-      });
+      toast.error("Failed to delete order");
     } finally {
       setIsDeleting(false);
     }

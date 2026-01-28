@@ -1,12 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+"use client";
+
 import { useState, useEffect } from "react";
-import { useAxiosPrivate } from "@/hooks/useAxiosPrivate";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { categorySchema } from "@/lib/validation";
+import { payloadFetch } from "@/lib/payload-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,7 +47,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { AxiosError } from "axios";
 import {
   Select,
   SelectContent,
@@ -64,6 +65,22 @@ type Category = {
 
 type FormData = z.infer<typeof categorySchema>;
 
+const buildCategoriesQuery = (
+  page: number,
+  perPage: number,
+  sortOrder: "asc" | "desc"
+) => {
+  const sort = sortOrder === "asc" ? "createdAt" : "-createdAt";
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    limit: String(perPage),
+    sort,
+    depth: "0",
+  });
+
+  return searchParams.toString();
+};
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [total, setTotal] = useState(0);
@@ -81,8 +98,6 @@ export default function CategoriesPage() {
   );
   const [formLoading, setFormLoading] = useState(false);
 
-  const axiosPrivate = useAxiosPrivate();
-  const { toast } = useToast();
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
 
@@ -107,19 +122,18 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await axiosPrivate.get("/categories", {
-        params: { page, perPage, sortOrder },
-      });
-      setCategories(response?.data?.categories || []);
-      setTotal(response?.data?.total || 0);
-      setTotalPages(response?.data?.totalPages || 1);
+      const query = buildCategoriesQuery(page, perPage, sortOrder);
+      const response = await payloadFetch<{
+        docs?: Category[];
+        totalDocs?: number;
+        totalPages?: number;
+      }>(`/api/categories?${query}`);
+      setCategories(response.docs || []);
+      setTotal(response.totalDocs || 0);
+      setTotalPages(response.totalPages || 1);
     } catch (error) {
       console.log("Failed to load categories", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load categories",
-      });
+      toast.error("Failed to load categories");
     } finally {
       setLoading(false);
     }
@@ -128,23 +142,19 @@ export default function CategoriesPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await axiosPrivate.get("/categories", {
-        params: { page, perPage, sortOrder },
-      });
-      setCategories(response?.data?.categories || []);
-      setTotal(response?.data?.total || 0);
-      setTotalPages(response?.data?.totalPages || 1);
-      toast({
-        title: "Success",
-        description: "Categories refreshed successfully",
-      });
+      const query = buildCategoriesQuery(page, perPage, sortOrder);
+      const response = await payloadFetch<{
+        docs?: Category[];
+        totalDocs?: number;
+        totalPages?: number;
+      }>(`/api/categories?${query}`);
+      setCategories(response.docs || []);
+      setTotal(response.totalDocs || 0);
+      setTotalPages(response.totalPages || 1);
+      toast.success("Categories refreshed successfully");
     } catch (error) {
       console.log("Failed to refresh categories", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh categories",
-      });
+      toast.error("Failed to refresh categories");
     } finally {
       setRefreshing(false);
     }
@@ -172,29 +182,23 @@ export default function CategoriesPage() {
   const handleAddCategory = async (data: FormData) => {
     setFormLoading(true);
     try {
-      await axiosPrivate.post("/categories", data);
-      toast({
-        title: "Success",
-        description: "Category created successfully",
+      await payloadFetch("/api/categories", {
+        method: "POST",
+        body: data,
       });
+      toast.success("Category created successfully");
       formAdd.reset();
       setIsAddModalOpen(false);
       setPage(1); // Reset to page 1 after adding
       fetchCategories();
     } catch (error: unknown) {
       console.log("Failed to create category", error);
-      let errorMessage = "Failed to create category";
-      if (error instanceof AxiosError && error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      if (errorMessage.includes("already exists")) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create category";
+      if (errorMessage.toLowerCase().includes("already exists")) {
         formAdd.setError("name", { type: "manual", message: errorMessage });
       } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMessage,
-        });
+        toast.error(errorMessage);
       }
     } finally {
       setFormLoading(false);
@@ -206,27 +210,21 @@ export default function CategoriesPage() {
 
     setFormLoading(true);
     try {
-      await axiosPrivate.put(`/categories/${selectedCategory._id}`, data);
-      toast({
-        title: "Success",
-        description: "Category updated successfully",
+      await payloadFetch(`/api/categories/${selectedCategory._id}`, {
+        method: "PATCH",
+        body: data,
       });
+      toast.success("Category updated successfully");
       setIsEditModalOpen(false);
       fetchCategories();
     } catch (error: unknown) {
       console.log("Failed to update category", error);
-      let errorMessage = "Failed to update category";
-      if (error instanceof AxiosError && error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      if (errorMessage.includes("already exists")) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update category";
+      if (errorMessage.toLowerCase().includes("already exists")) {
         formEdit.setError("name", { type: "manual", message: errorMessage });
       } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMessage,
-        });
+        toast.error(errorMessage);
       }
     } finally {
       setFormLoading(false);
@@ -237,21 +235,16 @@ export default function CategoriesPage() {
     if (!selectedCategory) return;
 
     try {
-      await axiosPrivate.delete(`/categories/${selectedCategory._id}`);
-      toast({
-        title: "Success",
-        description: "Category deleted successfully",
+      await payloadFetch(`/api/categories/${selectedCategory._id}`, {
+        method: "DELETE",
       });
+      toast.success("Category deleted successfully");
       setIsDeleteModalOpen(false);
       setPage(1); // Reset to page 1 after deleting
       fetchCategories();
     } catch (error) {
       console.log("Failed to delete category", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete category",
-      });
+      toast.error("Failed to delete category");
     }
   };
 

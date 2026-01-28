@@ -1,4 +1,7 @@
-import { NavLink } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import useAuthStore from "@/store/useAuthStore";
 import {
@@ -26,6 +29,7 @@ type SidebarProps = {
 export default function Sidebar({ open, setOpen }: SidebarProps) {
   const { user, logout } = useAuthStore();
   // const isAdmin = checkIsAdmin();
+  const pathname = usePathname();
 
   return (
     <motion.aside
@@ -48,7 +52,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
           transition={{ duration: 0.2 }}
         >
           <span className="font-bold text-xl text-white drop-shadow-lg">
-            BabyShop Admin
+            E-Store Admin
           </span>
         </motion.div>
 
@@ -80,54 +84,63 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
           label="Dashboard"
           open={open}
           end={true}
+          pathname={pathname}
         />
         <NavItem
           to="/dashboard/account"
           icon={<User size={20} />}
           label="Account"
           open={open}
+          pathname={pathname}
         />
         <NavItem
           to="/dashboard/users"
           icon={<Users size={20} />}
           label="Users"
           open={open}
+          pathname={pathname}
         />
         <NavItem
           to="/dashboard/orders"
           icon={<Package size={20} />}
           label="Orders"
           open={open}
+          pathname={pathname}
         />
         <NavItem
           to="/dashboard/invoices"
           icon={<FileText size={20} />}
           label="Invoices"
           open={open}
+          pathname={pathname}
         />
         <NavItem
           to="/dashboard/banners"
           icon={<Layers size={20} />}
           label="Banners"
           open={open}
+          pathname={pathname}
         />
         <NavItem
           to="/dashboard/products"
           icon={<ShoppingBag size={20} />}
           label="Products"
           open={open}
+          pathname={pathname}
         />
         <NavItem
           to="/dashboard/categories"
           icon={<Tag size={20} />}
           label="Categories"
           open={open}
+          pathname={pathname}
         />
         <NavItem
           to="/dashboard/brands"
           icon={<Bookmark size={20} />}
           label="Brands"
           open={open}
+          pathname={pathname}
         />
       </div>
 
@@ -195,79 +208,72 @@ type NavItemProps = {
   label: string;
   open: boolean;
   end?: boolean;
+  pathname: string | null;
 };
 
-function NavItem({ to, icon, label, open, end = false }: NavItemProps) {
+function NavItem({ to, icon, label, open, end = false, pathname }: NavItemProps) {
+  const isActive = end ? pathname === to : !!pathname?.startsWith(to);
   return (
-    <NavLink
-      to={to}
-      end={end}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center py-3 px-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden",
-          "hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-600/50 hover:text-white hover:shadow-lg hover:backdrop-blur-sm",
-          isActive
-            ? "bg-gradient-to-r from-[#29beb3]/20 to-[#a96bde]/20 text-white shadow-lg shadow-[#29beb3]/20 scale-105 ring-1 ring-[#29beb3]/30 border border-white/10 backdrop-blur-sm"
-            : "text-slate-300 hover:scale-102",
-          !open && "justify-center"
-        )
-      }
+    <Link
+      href={to}
+      className={cn(
+        "flex items-center py-3 px-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden",
+        "hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-600/50 hover:text-white hover:shadow-lg hover:backdrop-blur-sm",
+        isActive
+          ? "bg-gradient-to-r from-[#29beb3]/20 to-[#a96bde]/20 text-white shadow-lg shadow-[#29beb3]/20 scale-105 ring-1 ring-[#29beb3]/30 border border-white/10 backdrop-blur-sm"
+          : "text-slate-300 hover:scale-102",
+        !open && "justify-center"
+      )}
     >
-      {({ isActive }) => (
-        <>
-          {/* Background glow effect for active item */}
-          {isActive && (
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-[#29beb3]/30 to-[#a96bde]/30 opacity-30 blur-xl rounded-xl"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-            />
-          )}
+      {/* Background glow effect for active item */}
+      {isActive && (
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-[#29beb3]/30 to-[#a96bde]/30 opacity-30 blur-xl rounded-xl"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        />
+      )}
 
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className={cn(
+          "relative z-10 transition-colors duration-200",
+          !open && "mr-0",
+          open && "mr-3",
+          isActive ? "text-white" : "text-slate-300 group-hover:text-white"
+        )}
+      >
+        {icon}
+      </motion.div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.span
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2 }}
             className={cn(
-              "relative z-10 transition-colors duration-200",
-              !open && "mr-0",
-              open && "mr-3",
+              "relative z-10 font-medium",
               isActive ? "text-white" : "text-slate-300 group-hover:text-white"
             )}
           >
-            {icon}
-          </motion.div>
+            {label}
+          </motion.span>
+        )}
+      </AnimatePresence>
 
-          <AnimatePresence>
-            {open && (
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-                className={cn(
-                  "relative z-10 font-medium",
-                  isActive
-                    ? "text-white"
-                    : "text-slate-300 group-hover:text-white"
-                )}
-              >
-                {label}
-              </motion.span>
-            )}
-          </AnimatePresence>
-
-          {/* Active indicator dot */}
-          {isActive && !open && (
-            <motion.div
-              className="absolute -right-1 top-1/2 w-2 h-2 bg-gradient-to-br from-[#29beb3] to-[#a96bde] rounded-full shadow-lg"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            />
-          )}
-        </>
+      {/* Active indicator dot */}
+      {isActive && !open && (
+        <motion.div
+          className="absolute -right-1 top-1/2 w-2 h-2 bg-gradient-to-br from-[#29beb3] to-[#a96bde] rounded-full shadow-lg"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        />
       )}
-    </NavLink>
+    </Link>
   );
 }

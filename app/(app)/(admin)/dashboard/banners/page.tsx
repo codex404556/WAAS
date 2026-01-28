@@ -1,11 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+"use client";
+
 import { useState, useEffect } from "react";
-import { useAxiosPrivate } from "@/hooks/useAxiosPrivate";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { payloadFetch } from "@/lib/payload-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -77,8 +79,6 @@ export default function BannersPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const axiosPrivate = useAxiosPrivate();
-  const { toast } = useToast();
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
 
@@ -106,16 +106,13 @@ export default function BannersPage() {
 
   const fetchBanners = async () => {
     try {
-      const response = await axiosPrivate.get("/banners");
-      setBanners(response.data);
-      console.log("response", response);
+      const response = await payloadFetch<{ docs?: Banner[] }>(
+        "/api/banners?limit=100&sort=-createdAt&depth=0"
+      );
+      setBanners(response.docs || []);
     } catch (error) {
       console.log("Failed to load banners", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load banners",
-      });
+      toast.error("Failed to load banners");
     } finally {
       setLoading(false);
     }
@@ -124,19 +121,14 @@ export default function BannersPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await axiosPrivate.get("/banners");
-      setBanners(response.data);
-      toast({
-        title: "Success",
-        description: "Banners refreshed successfully",
-      });
+      const response = await payloadFetch<{ docs?: Banner[] }>(
+        "/api/banners?limit=100&sort=-createdAt&depth=0"
+      );
+      setBanners(response.docs || []);
+      toast.success("Banners refreshed successfully");
     } catch (error) {
       console.log("Failed to refresh banners", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh banners",
-      });
+      toast.error("Failed to refresh banners");
     } finally {
       setRefreshing(false);
     }
@@ -166,24 +158,20 @@ export default function BannersPage() {
   const handleAddBanner = async (data: FormData) => {
     setFormLoading(true);
     try {
-      await axiosPrivate.post("/banners", {
-        ...data,
-        startFrom: Number(data.startFrom),
+      await payloadFetch("/api/banners", {
+        method: "POST",
+        body: {
+          ...data,
+          startFrom: Number(data.startFrom),
+        },
       });
-      toast({
-        title: "Success",
-        description: "Banner created successfully",
-      });
+      toast.success("Banner created successfully");
       formAdd.reset();
       setIsAddModalOpen(false);
       fetchBanners();
     } catch (error) {
       console.log("Failed to create banner", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create banner",
-      });
+      toast.error("Failed to create banner");
     } finally {
       setFormLoading(false);
     }
@@ -194,23 +182,19 @@ export default function BannersPage() {
 
     setFormLoading(true);
     try {
-      await axiosPrivate.put(`/banners/${selectedBanner._id}`, {
-        ...data,
-        startFrom: Number(data.startFrom),
+      await payloadFetch(`/api/banners/${selectedBanner._id}`, {
+        method: "PATCH",
+        body: {
+          ...data,
+          startFrom: Number(data.startFrom),
+        },
       });
-      toast({
-        title: "Success",
-        description: "Banner updated successfully",
-      });
+      toast.success("Banner updated successfully");
       setIsEditModalOpen(false);
       fetchBanners();
     } catch (error) {
       console.log("Failed to update banner", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update banner",
-      });
+      toast.error("Failed to update banner");
     } finally {
       setFormLoading(false);
     }
@@ -220,20 +204,15 @@ export default function BannersPage() {
     if (!selectedBanner) return;
 
     try {
-      await axiosPrivate.delete(`/banners/${selectedBanner._id}`);
-      toast({
-        title: "Success",
-        description: "Banner deleted successfully",
+      await payloadFetch(`/api/banners/${selectedBanner._id}`, {
+        method: "DELETE",
       });
+      toast.success("Banner deleted successfully");
       setIsDeleteModalOpen(false);
       fetchBanners();
     } catch (error) {
       console.log("Failed to delete banner", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete banner",
-      });
+      toast.error("Failed to delete banner");
     }
   };
 

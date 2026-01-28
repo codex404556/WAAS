@@ -1,12 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+"use client";
+
 import { useState, useEffect } from "react";
-import { useAxiosPrivate } from "@/hooks/useAxiosPrivate";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { productSchema } from "@/lib/validation";
+import { payloadFetch } from "@/lib/payload-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,8 +65,7 @@ import {
   ArrowDown,
   RefreshCw,
 } from "lucide-react";
-import { AxiosError } from "axios";
-import ProductSkeleton from "@/components/skeleton/ProductSkeleton";
+import ProductSkeleton from "@/app/(app)/(admin)/skeleton/ProductSkeleton";
 
 type Product = {
   _id: string;
@@ -98,6 +99,22 @@ type Brand = {
 
 type FormData = z.infer<typeof productSchema>;
 
+const buildProductsQuery = (
+  page: number,
+  perPage: number,
+  sortOrder: "asc" | "desc"
+) => {
+  const sort = sortOrder === "asc" ? "createdAt" : "-createdAt";
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    limit: String(perPage),
+    sort,
+    depth: "1",
+  });
+
+  return searchParams.toString();
+};
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -115,8 +132,6 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  const axiosPrivate = useAxiosPrivate();
-  const { toast } = useToast();
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
 
@@ -152,21 +167,23 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const currentPage = resetPage ? 1 : page;
-      const response = await axiosPrivate.get("/products", {
-        params: { page: currentPage, perPage, sortOrder },
-      });
-      setProducts(response.data.products || []);
-      setTotal(response.data.total || 0);
+      const query = buildProductsQuery(currentPage, perPage, sortOrder);
+      const response = await payloadFetch<{
+        docs?: Product[];
+        totalDocs?: number;
+        totalPages?: number;
+      }>(`/api/products?${query}`);
+      setProducts(response.docs || []);
+      setTotal(response.totalDocs || 0);
       setTotalPages(
-        response.data.totalPages ||
-          Math.ceil((response.data.total || 0) / perPage)
+        response.totalPages || Math.ceil((response.totalDocs || 0) / perPage)
       );
 
       // Debug logging
       console.log("Pagination Debug:", {
-        total: response.data.total,
-        totalPages: response.data.totalPages,
-        calculatedPages: Math.ceil((response.data.total || 0) / perPage),
+        total: response.totalDocs,
+        totalPages: response.totalPages,
+        calculatedPages: Math.ceil((response.totalDocs || 0) / perPage),
         currentPage: currentPage,
         perPage,
       });
@@ -177,11 +194,7 @@ export default function ProductsPage() {
       }
     } catch (error) {
       console.log("Failed to load products", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load products",
-      });
+      toast.error("Failed to load products");
     } finally {
       setLoading(false);
     }
@@ -190,23 +203,19 @@ export default function ProductsPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await axiosPrivate.get("/products", {
-        params: { page, perPage, sortOrder },
-      });
-      setProducts(response?.data?.products || []);
-      setTotal(response?.data?.total || 0);
-      setTotalPages(response?.data?.totalPages || 1);
-      toast({
-        title: "Success",
-        description: "Products refreshed successfully",
-      });
+      const query = buildProductsQuery(page, perPage, sortOrder);
+      const response = await payloadFetch<{
+        docs?: Product[];
+        totalDocs?: number;
+        totalPages?: number;
+      }>(`/api/products?${query}`);
+      setProducts(response.docs || []);
+      setTotal(response.totalDocs || 0);
+      setTotalPages(response.totalPages || 1);
+      toast.success("Products refreshed successfully");
     } catch (error) {
       console.log("Failed to refresh products", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh products",
-      });
+      toast.error("Failed to refresh products");
     } finally {
       setRefreshing(false);
     }
@@ -214,33 +223,25 @@ export default function ProductsPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axiosPrivate.get("/categories", {
-        params: { page: 1, perPage: 100, sortOrder: "asc" },
-      });
-      setCategories(response.data.categories || []);
+      const response = await payloadFetch<{ docs?: Category[] }>(
+        "/api/categories?limit=100&sort=name&depth=0"
+      );
+      setCategories(response.docs || []);
     } catch (error) {
       console.log("Failed to load categories", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load categories",
-      });
+      toast.error("Failed to load categories");
     }
   };
 
   const fetchBrands = async () => {
     try {
-      const response = await axiosPrivate.get("/brands", {
-        params: { page: 1, perPage: 100, sortOrder: "asc" },
-      });
-      setBrands(response.data.brands || response.data || []);
+      const response = await payloadFetch<{ docs?: Brand[] }>(
+        "/api/brands?limit=100&sort=name&depth=0"
+      );
+      setBrands(response.docs || []);
     } catch (error) {
       console.log("Failed to load brands", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load brands",
-      });
+      toast.error("Failed to load brands");
     }
   };
 
@@ -276,33 +277,27 @@ export default function ProductsPage() {
   const handleAddProduct = async (data: FormData) => {
     setFormLoading(true);
     try {
-      await axiosPrivate.post("/products", {
+      await payloadFetch("/api/products", {
+        method: "POST",
+        body: {
         ...data,
         price: Number(data.price),
         discountPercentage: Number(data.discountPercentage),
         stock: Number(data.stock),
+        },
       });
-      toast({
-        title: "Success",
-        description: "Product created successfully",
-      });
+      toast.success("Product created successfully");
       formAdd.reset();
       setIsAddModalOpen(false);
       fetchProducts(true); // Reset to page 1 and refetch
     } catch (error: unknown) {
       console.log("Failed to create product", error);
-      let errorMessage = "Failed to create product";
-      if (error instanceof AxiosError && error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      if (errorMessage.includes("already exists")) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create product";
+      if (errorMessage.toLowerCase().includes("already exists")) {
         formAdd.setError("name", { type: "manual", message: errorMessage });
       } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMessage,
-        });
+        toast.error(errorMessage);
       }
     } finally {
       setFormLoading(false);
@@ -314,32 +309,26 @@ export default function ProductsPage() {
 
     setFormLoading(true);
     try {
-      await axiosPrivate.put(`/products/${selectedProduct._id}`, {
+      await payloadFetch(`/api/products/${selectedProduct._id}`, {
+        method: "PATCH",
+        body: {
         ...data,
         price: Number(data.price),
         discountPercentage: Number(data.discountPercentage),
         stock: Number(data.stock),
+        },
       });
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
-      });
+      toast.success("Product updated successfully");
       setIsEditModalOpen(false);
       fetchProducts();
     } catch (error: unknown) {
       console.log("Failed to update product", error);
-      let errorMessage = "Failed to update product";
-      if (error instanceof AxiosError && error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      if (errorMessage.includes("already exists")) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update product";
+      if (errorMessage.toLowerCase().includes("already exists")) {
         formEdit.setError("name", { type: "manual", message: errorMessage });
       } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMessage,
-        });
+        toast.error(errorMessage);
       }
     } finally {
       setFormLoading(false);
@@ -350,20 +339,15 @@ export default function ProductsPage() {
     if (!selectedProduct) return;
 
     try {
-      await axiosPrivate.delete(`/products/${selectedProduct._id}`);
-      toast({
-        title: "Success",
-        description: "Product deleted successfully",
+      await payloadFetch(`/api/products/${selectedProduct._id}`, {
+        method: "DELETE",
       });
+      toast.success("Product deleted successfully");
       setIsDeleteModalOpen(false);
       fetchProducts(true); // Reset to page 1 and refetch
     } catch (error) {
       console.log("Failed to delete product", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete product",
-      });
+      toast.error("Failed to delete product");
     }
   };
 
@@ -525,7 +509,9 @@ export default function ProductsPage() {
                         <div className="flex items-center gap-1 whitespace-nowrap">
                           <span className="text-yellow-500">★</span>
                           <span className="font-medium">
-                            {product.averageRating.toFixed(1)}
+                            {Number.isFinite(product.averageRating)
+                              ? product.averageRating.toFixed(1)
+                              : "0.0"}
                           </span>
                         </div>
                       </TableCell>

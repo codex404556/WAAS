@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "../ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const DashboardSkeleton = () => (
   <div className="space-y-6">

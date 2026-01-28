@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { payloadFetch } from "@/lib/payload-client";
 
 type User = {
   _id: string;
@@ -11,7 +12,6 @@ type User = {
 
 type AuthState = {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   register: (userData: {
@@ -28,17 +28,20 @@ const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
       isAuthenticated: false,
 
       login: async (credentials) => {
         try {
-          const response = await api.post("/auth/login", credentials);
+          const response = await payloadFetch<{
+            user?: User;
+          }>("/api/users/login", {
+            method: "POST",
+            body: credentials,
+          });
 
-          if (response.data.token) {
+          if (response?.user) {
             set({
-              user: response.data,
-              token: response.data.token,
+              user: response.user,
               isAuthenticated: true,
             });
           }
@@ -50,7 +53,10 @@ const useAuthStore = create<AuthState>()(
 
       register: async (userData) => {
         try {
-          await api.post("/api/auth/register", userData);
+          await payloadFetch("/api/users", {
+            method: "POST",
+            body: userData,
+          });
 
           // if (response.data.token) {
           //   set({
@@ -66,9 +72,13 @@ const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        payloadFetch("/api/users/logout", { method: "POST" }).catch(
+          (error) => {
+            console.error("Logout error:", error);
+          }
+        );
         set({
           user: null,
-          token: null,
           isAuthenticated: false,
         });
       },

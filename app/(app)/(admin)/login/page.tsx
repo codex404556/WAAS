@@ -1,11 +1,14 @@
+"use client";
+
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
-import { registerSchema } from "@/lib/validation";
+import { loginSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,43 +27,33 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { UserPlus } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 
-type FormData = z.infer<typeof registerSchema>;
+type FormData = z.infer<typeof loginSchema>;
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { register } = useAuthStore();
+  const router = useRouter();
+  const { login } = useAuthStore();
 
   const form = useForm<FormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      name: "",
       email: "",
       password: "",
-      role: "user",
     },
   });
 
   async function onSubmit(data: FormData) {
     setIsLoading(true);
     try {
-      await register(data);
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created",
-      });
-      navigate("/login");
+      await login(data);
+      toast.success("Login successful");
+      router.push("/dashboard");
     } catch (error) {
-      console.log("Failed to register", error);
-      toast({
-        variant: "destructive",
-        title: "Registration failed",
-        description: "Failed to register new user",
-      });
+      console.log("Failed to login", error);
+      toast.error("Login failed: Invalid credentials");
     } finally {
       setIsLoading(false);
     }
@@ -82,10 +75,10 @@ export default function RegisterPage() {
               transition={{ duration: 0.3 }}
             >
               <CardTitle className="text-3xl font-bold text-gray-800">
-                Create an Account
+                Admin Dashboard
               </CardTitle>
               <CardDescription className="text-gray-500">
-                Enter your details to sign up
+                Enter your credentials to sign in
               </CardDescription>
             </motion.div>
           </CardHeader>
@@ -95,31 +88,6 @@ export default function RegisterPage() {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">
-                        Name
-                      </FormLabel>
-                      <FormControl>
-                        <motion.div
-                          whileFocus={{ scale: 1.02 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <Input
-                            placeholder="John Doe"
-                            disabled={isLoading}
-                            className="border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                            {...field}
-                          />
-                        </motion.div>
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-xs" />
-                    </FormItem>
-                  )}
-                />
                 <FormField
                   control={form.control}
                   name="email"
@@ -172,26 +140,6 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">
-                        Role
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="User"
-                          type="text"
-                          disabled
-                          className="border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-500 text-xs" />
-                    </FormItem>
-                  )}
-                />
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -224,12 +172,12 @@ export default function RegisterPage() {
                             d="M4 12a8 8 0 018-8v8H4z"
                           />
                         </svg>
-                        Creating account...
+                        Signing in...
                       </span>
                     ) : (
                       <span className="flex items-center gap-2">
-                        <UserPlus size={16} />
-                        Sign Up
+                        <LogIn size={16} />
+                        Sign In
                       </span>
                     )}
                   </Button>
@@ -239,12 +187,12 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter className="justify-center">
             <p className="text-sm text-gray-500">
-              Already have an account?{" "}
+              Don't have an account?{" "}
               <Link
-                to="/login"
+                href="/register"
                 className="text-indigo-600 hover:text-indigo-800 hover:underline transition-all duration-200"
               >
-                Sign in
+                Sign up
               </Link>
             </p>
           </CardFooter>

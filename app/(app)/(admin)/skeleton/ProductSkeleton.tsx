@@ -5,7 +5,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "@/components/ui/table";
 
 const ProductSkeleton = ({ isAdmin }: { isAdmin: boolean }) => (
   <div className="rounded-md border">

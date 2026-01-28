@@ -1,12 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+"use client";
+
 import { useState, useEffect } from "react";
-import { useAxiosPrivate } from "@/hooks/useAxiosPrivate";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { brandSchema } from "@/lib/validation";
+import { payloadFetch } from "@/lib/payload-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -65,8 +67,6 @@ export default function BrandsPage() {
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  const axiosPrivate = useAxiosPrivate();
-  const { toast } = useToast();
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
 
@@ -88,15 +88,13 @@ export default function BrandsPage() {
 
   const fetchBrands = async () => {
     try {
-      const response = await axiosPrivate.get("/brands");
-      setBrands(response.data);
+      const response = await payloadFetch<{ docs?: Brand[] }>(
+        "/api/brands?limit=100&sort=name&depth=0"
+      );
+      setBrands(response.docs || []);
     } catch (error) {
       console.log("Failed to load brands", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load brands",
-      });
+      toast.error("Failed to load brands");
     } finally {
       setLoading(false);
     }
@@ -126,19 +124,14 @@ export default function BrandsPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await axiosPrivate.get("/brands");
-      setBrands(response.data);
-      toast({
-        title: "Success",
-        description: "Brands refreshed successfully",
-      });
+      const response = await payloadFetch<{ docs?: Brand[] }>(
+        "/api/brands?limit=100&sort=name&depth=0"
+      );
+      setBrands(response.docs || []);
+      toast.success("Brands refreshed successfully");
     } catch (error) {
       console.log("Failed to refresh brands", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh brands",
-      });
+      toast.error("Failed to refresh brands");
     } finally {
       setRefreshing(false);
     }
@@ -165,21 +158,17 @@ export default function BrandsPage() {
   const handleAddBrand = async (data: FormData) => {
     setFormLoading(true);
     try {
-      await axiosPrivate.post("/brands", data);
-      toast({
-        title: "Success",
-        description: "Brand created successfully",
+      await payloadFetch("/api/brands", {
+        method: "POST",
+        body: data,
       });
+      toast.success("Brand created successfully");
       formAdd.reset();
       setIsAddModalOpen(false);
       fetchBrands();
     } catch (error) {
       console.log("Failed to create brand", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create brand",
-      });
+      toast.error("Failed to create brand");
     } finally {
       setFormLoading(false);
     }
@@ -190,20 +179,16 @@ export default function BrandsPage() {
 
     setFormLoading(true);
     try {
-      await axiosPrivate.put(`/brands/${selectedBrand._id}`, data);
-      toast({
-        title: "Success",
-        description: "Brand updated successfully",
+      await payloadFetch(`/api/brands/${selectedBrand._id}`, {
+        method: "PATCH",
+        body: data,
       });
+      toast.success("Brand updated successfully");
       setIsEditModalOpen(false);
       fetchBrands();
     } catch (error) {
       console.log("Failed to update brand", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update brand",
-      });
+      toast.error("Failed to update brand");
     } finally {
       setFormLoading(false);
     }
@@ -213,20 +198,15 @@ export default function BrandsPage() {
     if (!selectedBrand) return;
 
     try {
-      await axiosPrivate.delete(`/brands/${selectedBrand._id}`);
-      toast({
-        title: "Success",
-        description: "Brand deleted successfully",
+      await payloadFetch(`/api/brands/${selectedBrand._id}`, {
+        method: "DELETE",
       });
+      toast.success("Brand deleted successfully");
       setIsDeleteModalOpen(false);
       fetchBrands();
     } catch (error) {
       console.log("Failed to delete brand", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete brand",
-      });
+      toast.error("Failed to delete brand");
     }
   };
 

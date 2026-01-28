@@ -1,13 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+"use client";
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useAxiosPrivate } from "@/hooks/useAxiosPrivate";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { userSchema } from "@/lib/validation";
+import { payloadFetch } from "@/lib/payload-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -79,6 +81,25 @@ type User = {
 
 type FormData = z.infer<typeof userSchema>;
 
+const buildUsersQuery = (
+  page: number,
+  perPage: number,
+  roleFilter: string
+) => {
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    limit: String(perPage),
+    sort: "-createdAt",
+    depth: "0",
+  });
+
+  if (roleFilter !== "all") {
+    searchParams.set("where[role][equals]", roleFilter);
+  }
+
+  return searchParams.toString();
+};
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,8 +117,6 @@ export default function UsersPage() {
   const [perPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
 
-  const axiosPrivate = useAxiosPrivate();
-  const { toast } = useToast();
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
 
@@ -128,32 +147,27 @@ export default function UsersPage() {
       // Add a small delay to demonstrate the skeleton loading state
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const response = await axiosPrivate.get("/users", {
-        params: {
-          page,
-          perPage,
-          sortOrder: "desc",
-          role: roleFilter === "all" ? undefined : roleFilter,
-        },
-      });
+      const query = buildUsersQuery(page, perPage, roleFilter);
+      const response = await payloadFetch<{
+        docs?: User[];
+        totalDocs?: number;
+        totalPages?: number;
+      }>(`/api/users?${query}`);
 
       // Handle both paginated and non-paginated responses
-      if (response.data.users) {
-        setUsers(response.data.users);
-        setTotal(response.data.total || response.data.users.length);
-        setTotalPages(response.data.totalPages || 1);
+      if (response.docs) {
+        setUsers(response.docs);
+        setTotal(response.totalDocs || response.docs.length);
+        setTotalPages(response.totalPages || 1);
       } else {
-        setUsers(response.data);
-        setTotal(response.data.length);
+        const data = (response as unknown as User[]) || [];
+        setUsers(data);
+        setTotal(data.length);
         setTotalPages(1);
       }
     } catch (error) {
       console.log("Failed to load users", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load users",
-      });
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -162,35 +176,28 @@ export default function UsersPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await axiosPrivate.get("/users", {
-        params: {
-          page,
-          perPage,
-          role: roleFilter !== "all" ? roleFilter : undefined,
-        },
-      });
+      const query = buildUsersQuery(page, perPage, roleFilter);
+      const response = await payloadFetch<{
+        docs?: User[];
+        totalDocs?: number;
+        totalPages?: number;
+      }>(`/api/users?${query}`);
 
       // Handle both paginated and non-paginated responses
-      if (response.data.users) {
-        setUsers(response.data.users);
-        setTotal(response.data.total || response.data.users.length);
-        setTotalPages(response.data.totalPages || 1);
+      if (response.docs) {
+        setUsers(response.docs);
+        setTotal(response.totalDocs || response.docs.length);
+        setTotalPages(response.totalPages || 1);
       } else {
-        setUsers(response.data);
-        setTotal(response.data.length);
+        const data = (response as unknown as User[]) || [];
+        setUsers(data);
+        setTotal(data.length);
         setTotalPages(1);
       }
-      toast({
-        title: "Success",
-        description: "Users refreshed successfully",
-      });
+      toast.success("Users refreshed successfully");
     } catch (error) {
       console.log("Failed to refresh users", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh users",
-      });
+      toast.error("Failed to refresh users");
     } finally {
       setRefreshing(false);
     }
@@ -213,9 +220,12 @@ export default function UsersPage() {
   };
 
   const filteredUsers = users.filter((user) => {
+    const normalizedSearch = searchTerm.toLowerCase();
+    const normalizedName = (user.name ?? "").toLowerCase();
+    const normalizedEmail = (user.email ?? "").toLowerCase();
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      normalizedName.includes(normalizedSearch) ||
+      normalizedEmail.includes(normalizedSearch);
 
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
@@ -259,21 +269,17 @@ export default function UsersPage() {
   const handleAddUser = async (data: FormData) => {
     setFormLoading(true);
     try {
-      await axiosPrivate.post("/users", data);
-      toast({
-        title: "Success",
-        description: "User created successfully",
+      await payloadFetch("/api/users", {
+        method: "POST",
+        body: data,
       });
+      toast.success("User created successfully");
       formAdd.reset();
       setIsAddModalOpen(false);
       fetchUsers();
     } catch (error) {
       console.log("Failed to create user", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create user",
-      });
+      toast.error("Failed to create user");
     } finally {
       setFormLoading(false);
     }
@@ -283,20 +289,16 @@ export default function UsersPage() {
     if (!selectedUser) return;
     setFormLoading(true);
     try {
-      await axiosPrivate.put(`/users/${selectedUser._id}`, data);
-      toast({
-        title: "Success",
-        description: "User updated successfully",
+      await payloadFetch(`/api/users/${selectedUser._id}`, {
+        method: "PATCH",
+        body: data,
       });
+      toast.success("User updated successfully");
       setIsEditModalOpen(false);
       fetchUsers();
     } catch (error) {
       console.log("Failed to update user", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update user",
-      });
+      toast.error("Failed to update user");
     } finally {
       setFormLoading(false);
     }
@@ -305,20 +307,15 @@ export default function UsersPage() {
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     try {
-      await axiosPrivate.delete(`/users/${selectedUser._id}`);
-      toast({
-        title: "Success",
-        description: "User deleted successfully",
+      await payloadFetch(`/api/users/${selectedUser._id}`, {
+        method: "DELETE",
       });
+      toast.success("User deleted successfully");
       setIsDeleteModalOpen(false);
       fetchUsers();
     } catch (error) {
       console.log("Failed to delete user", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete user",
-      });
+      toast.error("Failed to delete user");
     }
   };
 

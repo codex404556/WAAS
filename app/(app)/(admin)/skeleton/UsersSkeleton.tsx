@@ -5,7 +5,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "@/components/ui/table";
 
 const UsersSkeleton = ({ isAdmin }: { isAdmin: boolean }) => (
   <div className="rounded-xl border border-gray-200 shadow-md overflow-hidden bg-white">
