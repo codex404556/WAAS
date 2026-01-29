@@ -14,6 +14,15 @@ export const Users: CollectionConfig = {
       required: true,
     },
     {
+      name: "clerkId",
+      type: "text",
+      unique: true,
+    },
+    {
+      name: "avatar",
+      type: "text",
+    },
+    {
       name: 'role',
       type: 'select',
       required: true,

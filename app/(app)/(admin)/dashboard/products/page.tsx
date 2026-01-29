@@ -68,36 +68,107 @@ import {
 import ProductSkeleton from "@/app/(app)/(admin)/skeleton/ProductSkeleton";
 
 type Product = {
-  _id: string;
+  id?: number;
+  _id?: string;
   name: string;
   description: string;
+  additionalInformation?: string;
   price: number;
   discountPercentage: number;
   stock: number;
   averageRating: number;
-  image: string;
+  image?: string;
+  imageId?: number | string;
+  imageUrl?: string;
+  images?: Array<
+    { id?: number; _id?: string; url?: string } | number | string
+  >;
   category: {
-    _id: string;
-    name: string;
+    id?: number;
+    _id?: string;
+    name?: string;
+    title?: string;
   };
   brand: {
-    _id: string;
+    id?: number;
+    _id?: string;
     name: string;
   };
   createdAt: string;
 };
 
 type Category = {
-  _id: string;
+  id?: number;
+  _id?: string;
   name: string;
 };
 
 type Brand = {
-  _id: string;
-  name: string;
+  id?: number;
+  _id?: string;
+  name?: string;
+  title?: string;
 };
 
 type FormData = z.infer<typeof productSchema>;
+
+const getDocId = (doc?: { id?: number | string; _id?: string }) =>
+  doc?.id ?? doc?._id;
+
+const getDocIdString = (doc?: { id?: number | string; _id?: string }) => {
+  const id = getDocId(doc);
+  return id === undefined || id === null ? "" : String(id);
+};
+
+const toSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-");
+
+const dataUrlToFile = (dataUrl: string, filename: string) => {
+  const [meta, base64] = dataUrl.split(",");
+  const match = meta.match(/data:(.*);base64/);
+  const mime = match ? match[1] : "application/octet-stream";
+  const bytes = atob(base64);
+  const buffer = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i += 1) {
+    buffer[i] = bytes.charCodeAt(i);
+  }
+  return new File([buffer], filename, { type: mime });
+};
+
+const uploadProductImage = async (dataUrl: string, name: string) => {
+  const formData = new FormData();
+  const safeName = toSlug(name) || "product";
+  const file = dataUrlToFile(dataUrl, `${safeName}.png`);
+  formData.append("file", file);
+  formData.append("alt", name);
+
+  const res = await fetch("/api/media", {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    const suffix = text ? ` - ${text}` : "";
+    throw new Error(
+      `Media upload failed: ${res.status} ${res.statusText}${suffix}`
+    );
+  }
+
+  const data = (await res.json()) as { doc?: { id?: number; _id?: string } };
+  const mediaId = data?.doc?.id ?? data?.doc?._id;
+  if (!mediaId) {
+    throw new Error("Media upload failed: missing media id");
+  }
+
+  return mediaId;
+};
 
 const buildProductsQuery = (
   page: number,
@@ -131,6 +202,9 @@ export default function ProductsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [selectedProductImageId, setSelectedProductImageId] = useState<
+    number | string | null
+  >(null);
 
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
@@ -140,6 +214,7 @@ export default function ProductsPage() {
     defaultValues: {
       name: "",
       description: "",
+      additionalInformation: "",
       price: 0,
       discountPercentage: 10,
       stock: 10,
@@ -154,6 +229,7 @@ export default function ProductsPage() {
     defaultValues: {
       name: "",
       description: "",
+      additionalInformation: "",
       price: 0,
       discountPercentage: 0,
       stock: 0,
@@ -173,7 +249,28 @@ export default function ProductsPage() {
         totalDocs?: number;
         totalPages?: number;
       }>(`/api/products?${query}`);
-      setProducts(response.docs || []);
+      const docs = response.docs || [];
+      const normalized = docs.map((doc) => {
+        const images = Array.isArray(doc.images) ? doc.images : [];
+        const firstImage = images[0];
+        const imageId =
+          typeof firstImage === "object" && firstImage
+            ? getDocId(firstImage)
+            : typeof firstImage === "string" || typeof firstImage === "number"
+              ? firstImage
+              : undefined;
+        const imageUrl =
+          typeof firstImage === "object" && firstImage
+            ? firstImage.url
+            : undefined;
+
+        return {
+          ...doc,
+          imageId,
+          imageUrl,
+        };
+      });
+      setProducts(normalized);
       setTotal(response.totalDocs || 0);
       setTotalPages(
         response.totalPages || Math.ceil((response.totalDocs || 0) / perPage)
@@ -224,21 +321,36 @@ export default function ProductsPage() {
   const fetchCategories = async () => {
     try {
       const response = await payloadFetch<{ docs?: Category[] }>(
-        "/api/categories?limit=100&sort=name&depth=0"
+        "/api/categories?limit=100&sort=title&depth=0"
       );
-      setCategories(response.docs || []);
+      const docs = response.docs || [];
+      const normalized = docs.map((category) => ({
+        ...category,
+        name: getCategoryLabel(category),
+      }));
+      setCategories(normalized);
     } catch (error) {
       console.log("Failed to load categories", error);
       toast.error("Failed to load categories");
     }
   };
 
+  const getBrandLabel = (brand: Brand) => brand.title ?? brand.name ?? "";
+
+  const getCategoryLabel = (category: Category) =>
+    category.title ?? category.name ?? "";
+
   const fetchBrands = async () => {
     try {
       const response = await payloadFetch<{ docs?: Brand[] }>(
-        "/api/brands?limit=100&sort=name&depth=0"
+        "/api/brands?limit=100&sort=title&depth=0"
       );
-      setBrands(response.docs || []);
+      const docs = response.docs || [];
+      const normalized = docs.map((brand) => ({
+        ...brand,
+        name: getBrandLabel(brand),
+      }));
+      setBrands(normalized);
     } catch (error) {
       console.log("Failed to load brands", error);
       toast.error("Failed to load brands");
@@ -256,15 +368,17 @@ export default function ProductsPage() {
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
+    setSelectedProductImageId(product.imageId ?? null);
     formEdit.reset({
       name: product.name,
       description: product.description,
+      additionalInformation: product.additionalInformation ?? "",
       price: product.price,
       discountPercentage: product.discountPercentage,
       stock: product.stock,
-      category: product.category._id,
-      brand: product.brand._id,
-      image: product.image,
+      category: getDocIdString(product.category),
+      brand: getDocIdString(product.brand),
+      image: product.imageUrl ?? product.image ?? "",
     });
     setIsEditModalOpen(true);
   };
@@ -277,6 +391,11 @@ export default function ProductsPage() {
   const handleAddProduct = async (data: FormData) => {
     setFormLoading(true);
     try {
+      let imageId: number | string | null | undefined;
+      if (data.image?.startsWith("data:")) {
+        imageId = await uploadProductImage(data.image, data.name);
+      }
+
       await payloadFetch("/api/products", {
         method: "POST",
         body: {
@@ -284,6 +403,7 @@ export default function ProductsPage() {
         price: Number(data.price),
         discountPercentage: Number(data.discountPercentage),
         stock: Number(data.stock),
+        images: imageId ? [imageId] : undefined,
         },
       });
       toast.success("Product created successfully");
@@ -309,13 +429,30 @@ export default function ProductsPage() {
 
     setFormLoading(true);
     try {
-      await payloadFetch(`/api/products/${selectedProduct._id}`, {
+      const productId = getDocId(selectedProduct);
+      if (!productId) {
+        toast.error("Missing product id");
+        return;
+      }
+
+      let images: Array<number | string> | null | undefined;
+      if (!data.image) {
+        images = [];
+      } else if (data.image.startsWith("data:")) {
+        const imageId = await uploadProductImage(data.image, data.name);
+        images = [imageId];
+      } else if (selectedProductImageId) {
+        images = [selectedProductImageId];
+      }
+
+      await payloadFetch(`/api/products/${productId}`, {
         method: "PATCH",
         body: {
         ...data,
         price: Number(data.price),
         discountPercentage: Number(data.discountPercentage),
         stock: Number(data.stock),
+        images,
         },
       });
       toast.success("Product updated successfully");
@@ -339,7 +476,13 @@ export default function ProductsPage() {
     if (!selectedProduct) return;
 
     try {
-      await payloadFetch(`/api/products/${selectedProduct._id}`, {
+      const productId = getDocId(selectedProduct);
+      if (!productId) {
+        toast.error("Missing product id");
+        return;
+      }
+
+      await payloadFetch(`/api/products/${productId}`, {
         method: "DELETE",
       });
       toast.success("Product deleted successfully");
@@ -459,7 +602,7 @@ export default function ProductsPage() {
                 <TableBody>
                   {products.map((product, index) => (
                     <TableRow
-                      key={product._id}
+                      key={getDocId(product) ?? product.name}
                       className={`border-b border-border/30 transition-colors hover:bg-muted/50 ${
                         index % 2 === 0 ? "bg-background" : "bg-muted/20"
                       }`}
@@ -467,7 +610,7 @@ export default function ProductsPage() {
                       <TableCell className="py-3">
                         <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shadow-sm border flex-shrink-0">
                           <img
-                            src={product?.image}
+                            src={product?.imageUrl ?? product?.image}
                             alt={product?.name}
                             className="h-full w-full object-cover"
                             onError={(e) => {
@@ -517,12 +660,12 @@ export default function ProductsPage() {
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 whitespace-nowrap max-w-[100px] truncate">
-                          {product?.category?.name}
+                          {product?.category?.title ?? product?.category?.name}
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800 whitespace-nowrap max-w-[100px] truncate">
-                          {product?.brand?.name}
+                          {product?.brand?.title ?? product?.brand?.name}
                         </span>
                       </TableCell>
                       {isAdmin && (
@@ -673,6 +816,23 @@ export default function ProductsPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={formAdd.control}
+                name="additionalInformation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Information</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        disabled={formLoading}
+                        className="min-h-[100px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={formAdd.control}
@@ -759,8 +919,13 @@ export default function ProductsPage() {
                         </FormControl>
                         <SelectContent>
                           {categories.map((category) => (
-                            <SelectItem key={category._id} value={category._id}>
-                              {category.name}
+                            <SelectItem
+                              key={
+                                getDocId(category) ?? getCategoryLabel(category)
+                              }
+                              value={getDocIdString(category)}
+                            >
+                              {getCategoryLabel(category)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -788,8 +953,11 @@ export default function ProductsPage() {
                       </FormControl>
                       <SelectContent>
                         {brands.map((brand) => (
-                          <SelectItem key={brand._id} value={brand._id}>
-                            {brand.name}
+                          <SelectItem
+                            key={getDocId(brand) ?? getBrandLabel(brand)}
+                            value={getDocIdString(brand)}
+                          >
+                            {getBrandLabel(brand)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -871,6 +1039,23 @@ export default function ProductsPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        disabled={formLoading}
+                        className="min-h-[100px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formEdit.control}
+                name="additionalInformation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Information</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
@@ -968,8 +1153,13 @@ export default function ProductsPage() {
                         </FormControl>
                         <SelectContent>
                           {categories.map((category) => (
-                            <SelectItem key={category._id} value={category._id}>
-                              {category.name}
+                            <SelectItem
+                              key={
+                                getDocId(category) ?? getCategoryLabel(category)
+                              }
+                              value={getDocIdString(category)}
+                            >
+                              {getCategoryLabel(category)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -997,8 +1187,11 @@ export default function ProductsPage() {
                       </FormControl>
                       <SelectContent>
                         {brands.map((brand) => (
-                          <SelectItem key={brand._id} value={brand._id}>
-                            {brand.name}
+                          <SelectItem
+                            key={getDocId(brand) ?? getBrandLabel(brand)}
+                            value={getDocIdString(brand)}
+                          >
+                            {getBrandLabel(brand)}
                           </SelectItem>
                         ))}
                       </SelectContent>

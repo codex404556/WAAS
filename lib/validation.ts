@@ -49,6 +49,7 @@ export const productSchema = z.object({
   description: z
     .string()
     .min(10, { message: "Description must be at least 10 characters" }),
+  additionalInformation: z.string().optional(),
   price: z.number().min(0, { message: "Price must be a positive number" }),
   discountPercentage: z.number().min(0).max(100).default(0),
   stock: z.number().min(0).default(0),

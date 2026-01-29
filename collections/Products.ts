@@ -6,6 +6,12 @@ const Products: CollectionConfig = {
   slug: "products",
   access: {
     read: () => true,
+    create: ({ req }) =>
+      Boolean(req.user && "role" in req.user && req.user.role === "admin"),
+    update: ({ req }) =>
+      Boolean(req.user && "role" in req.user && req.user.role === "admin"),
+    delete: ({ req }) =>
+      Boolean(req.user && "role" in req.user && req.user.role === "admin"),
   },
   labels: {
     singular: "Product",

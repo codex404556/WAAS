@@ -56,15 +56,93 @@ import {
 } from "@/components/ui/select";
 
 type Category = {
-  _id: string;
+  id?: number;
+  _id?: string;
   name: string;
-  image?: string;
+  title?: string;
+  imageId?: number | string;
+  imageUrl?: string;
   categoryType: "Featured" | "Hot Categories" | "Top Categories";
   createdAt: string;
 };
 
 type FormData = z.infer<typeof categorySchema>;
 
+const getDocId = (doc?: { id?: number | string; _id?: string }) =>
+  doc?.id ?? doc?._id;
+
+const toSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-");
+
+const buildCategoryPayload = (
+  name: string,
+  categoryType: Category["categoryType"],
+  imageId?: number | string | null
+) => {
+  const payload: {
+    title: string;
+    slug: string;
+    categoryType: Category["categoryType"];
+    image?: number | string | null;
+  } = {
+    title: name,
+    slug: toSlug(name),
+    categoryType,
+  };
+
+  if (imageId !== undefined) {
+    payload.image = imageId;
+  }
+
+  return payload;
+};
+
+const dataUrlToFile = (dataUrl: string, filename: string) => {
+  const [meta, base64] = dataUrl.split(",");
+  const match = meta.match(/data:(.*);base64/);
+  const mime = match ? match[1] : "application/octet-stream";
+  const bytes = atob(base64);
+  const buffer = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i += 1) {
+    buffer[i] = bytes.charCodeAt(i);
+  }
+  return new File([buffer], filename, { type: mime });
+};
+
+const uploadCategoryImage = async (dataUrl: string, name: string) => {
+  const formData = new FormData();
+  const safeName = toSlug(name) || "category";
+  const file = dataUrlToFile(dataUrl, `${safeName}.png`);
+  formData.append("file", file);
+  formData.append("alt", name);
+
+  const res = await fetch("/api/media", {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    const suffix = text ? ` - ${text}` : "";
+    throw new Error(
+      `Media upload failed: ${res.status} ${res.statusText}${suffix}`
+    );
+  }
+
+  const data = (await res.json()) as { doc?: { id?: number; _id?: string } };
+  const mediaId = data?.doc?.id ?? data?.doc?._id;
+  if (!mediaId) {
+    throw new Error("Media upload failed: missing media id");
+  }
+
+  return mediaId;
+};
 const buildCategoriesQuery = (
   page: number,
   perPage: number,
@@ -75,7 +153,7 @@ const buildCategoriesQuery = (
     page: String(page),
     limit: String(perPage),
     sort,
-    depth: "0",
+    depth: "1",
   });
 
   return searchParams.toString();
@@ -97,6 +175,9 @@ export default function CategoriesPage() {
     null
   );
   const [formLoading, setFormLoading] = useState(false);
+  const [selectedCategoryImageId, setSelectedCategoryImageId] = useState<
+    number | string | null
+  >(null);
 
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
@@ -124,11 +205,29 @@ export default function CategoriesPage() {
     try {
       const query = buildCategoriesQuery(page, perPage, sortOrder);
       const response = await payloadFetch<{
-        docs?: Category[];
+        docs?: Array<
+          Category & {
+            title?: string;
+            image?: { id?: number; _id?: string; url?: string } | string | null;
+          }
+        >;
         totalDocs?: number;
         totalPages?: number;
       }>(`/api/categories?${query}`);
-      setCategories(response.docs || []);
+      const docs = response.docs || [];
+      const normalized = docs.map((doc) => ({
+        ...doc,
+        name: doc.title ?? doc.name,
+        imageId:
+          typeof doc.image === "object" && doc.image
+            ? getDocId(doc.image)
+            : typeof doc.image === "string"
+              ? doc.image
+              : undefined,
+        imageUrl:
+          typeof doc.image === "object" && doc.image ? doc.image.url : undefined,
+      }));
+      setCategories(normalized);
       setTotal(response.totalDocs || 0);
       setTotalPages(response.totalPages || 1);
     } catch (error) {
@@ -144,11 +243,29 @@ export default function CategoriesPage() {
     try {
       const query = buildCategoriesQuery(page, perPage, sortOrder);
       const response = await payloadFetch<{
-        docs?: Category[];
+        docs?: Array<
+          Category & {
+            title?: string;
+            image?: { id?: number; _id?: string; url?: string } | string | null;
+          }
+        >;
         totalDocs?: number;
         totalPages?: number;
       }>(`/api/categories?${query}`);
-      setCategories(response.docs || []);
+      const docs = response.docs || [];
+      const normalized = docs.map((doc) => ({
+        ...doc,
+        name: doc.title ?? doc.name,
+        imageId:
+          typeof doc.image === "object" && doc.image
+            ? getDocId(doc.image)
+            : typeof doc.image === "string"
+              ? doc.image
+              : undefined,
+        imageUrl:
+          typeof doc.image === "object" && doc.image ? doc.image.url : undefined,
+      }));
+      setCategories(normalized);
       setTotal(response.totalDocs || 0);
       setTotalPages(response.totalPages || 1);
       toast.success("Categories refreshed successfully");
@@ -166,9 +283,10 @@ export default function CategoriesPage() {
 
   const handleEdit = (category: Category) => {
     setSelectedCategory(category);
+    setSelectedCategoryImageId(category.imageId ?? null);
     formEdit.reset({
       name: category.name,
-      image: category.image || "",
+      image: category.imageUrl || "",
       categoryType: category.categoryType,
     });
     setIsEditModalOpen(true);
@@ -182,9 +300,19 @@ export default function CategoriesPage() {
   const handleAddCategory = async (data: FormData) => {
     setFormLoading(true);
     try {
+      let imageId: number | string | null | undefined;
+      if (data.image?.startsWith("data:")) {
+        imageId = await uploadCategoryImage(data.image, data.name);
+      }
+
+      const payload = buildCategoryPayload(
+        data.name,
+        data.categoryType,
+        imageId
+      );
       await payloadFetch("/api/categories", {
         method: "POST",
-        body: data,
+        body: payload,
       });
       toast.success("Category created successfully");
       formAdd.reset();
@@ -210,9 +338,29 @@ export default function CategoriesPage() {
 
     setFormLoading(true);
     try {
-      await payloadFetch(`/api/categories/${selectedCategory._id}`, {
+      const categoryId = getDocId(selectedCategory);
+      if (!categoryId) {
+        toast.error("Missing category id");
+        return;
+      }
+
+      let imageId: number | string | null | undefined;
+      if (!data.image) {
+        imageId = null;
+      } else if (data.image.startsWith("data:")) {
+        imageId = await uploadCategoryImage(data.image, data.name);
+      } else if (selectedCategoryImageId) {
+        imageId = selectedCategoryImageId;
+      }
+
+      const payload = buildCategoryPayload(
+        data.name,
+        data.categoryType,
+        imageId
+      );
+      await payloadFetch(`/api/categories/${categoryId}`, {
         method: "PATCH",
-        body: data,
+        body: payload,
       });
       toast.success("Category updated successfully");
       setIsEditModalOpen(false);
@@ -235,7 +383,13 @@ export default function CategoriesPage() {
     if (!selectedCategory) return;
 
     try {
-      await payloadFetch(`/api/categories/${selectedCategory._id}`, {
+      const categoryId = getDocId(selectedCategory);
+      if (!categoryId) {
+        toast.error("Missing category id");
+        return;
+      }
+
+      await payloadFetch(`/api/categories/${categoryId}`, {
         method: "DELETE",
       });
       toast.success("Category deleted successfully");
@@ -333,12 +487,12 @@ export default function CategoriesPage() {
               </TableHeader>
               <TableBody>
                 {categories.map((category) => (
-                  <TableRow key={category._id}>
+                  <TableRow key={getDocId(category) ?? category.name}>
                     <TableCell>
-                      {category.image ? (
+                      {category.imageUrl ? (
                         <div className="h-12 w-12 rounded overflow-hidden bg-muted">
                           <img
-                            src={category.image}
+                            src={category.imageUrl}
                             alt={category.name}
                             className="h-full w-full object-cover"
                           />

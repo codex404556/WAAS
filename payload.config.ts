@@ -94,8 +94,13 @@ export default buildConfig({
                     })
                   : 0;
 
+              const categoryName =
+                (category as { title?: string; name?: string }).title ??
+                (category as { name?: string }).name ??
+                "Unknown";
+
               return {
-                name: (category as { name?: string }).name ?? "Unknown",
+                name: categoryName,
                 value,
               };
             })

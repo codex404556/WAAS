@@ -49,13 +49,83 @@ import { Edit, Trash, Plus, Loader2, RefreshCw } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 
 type Brand = {
-  _id: string;
+  id?: number;
+  _id?: string;
   name: string;
-  image?: string; // Image is optional
+  title?: string;
+  imageId?: number | string;
+  imageUrl?: string;
   createdAt: string;
 };
 
 type FormData = z.infer<typeof brandSchema>;
+
+const getDocId = (doc?: { id?: number | string; _id?: string }) =>
+  doc?.id ?? doc?._id;
+
+const toSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-");
+
+const buildBrandPayload = (name: string, imageId?: number | string | null) => {
+  const payload: { title: string; slug: string; image?: number | string | null } =
+    {
+      title: name,
+      slug: toSlug(name),
+    };
+
+  if (imageId !== undefined) {
+    payload.image = imageId;
+  }
+
+  return payload;
+};
+
+const dataUrlToFile = (dataUrl: string, filename: string) => {
+  const [meta, base64] = dataUrl.split(",");
+  const match = meta.match(/data:(.*);base64/);
+  const mime = match ? match[1] : "application/octet-stream";
+  const bytes = atob(base64);
+  const buffer = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i += 1) {
+    buffer[i] = bytes.charCodeAt(i);
+  }
+  return new File([buffer], filename, { type: mime });
+};
+
+const uploadBrandImage = async (dataUrl: string, name: string) => {
+  const formData = new FormData();
+  const safeName = toSlug(name) || "brand";
+  const file = dataUrlToFile(dataUrl, `${safeName}.png`);
+  formData.append("file", file);
+  formData.append("alt", name);
+
+  const res = await fetch("/api/media", {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    const suffix = text ? ` - ${text}` : "";
+    throw new Error(
+      `Media upload failed: ${res.status} ${res.statusText}${suffix}`
+    );
+  }
+
+  const data = (await res.json()) as { doc?: { id?: number; _id?: string } };
+  const mediaId = data?.doc?.id ?? data?.doc?._id;
+  if (!mediaId) {
+    throw new Error("Media upload failed: missing media id");
+  }
+
+  return mediaId;
+};
 
 export default function BrandsPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -66,6 +136,9 @@ export default function BrandsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [selectedBrandImageId, setSelectedBrandImageId] = useState<
+    number | string | null
+  >(null);
 
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
@@ -88,10 +161,28 @@ export default function BrandsPage() {
 
   const fetchBrands = async () => {
     try {
-      const response = await payloadFetch<{ docs?: Brand[] }>(
-        "/api/brands?limit=100&sort=name&depth=0"
-      );
-      setBrands(response.docs || []);
+      const response = await payloadFetch<{
+        docs?: Array<
+          Brand & {
+            title?: string;
+            image?: { id?: number; _id?: string; url?: string } | string | null;
+          }
+        >;
+      }>("/api/brands?limit=100&sort=title&depth=1");
+      const docs = response.docs || [];
+      const normalized = docs.map((doc) => ({
+        ...doc,
+        name: doc.title ?? doc.name,
+        imageId:
+          typeof doc.image === "object" && doc.image
+            ? getDocId(doc.image)
+            : typeof doc.image === "string"
+              ? doc.image
+              : undefined,
+        imageUrl:
+          typeof doc.image === "object" && doc.image ? doc.image.url : undefined,
+      }));
+      setBrands(normalized);
     } catch (error) {
       console.log("Failed to load brands", error);
       toast.error("Failed to load brands");
@@ -124,10 +215,28 @@ export default function BrandsPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await payloadFetch<{ docs?: Brand[] }>(
-        "/api/brands?limit=100&sort=name&depth=0"
-      );
-      setBrands(response.docs || []);
+      const response = await payloadFetch<{
+        docs?: Array<
+          Brand & {
+            title?: string;
+            image?: { id?: number; _id?: string; url?: string } | string | null;
+          }
+        >;
+      }>("/api/brands?limit=100&sort=title&depth=1");
+      const docs = response.docs || [];
+      const normalized = docs.map((doc) => ({
+        ...doc,
+        name: doc.title ?? doc.name,
+        imageId:
+          typeof doc.image === "object" && doc.image
+            ? getDocId(doc.image)
+            : typeof doc.image === "string"
+              ? doc.image
+              : undefined,
+        imageUrl:
+          typeof doc.image === "object" && doc.image ? doc.image.url : undefined,
+      }));
+      setBrands(normalized);
       toast.success("Brands refreshed successfully");
     } catch (error) {
       console.log("Failed to refresh brands", error);
@@ -143,9 +252,10 @@ export default function BrandsPage() {
 
   const handleEdit = (brand: Brand) => {
     setSelectedBrand(brand);
+    setSelectedBrandImageId(brand.imageId ?? null);
     formEdit.reset({
       name: brand.name,
-      image: brand.image || "", // Ensure image is set or empty
+      image: brand.imageUrl || "", // Ensure image is set or empty
     });
     setIsEditModalOpen(true);
   };
@@ -158,9 +268,15 @@ export default function BrandsPage() {
   const handleAddBrand = async (data: FormData) => {
     setFormLoading(true);
     try {
+      let imageId: number | string | null | undefined;
+      if (data.image?.startsWith("data:")) {
+        imageId = await uploadBrandImage(data.image, data.name);
+      }
+
+      const payload = buildBrandPayload(data.name, imageId);
       await payloadFetch("/api/brands", {
         method: "POST",
-        body: data,
+        body: payload,
       });
       toast.success("Brand created successfully");
       formAdd.reset();
@@ -179,9 +295,25 @@ export default function BrandsPage() {
 
     setFormLoading(true);
     try {
-      await payloadFetch(`/api/brands/${selectedBrand._id}`, {
+      const brandId = getDocId(selectedBrand);
+      if (!brandId) {
+        toast.error("Missing brand id");
+        return;
+      }
+
+      let imageId: number | string | null | undefined;
+      if (!data.image) {
+        imageId = null;
+      } else if (data.image.startsWith("data:")) {
+        imageId = await uploadBrandImage(data.image, data.name);
+      } else if (selectedBrandImageId) {
+        imageId = selectedBrandImageId;
+      }
+
+      const payload = buildBrandPayload(data.name, imageId);
+      await payloadFetch(`/api/brands/${brandId}`, {
         method: "PATCH",
-        body: data,
+        body: payload,
       });
       toast.success("Brand updated successfully");
       setIsEditModalOpen(false);
@@ -198,7 +330,13 @@ export default function BrandsPage() {
     if (!selectedBrand) return;
 
     try {
-      await payloadFetch(`/api/brands/${selectedBrand._id}`, {
+      const brandId = getDocId(selectedBrand);
+      if (!brandId) {
+        toast.error("Missing brand id");
+        return;
+      }
+
+      await payloadFetch(`/api/brands/${brandId}`, {
         method: "DELETE",
       });
       toast.success("Brand deleted successfully");
@@ -252,12 +390,12 @@ export default function BrandsPage() {
             </TableHeader>
             <TableBody>
               {brands.map((brand) => (
-                <TableRow key={brand._id}>
+                <TableRow key={getDocId(brand) ?? brand.name}>
                   <TableCell>
-                    {brand.image ? (
+                    {brand.imageUrl ? (
                       <div className="h-12 w-12 rounded overflow-hidden bg-muted">
                         <img
-                          src={brand.image}
+                          src={brand.imageUrl}
                           alt={brand.name}
                           className="h-full w-full object-cover"
                         />

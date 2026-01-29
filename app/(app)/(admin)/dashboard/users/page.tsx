@@ -71,15 +71,20 @@ import {
 import { cn } from "@/lib/utils";
 
 type User = {
-  _id: string;
+  id?: number;
+  _id?: string;
   name: string;
   email: string;
   avatar: string;
   role: "admin" | "user" | "deliveryman";
   createdAt: string;
+  clerkId?: string;
 };
 
 type FormData = z.infer<typeof userSchema>;
+
+const getDocId = (doc?: { id?: number | string; _id?: string }) =>
+  doc?.id ?? doc?._id;
 
 const buildUsersQuery = (
   page: number,
@@ -95,6 +100,10 @@ const buildUsersQuery = (
 
   if (roleFilter !== "all") {
     searchParams.set("where[role][equals]", roleFilter);
+  }
+
+  if (roleFilter === "user") {
+    searchParams.set("where[clerkId][exists]", "true");
   }
 
   return searchParams.toString();
@@ -220,16 +229,15 @@ export default function UsersPage() {
   };
 
   const filteredUsers = users.filter((user) => {
-    const normalizedSearch = searchTerm.toLowerCase();
-    const normalizedName = (user.name ?? "").toLowerCase();
-    const normalizedEmail = (user.email ?? "").toLowerCase();
     const matchesSearch =
-      normalizedName.includes(normalizedSearch) ||
-      normalizedEmail.includes(normalizedSearch);
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    const matchesCustomerSource =
+      roleFilter !== "user" || Boolean(user.clerkId);
 
-    return matchesSearch && matchesRole;
+    return matchesSearch && matchesRole && matchesCustomerSource;
   });
 
   const handleEdit = (user: User) => {
@@ -289,7 +297,13 @@ export default function UsersPage() {
     if (!selectedUser) return;
     setFormLoading(true);
     try {
-      await payloadFetch(`/api/users/${selectedUser._id}`, {
+      const userId = getDocId(selectedUser);
+      if (!userId) {
+        toast.error("Missing user id");
+        return;
+      }
+
+      await payloadFetch(`/api/users/${userId}`, {
         method: "PATCH",
         body: data,
       });
@@ -307,7 +321,13 @@ export default function UsersPage() {
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     try {
-      await payloadFetch(`/api/users/${selectedUser._id}`, {
+      const userId = getDocId(selectedUser);
+      if (!userId) {
+        toast.error("Missing user id");
+        return;
+      }
+
+      await payloadFetch(`/api/users/${userId}`, {
         method: "DELETE",
       });
       toast.success("User deleted successfully");
@@ -489,8 +509,8 @@ export default function UsersPage() {
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="deliveryman">Delivery Person</SelectItem>
+              <SelectItem value="user">Customer</SelectItem>
+              <SelectItem value="deliveryman">Delivery</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -879,7 +899,10 @@ export default function UsersPage() {
           <TableBody>
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
-                <TableRow key={user._id} className="hover:bg-gray-50">
+                <TableRow
+                  key={getDocId(user) ?? user.email}
+                  className="hover:bg-gray-50"
+                >
                   <TableCell>
                     <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold shadow-sm overflow-hidden">
                       {user.avatar ? (
@@ -1071,7 +1094,9 @@ export default function UsersPage() {
                   <Label className="text-sm font-medium text-gray-600">
                     User ID
                   </Label>
-                  <p className="text-lg font-semibold">{selectedUser._id}</p>
+                  <p className="text-lg font-semibold">
+                    {getDocId(selectedUser)}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-600">

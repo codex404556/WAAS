@@ -16,7 +16,7 @@ export default async function DashboardLayout({
   const { user } = await payload.auth({ headers });
 
   if (!user) {
-    redirect("/dashboard/login");
+    redirect("/login");
   }
 
   return <DashboardApp>{children}</DashboardApp>;
