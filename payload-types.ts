@@ -124,7 +124,11 @@ export interface User {
   id: string;
   updatedAt: string;
   createdAt: string;
+  name: string;
   email: string;
+  clerkId?: string | null;
+  avatar?: string | null;
+  role: 'admin' | 'user' | 'deliveryman';
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
   salt?: string | null;
@@ -240,7 +244,11 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
+  name?: T;
   email?: T;
+  clerkId?: T;
+  avatar?: T;
+  role?: T;
   resetPasswordToken?: T;
   resetPasswordExpiration?: T;
   salt?: T;
