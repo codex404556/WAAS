@@ -20,14 +20,13 @@ import ProductTab from "@/components/ProductTab";
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  params: Promise<{ slug: string }>;
-  showProduct?: true | false;
+  params: { slug: string };
 }
 
 const SingleProductPage = async ({
-  params, showProduct
+  params
 }: Props) => {
-  const { slug } = await params;
+  const { slug } = params;
   const product = await getProductBySlug(slug);
   const titleInfo =
     (await getProductInfo(slug)) ?? {
@@ -82,7 +81,7 @@ const SingleProductPage = async ({
           </p>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <AddToCartButton showProduct={showProduct || true} product={product} />
+          <AddToCartButton showProduct={true} product={product} />
           <AddToFavorites product={product} showProduct={true} className="" />
         </div>
         <ProductsCharacteristics product={product} />
