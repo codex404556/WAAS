@@ -14,7 +14,7 @@ export const registerSchema = z.object({
     .string()
     .min(6, { message: "Password must be at least 6 characters" }),
   role: z.enum(["admin", "user", "deliveryman"], {
-    errorMap: () => ({ message: "Please select a valid role" }),
+    message: "Please select a valid role",
   }),
 });
 
@@ -26,7 +26,7 @@ export const userSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters" })
     .optional(),
   role: z.enum(["admin", "user", "deliveryman"], {
-    errorMap: () => ({ message: "Please select a valid role" }),
+    message: "Please select a valid role",
   }),
   avatar: z.string().optional(),
 });
