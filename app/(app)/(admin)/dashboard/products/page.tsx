@@ -361,8 +361,7 @@ export default function ProductsPage() {
 
   const getBrandLabel = (brand: Brand) => brand.title ?? brand.name ?? "";
 
-  const getCategoryLabel = (category: Category) =>
-    category.title ?? category.name ?? "";
+  const getCategoryLabel = (category: Category) => category.name ?? "";
 
   const fetchBrands = async () => {
     try {
