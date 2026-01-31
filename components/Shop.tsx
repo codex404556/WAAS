@@ -1,6 +1,6 @@
 "use client";
 import { BRANDS_QUERYResult, Category, Product } from "@/types/cms";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Container from "./Container";
 import { Title } from "./ui/text";
 import CatergoryList from "./filters/CatergoryList";
@@ -32,7 +32,7 @@ const Shop = ({ categories, brands }: Props) => {
     brandParams || null
   );
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoding(true);
     try {
       let minPrice = 0;
@@ -55,10 +55,10 @@ const Shop = ({ categories, brands }: Props) => {
     } finally {
       setLoding(false);
     }
-  };
+  }, [selectedBrand, selectedCategory, selectedPrice, searchTerm]);
   useEffect(() => {
     fetchProducts();
-  }, [selectedBrand, selectedCategory, selectedPrice, searchTerm]);
+  }, [fetchProducts]);
 
   return (
     <div className="border-t">
