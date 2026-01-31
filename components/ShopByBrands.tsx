@@ -63,7 +63,7 @@ const ShopByBrands = async () => {
         ))}
       </div>
       <div className="flex flex-wrap md:flex-nowrap items-cente justify-between gap-7 mt-10 md:gap-4 shadow-lg rounded-md py-5 px-5">
-        {orderData.map((brand, index) => (
+        {orderData.map((brand) => (
           <div
             key={brand.title}
             className="flex items-center justify-between gap-3 mb-5 mt-7 group"

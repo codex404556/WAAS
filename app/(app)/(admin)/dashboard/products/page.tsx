@@ -548,12 +548,6 @@ export default function ProductsPage() {
     }
   };
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
-    }
-  };
-
   const handleSortChange = (value: "asc" | "desc") => {
     setSortOrder(value);
     setPage(1); // Reset to page 1 when sort order changes

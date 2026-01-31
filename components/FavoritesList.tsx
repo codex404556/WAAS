@@ -5,7 +5,6 @@ import Container from "./Container";
 import { Heart, X } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import { Product } from "@/types/cms";
 import toast from "react-hot-toast";
 import Image from "next/image";
 import { urlFor } from "@/lib/image";

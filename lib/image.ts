@@ -22,11 +22,13 @@ class ImageUrlBuilder {
     this.source = source;
   }
 
-  width(_value: number): ImageUrlBuilder {
+  width(value: number): ImageUrlBuilder {
+    void value;
     return this;
   }
 
-  height(_value: number): ImageUrlBuilder {
+  height(value: number): ImageUrlBuilder {
+    void value;
     return this;
   }
 
