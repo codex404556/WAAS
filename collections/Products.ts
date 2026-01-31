@@ -99,6 +99,7 @@ const Products: CollectionConfig = {
       name: "additionalInformation",
       label: "Additional Information",
       type: "textarea",
+      required: false,
     },
 
     // Price (required, min 0)
@@ -120,13 +121,12 @@ const Products: CollectionConfig = {
       defaultValue: 0,
     },
 
-    // Categories (Sanity: array of references to category)
+    // Category (single reference)
     {
-      name: "categories",
-      label: "Categories",
+      name: "category",
+      label: "Category",
       type: "relationship",
       relationTo: "categories",
-      hasMany: true,
     },
 
     // Stock (required, min 0)

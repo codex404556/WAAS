@@ -25,11 +25,11 @@ const PremiumFeature: React.FC<PremiumFeatureProps> = ({
   features,
 }) => {
   const handleJavaScriptPurchase = () => {
-    window.open("https://buymeacoffee.com/reactbd/e/432469", "_blank");
+    window.open("/", "_blank");
   };
 
   const handleTypeScriptPurchase = () => {
-    window.open("https://buymeacoffee.com/reactbd/e/493505", "_blank");
+    window.open("/", "_blank");
   };
 
   return (
@@ -58,7 +58,7 @@ const PremiumFeature: React.FC<PremiumFeatureProps> = ({
             <div className="inline-flex items-center gap-2 bg-babyshopSky/10 dark:bg-babyshopSky/20 px-6 py-3 rounded-full border-2 border-babyshopSky">
               <Lock className="h-5 w-5 text-babyshopSky" />
               <span className="font-semibold text-babyshopSky">
-                Paid Version Only
+                Paid Version
               </span>
               <Sparkles className="h-5 w-5 text-babyshopSky" />
             </div>
@@ -75,7 +75,7 @@ const PremiumFeature: React.FC<PremiumFeatureProps> = ({
           <div className="bg-babyshopLightBg dark:bg-card rounded-xl p-8 border">
             <h3 className="text-2xl font-bold mb-6 text-center flex items-center justify-center gap-2">
               <Sparkles className="h-6 w-6 text-babyshopSky" />
-              Premium Features Included
+              Premium Features
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
               {features.map((feature, index) => (
@@ -113,7 +113,7 @@ const PremiumFeature: React.FC<PremiumFeatureProps> = ({
                   className="bg-gradient-to-r from-babyshopRed to-babyshopPurple hover:opacity-90 text-babyshopWhite font-semibold px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Crown className="h-5 w-5 mr-2" />
-                  JavaScript Version
+                  full access
                   <ExternalLink className="h-4 w-4 ml-2" />
                 </Button>
 
@@ -123,7 +123,7 @@ const PremiumFeature: React.FC<PremiumFeatureProps> = ({
                   className="bg-gradient-to-r from-babyshopSky to-babyshopPurple hover:opacity-90 text-babyshopWhite font-semibold px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Crown className="h-5 w-5 mr-2" />
-                  TypeScript Turbo
+                  invices
                   <ExternalLink className="h-4 w-4 ml-2" />
                 </Button>
               </div>
@@ -133,23 +133,23 @@ const PremiumFeature: React.FC<PremiumFeatureProps> = ({
               <p className="text-xs text-muted-foreground">
                 Visit{" "}
                 <a
-                  href="https://buymeacoffee.com/reactbd/"
+                  href="/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-semibold text-primary hover:underline"
                 >
-                  reactbd.com
+                  codexworld
                 </a>{" "}
                 for more information
               </p>
               <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-babyshopRed"></span>
-                  JavaScript - Full Project
+                  full access
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-babyshopSky"></span>
-                  TypeScript - Turbo Build
+                  terporary acced
                 </span>
               </div>
             </div>
@@ -173,7 +173,7 @@ const PremiumFeature: React.FC<PremiumFeatureProps> = ({
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-babyshopSky">100%</div>
                 <div className="text-sm text-muted-foreground">
-                  Satisfaction Guarantee
+                  Santification
                 </div>
               </div>
             </div>

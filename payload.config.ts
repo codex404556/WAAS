@@ -1,5 +1,6 @@
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import { s3Storage } from "@payloadcms/storage-s3";
 import path from "path";
 import { buildConfig } from "payload";
 import type { CollectionSlug, Where } from "payload";
@@ -88,8 +89,8 @@ export default buildConfig({
               const value =
                 categoryId && hasCollection("products")
                   ? await countCollection("products", {
-                      categories: {
-                        contains: categoryId,
+                      category: {
+                        equals: categoryId,
                       },
                     })
                   : 0;
@@ -168,5 +169,21 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [],
+  plugins: [
+    s3Storage({
+      bucket: process.env.R2_BUCKET || "",
+      config: {
+        endpoint: process.env.R2_ENDPOINT,
+        region: "auto",
+        forcePathStyle: true,
+        credentials: {
+          accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+        },
+      },
+      collections: {
+        media: true,
+      },
+    }),
+  ],
 });

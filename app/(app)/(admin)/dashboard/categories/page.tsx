@@ -117,7 +117,8 @@ const dataUrlToFile = (dataUrl: string, filename: string) => {
 const uploadCategoryImage = async (dataUrl: string, name: string) => {
   const formData = new FormData();
   const safeName = toSlug(name) || "category";
-  const file = dataUrlToFile(dataUrl, `${safeName}.png`);
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const file = dataUrlToFile(dataUrl, `${safeName}-${uniqueSuffix}.png`);
   formData.append("file", file);
   formData.append("alt", name);
 

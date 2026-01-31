@@ -11,5 +11,7 @@ export const Media: CollectionConfig = {
       type: 'text',
     },
   ],
-  upload: true,
+  upload: {
+    disableLocalStorage: true,
+  },
 }

@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ImageUpload } from "@/components/ui/image-upload";
+import { MultiImageUpload } from "@/components/ui/multi-image-upload";
 import {
   Table,
   TableBody,
@@ -74,12 +74,14 @@ type Product = {
   description: string;
   additionalInformation?: string;
   price: number;
-  discountPercentage: number;
+  discount: number;
   stock: number;
   averageRating: number;
   image?: string;
   imageId?: number | string;
   imageUrl?: string;
+  imageIds?: Array<number | string>;
+  imageUrls?: string[];
   images?: Array<
     { id?: number; _id?: string; url?: string } | number | string
   >;
@@ -120,6 +122,13 @@ const getDocIdString = (doc?: { id?: number | string; _id?: string }) => {
   return id === undefined || id === null ? "" : String(id);
 };
 
+const parseRelationId = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const asNumber = Number(trimmed);
+  return Number.isNaN(asNumber) ? trimmed : asNumber;
+};
+
 const toSlug = (value: string) =>
   value
     .toLowerCase()
@@ -143,7 +152,8 @@ const dataUrlToFile = (dataUrl: string, filename: string) => {
 const uploadProductImage = async (dataUrl: string, name: string) => {
   const formData = new FormData();
   const safeName = toSlug(name) || "product";
-  const file = dataUrlToFile(dataUrl, `${safeName}.png`);
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const file = dataUrlToFile(dataUrl, `${safeName}-${uniqueSuffix}.png`);
   formData.append("file", file);
   formData.append("alt", name);
 
@@ -202,9 +212,9 @@ export default function ProductsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formLoading, setFormLoading] = useState(false);
-  const [selectedProductImageId, setSelectedProductImageId] = useState<
-    number | string | null
-  >(null);
+  const [selectedProductImageIds, setSelectedProductImageIds] = useState<
+    Array<number | string>
+  >([]);
 
   const { checkIsAdmin } = useAuthStore();
   const isAdmin = checkIsAdmin();
@@ -216,11 +226,11 @@ export default function ProductsPage() {
       description: "",
       additionalInformation: "",
       price: 0,
-      discountPercentage: 10,
+      discount: 10,
       stock: 10,
       category: "",
       brand: "",
-      image: "",
+      images: [],
     },
   });
 
@@ -231,11 +241,11 @@ export default function ProductsPage() {
       description: "",
       additionalInformation: "",
       price: 0,
-      discountPercentage: 0,
+      discount: 0,
       stock: 0,
       category: "",
       brand: "",
-      image: "",
+      images: [],
     },
   });
 
@@ -252,6 +262,18 @@ export default function ProductsPage() {
       const docs = response.docs || [];
       const normalized = docs.map((doc) => {
         const images = Array.isArray(doc.images) ? doc.images : [];
+        const imageIds = images
+          .map((image) =>
+            typeof image === "object" && image
+              ? getDocId(image)
+              : image
+          )
+          .filter((id): id is number | string => id !== undefined);
+        const imageUrls = images
+          .map((image) =>
+            typeof image === "object" && image ? image.url : undefined
+          )
+          .filter((url): url is string => Boolean(url));
         const firstImage = images[0];
         const imageId =
           typeof firstImage === "object" && firstImage
@@ -268,6 +290,8 @@ export default function ProductsPage() {
           ...doc,
           imageId,
           imageUrl,
+          imageIds,
+          imageUrls,
         };
       });
       setProducts(normalized);
@@ -368,17 +392,17 @@ export default function ProductsPage() {
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
-    setSelectedProductImageId(product.imageId ?? null);
+    setSelectedProductImageIds(product.imageIds ?? []);
     formEdit.reset({
       name: product.name,
       description: product.description,
       additionalInformation: product.additionalInformation ?? "",
       price: product.price,
-      discountPercentage: product.discountPercentage,
+      discount: product.discount,
       stock: product.stock,
       category: getDocIdString(product.category),
       brand: getDocIdString(product.brand),
-      image: product.imageUrl ?? product.image ?? "",
+      images: product.imageUrls ?? [],
     });
     setIsEditModalOpen(true);
   };
@@ -391,19 +415,24 @@ export default function ProductsPage() {
   const handleAddProduct = async (data: FormData) => {
     setFormLoading(true);
     try {
-      let imageId: number | string | null | undefined;
-      if (data.image?.startsWith("data:")) {
-        imageId = await uploadProductImage(data.image, data.name);
-      }
+      const imageIds = await Promise.all(
+        (data.images || []).map((image) =>
+          image.startsWith("data:")
+            ? uploadProductImage(image, data.name)
+            : Promise.resolve(parseRelationId(image))
+        )
+      );
 
       await payloadFetch("/api/products", {
         method: "POST",
         body: {
         ...data,
         price: Number(data.price),
-        discountPercentage: Number(data.discountPercentage),
+        discount: Number(data.discount),
         stock: Number(data.stock),
-        images: imageId ? [imageId] : undefined,
+        category: parseRelationId(data.category),
+        brand: parseRelationId(data.brand),
+        images: imageIds.length ? imageIds : undefined,
         },
       });
       toast.success("Product created successfully");
@@ -436,13 +465,25 @@ export default function ProductsPage() {
       }
 
       let images: Array<number | string> | null | undefined;
-      if (!data.image) {
+      if (!data.images || data.images.length === 0) {
         images = [];
-      } else if (data.image.startsWith("data:")) {
-        const imageId = await uploadProductImage(data.image, data.name);
-        images = [imageId];
-      } else if (selectedProductImageId) {
-        images = [selectedProductImageId];
+      } else {
+        const urlToId = new Map<string, number | string>();
+        (selectedProduct.imageUrls || []).forEach((url, index) => {
+          const id = selectedProductImageIds[index];
+          if (url && id !== undefined) {
+            urlToId.set(url, id);
+          }
+        });
+
+        images = await Promise.all(
+          data.images.map((image) => {
+            if (image.startsWith("data:")) {
+              return uploadProductImage(image, data.name);
+            }
+            return Promise.resolve(urlToId.get(image) ?? parseRelationId(image));
+          })
+        );
       }
 
       await payloadFetch(`/api/products/${productId}`, {
@@ -450,8 +491,10 @@ export default function ProductsPage() {
         body: {
         ...data,
         price: Number(data.price),
-        discountPercentage: Number(data.discountPercentage),
+        discount: Number(data.discount),
         stock: Number(data.stock),
+        category: parseRelationId(data.category),
+        brand: parseRelationId(data.brand),
         images,
         },
       });
@@ -632,7 +675,7 @@ export default function ProductsPage() {
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800 whitespace-nowrap">
-                          {product.discountPercentage}%
+                          {product.discount}%
                         </span>
                       </TableCell>
                       <TableCell>
@@ -858,20 +901,20 @@ export default function ProductsPage() {
                 />
                 <FormField
                   control={formAdd.control}
-                  name="discountPercentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount (%)</FormLabel>
-                      <FormControl>
-                        <Input
+                name="discount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Discount (%)</FormLabel>
+                    <FormControl>
+                      <Input
                           {...field}
-                          type="number"
-                          min="0"
-                          max="100"
-                          disabled={formLoading}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value))
-                          }
+                        type="number"
+                        min="0"
+                        max="100"
+                        disabled={formLoading}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value))
+                        }
                         />
                       </FormControl>
                       <FormMessage />
@@ -968,13 +1011,13 @@ export default function ProductsPage() {
               />
               <FormField
                 control={formAdd.control}
-                name="image"
+                name="images"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Image</FormLabel>
+                    <FormLabel>Product Images</FormLabel>
                     <FormControl>
-                      <ImageUpload
-                        value={field.value}
+                      <MultiImageUpload
+                        value={field.value ?? []}
                         onChange={field.onChange}
                         disabled={formLoading}
                       />
@@ -1092,20 +1135,20 @@ export default function ProductsPage() {
                 />
                 <FormField
                   control={formEdit.control}
-                  name="discountPercentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount (%)</FormLabel>
-                      <FormControl>
-                        <Input
+                name="discount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Discount (%)</FormLabel>
+                    <FormControl>
+                      <Input
                           {...field}
-                          type="number"
-                          min="0"
-                          max="100"
-                          disabled={formLoading}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value))
-                          }
+                        type="number"
+                        min="0"
+                        max="100"
+                        disabled={formLoading}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value))
+                        }
                         />
                       </FormControl>
                       <FormMessage />
@@ -1202,13 +1245,13 @@ export default function ProductsPage() {
               />
               <FormField
                 control={formEdit.control}
-                name="image"
+                name="images"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Image</FormLabel>
+                    <FormLabel>Product Images</FormLabel>
                     <FormControl>
-                      <ImageUpload
-                        value={field.value}
+                      <MultiImageUpload
+                        value={field.value ?? []}
                         onChange={field.onChange}
                         disabled={formLoading}
                       />
