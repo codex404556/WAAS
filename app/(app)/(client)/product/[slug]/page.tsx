@@ -20,13 +20,13 @@ import ProductTab from "@/components/ProductTab";
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 const SingleProductPage = async ({
   params
 }: Props) => {
-  const { slug } = params;
+  const { slug } = await params;
   const product = await getProductBySlug(slug);
   const titleInfo =
     (await getProductInfo(slug)) ?? {
