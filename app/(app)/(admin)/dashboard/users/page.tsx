@@ -862,7 +862,7 @@ export default function UsersPage() {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete{" "}
-              <span className="font-semibold">{selectedUser?.name}</span>'s
+              <span className="font-semibold">{selectedUser?.name}</span>&apos;s
               account.
             </AlertDialogDescription>
           </AlertDialogHeader>
