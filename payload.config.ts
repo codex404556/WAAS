@@ -34,7 +34,7 @@ export default buildConfig({
         const collectionSlugs =
           req.payload.config.collections?.map((collection) => collection.slug) ??
           [];
-        const hasCollection = (slug: string) =>
+        const hasCollection = (slug: CollectionSlug) =>
           collectionSlugs.includes(slug);
 
         const countCollection = async (slug: CollectionSlug, where?: Where) => {
