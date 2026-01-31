@@ -35,7 +35,7 @@ export const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   image: z.string().optional(),
   categoryType: z.enum(["Featured", "Hot Categories", "Top Categories"], {
-    required_error: "Category type is required",
+    message: "Category type is required",
   }),
 });
 
