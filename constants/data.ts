@@ -25,8 +25,8 @@ export const categoryLinks = [
   { title: "gadgit accessories", href: "/gadfit-accessories" },
 ];
 export const productType = [
-  { title: "Monitors", value: "monitors" },
-  { title: "Laptops", value: "laptops" },
-  { title: "Refriferators", value: "refriferators" },
-  { title: "Others", value: "others" },
+  { title: "Best Sellers", value: "best-sellers" },
+  { title: "Lowest Price", value: "lowest-price" },
+  { title: "Big Deals", value: "big-deals" },
+  { title: "Top", value: "top" },
 ];

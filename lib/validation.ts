@@ -55,6 +55,7 @@ export const productSchema = z.object({
   stock: z.number().min(0),
   category: z.string().min(1, { message: "Please select a category" }),
   brand: z.string().min(1, { message: "Please select a brand" }),
+  variant: z.string().optional(),
   images: z
     .array(z.string())
     .min(1, { message: "Please upload at least one image" }),

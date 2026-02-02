@@ -11,7 +11,7 @@ import ProductsCard from "./ProductsCard";
 import { Product } from "@/types/cms";
 
 const ProductGrid = () => {
-  const [selectedTab, setSelectedTab] = useState(productType[0]?.title || "");
+  const [selectedTab, setSelectedTab] = useState(productType[0]?.value || "");
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -20,7 +20,7 @@ const ProductGrid = () => {
       setLoading(true);
       try {
         const response = await listProductsByVariant(
-          selectedTab.toLocaleLowerCase()
+          selectedTab
         );
         setProducts(response);
       } catch (error) {
@@ -60,7 +60,12 @@ const ProductGrid = () => {
           ))}
         </div>
       ) : (
-        <NoProductsAvailable selectedTab={selectedTab} />
+        <NoProductsAvailable
+          selectedTab={
+            productType.find((item) => item.value === selectedTab)?.title ??
+            selectedTab
+          }
+        />
       )}
     </div>
   );

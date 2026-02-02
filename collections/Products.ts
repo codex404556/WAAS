@@ -139,7 +139,7 @@ const Products: CollectionConfig = {
       defaultValue: 0,
     },
 
-    // Brand 
+    // Brand
     {
       name: "brand",
       label: "Brand",
@@ -202,16 +202,16 @@ const Products: CollectionConfig = {
       ],
     },
 
-    // Product Type / Variant (Sanity list)
+    // Product Type / Collection (Sanity list)
     {
       name: "variant",
-      label: "Product Type",
+      label: "Collection",
       type: "select",
       options: [
-        { label: "Monitors", value: "monitors" },
-        { label: "Laptops", value: "laptops" },
-        { label: "Refriferators", value: "refriferators" },
-        { label: "Others", value: "others" },
+        { label: "Best Sellers", value: "best-sellers" },
+        { label: "Big Deals", value: "big-deals" },
+        { label: "Lowest Price", value: "lowest-price" },
+        { label: "Top", value: "top" },
       ],
     },
   ],

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import useAuthStore from "@/store/useAuthStore";
 import {
@@ -31,6 +31,12 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
   const { user, logout } = useAuthStore();
   // const isAdmin = checkIsAdmin();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/login");
+  };
 
   return (
     <motion.aside
@@ -191,7 +197,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
           <Button
             variant="outline"
             size={open ? "default" : "icon"}
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full border-red-500/30 hover:bg-red-600/20 hover:border-red-400/50 text-red-400 hover:text-red-300 transition-colors bg-red-600/10 backdrop-blur-sm"
           >
             <LogOut size={16} className={cn("mr-2", !open && "mr-0")} />

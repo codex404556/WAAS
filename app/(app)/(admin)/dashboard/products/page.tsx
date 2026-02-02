@@ -10,6 +10,7 @@ import { z } from "zod";
 import { productSchema } from "@/lib/validation";
 import { payloadFetch } from "@/lib/payload-client";
 import { Button } from "@/components/ui/button";
+import { productType } from "@/constants/data";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,7 @@ type Product = {
   discount: number;
   stock: number;
   averageRating: number;
+  variant?: string;
   image?: string;
   imageId?: number | string;
   imageUrl?: string;
@@ -102,7 +104,8 @@ type Product = {
 type Category = {
   id?: number;
   _id?: string;
-  name: string;
+  name?: string;
+  title?: string;
 };
 
 type Brand = {
@@ -128,6 +131,9 @@ const parseRelationId = (value: string) => {
   const asNumber = Number(trimmed);
   return Number.isNaN(asNumber) ? trimmed : asNumber;
 };
+
+const normalizeVariant = (value?: string) =>
+  value && value !== "none" ? value : undefined;
 
 const toSlug = (value: string) =>
   value
@@ -230,6 +236,7 @@ export default function ProductsPage() {
       stock: 10,
       category: "",
       brand: "",
+      variant: "",
       images: [],
     },
   });
@@ -245,6 +252,7 @@ export default function ProductsPage() {
       stock: 0,
       category: "",
       brand: "",
+      variant: "",
       images: [],
     },
   });
@@ -361,7 +369,8 @@ export default function ProductsPage() {
 
   const getBrandLabel = (brand: Brand) => brand.title ?? brand.name ?? "";
 
-  const getCategoryLabel = (category: Category) => category.name ?? "";
+  const getCategoryLabel = (category: Category) =>
+    category.title ?? category.name ?? "";
 
   const fetchBrands = async () => {
     try {
@@ -401,6 +410,7 @@ export default function ProductsPage() {
       stock: product.stock,
       category: getDocIdString(product.category),
       brand: getDocIdString(product.brand),
+      variant: product.variant ?? "",
       images: product.imageUrls ?? [],
     });
     setIsEditModalOpen(true);
@@ -431,6 +441,7 @@ export default function ProductsPage() {
         stock: Number(data.stock),
         category: parseRelationId(data.category),
         brand: parseRelationId(data.brand),
+        variant: normalizeVariant(data.variant),
         images: imageIds.length ? imageIds : undefined,
         },
       });
@@ -494,6 +505,7 @@ export default function ProductsPage() {
         stock: Number(data.stock),
         category: parseRelationId(data.category),
         brand: parseRelationId(data.brand),
+        variant: normalizeVariant(data.variant),
         images,
         },
       });
@@ -701,7 +713,7 @@ export default function ProductsPage() {
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800 whitespace-nowrap max-w-[100px] truncate">
-                          {product?.brand?.name ?? ""}
+                          {product?.brand ? getBrandLabel(product.brand) : ""}
                         </span>
                       </TableCell>
                       {isAdmin && (
@@ -971,37 +983,68 @@ export default function ProductsPage() {
                   )}
                 />
               </div>
-              <FormField
-                control={formAdd.control}
-                name="brand"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={formLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a brand" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {brands.map((brand) => (
-                          <SelectItem
-                            key={getDocId(brand) ?? getBrandLabel(brand)}
-                            value={getDocIdString(brand)}
-                          >
-                            {getBrandLabel(brand)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={formAdd.control}
+                  name="brand"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Brand</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={formLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a brand" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {brands.map((brand) => (
+                            <SelectItem
+                              key={getDocId(brand) ?? getBrandLabel(brand)}
+                              value={getDocIdString(brand)}
+                            >
+                              {getBrandLabel(brand)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={formAdd.control}
+                  name="variant"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Collection (Optional)</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={formLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a collection" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {productType.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={formAdd.control}
                 name="images"
@@ -1205,37 +1248,68 @@ export default function ProductsPage() {
                   )}
                 />
               </div>
-              <FormField
-                control={formEdit.control}
-                name="brand"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={formLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a brand" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {brands.map((brand) => (
-                          <SelectItem
-                            key={getDocId(brand) ?? getBrandLabel(brand)}
-                            value={getDocIdString(brand)}
-                          >
-                            {getBrandLabel(brand)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={formEdit.control}
+                  name="brand"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Brand</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={formLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a brand" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {brands.map((brand) => (
+                            <SelectItem
+                              key={getDocId(brand) ?? getBrandLabel(brand)}
+                              value={getDocIdString(brand)}
+                            >
+                              {getBrandLabel(brand)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={formEdit.control}
+                  name="variant"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Collection (Optional)</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={formLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a collection" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {productType.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={formEdit.control}
                 name="images"
