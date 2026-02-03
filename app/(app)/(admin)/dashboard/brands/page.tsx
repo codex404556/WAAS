@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,8 +46,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Edit, Trash, Plus, Loader2, RefreshCw } from "lucide-react";
+import { Edit, Trash, Plus, RefreshCw, Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
+import BrandsSkeleton from "@/app/(app)/(admin)/skeleton/BrandsSkeleton";
 
 type Brand = {
   id?: number;
@@ -351,9 +353,18 @@ export default function BrandsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <h1 className="text-3xl font-bold">Brands</h1>
-        <div className="flex items-center gap-2">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex items-center gap-2"
+        >
           <Button
             variant="outline"
             onClick={handleRefresh}
@@ -369,15 +380,18 @@ export default function BrandsPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Brand
             </Button>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {loading ? (
-        <div className="flex justify-center items-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <BrandsSkeleton isAdmin={isAdmin} />
       ) : (
-        <div className="rounded-md border">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="rounded-md border"
+        >
           <Table>
             <TableHeader>
               <TableRow>
@@ -443,7 +457,7 @@ export default function BrandsPage() {
               )}
             </TableBody>
           </Table>
-        </div>
+        </motion.div>
       )}
 
       {/* Add Brand Modal */}

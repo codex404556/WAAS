@@ -22,7 +22,7 @@ const ImagesView = ({ images = [], isStock }: Props) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="w-full max-h-[550px] min-h-[450px] rounded-md group overflow-hidden"
+          className="w-full max-h-[550px] min-h-[450px] rounded-md group"
         >
           <Image
             src={urlFor(isActive).url()}
@@ -46,7 +46,7 @@ const ImagesView = ({ images = [], isStock }: Props) => {
               alt={`Thumbnail ${image?._key}`}
               width={100}
               height={100}
-              className="w-full h-auto object-contain"
+              className="w-30 h-30 object-contain"
             />
           </button>
         ))}

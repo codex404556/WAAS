@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -567,14 +568,23 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div className="flex items-end gap-3">
           <h1 className="text-3xl font-bold">Products</h1>
           <p className="text-sm font-medium">
             Total <span className="font-bold">{total}</span>
           </p>
         </div>
-        <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-2 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex items-center gap-3 rounded-lg bg-muted/50 p-2 shadow-sm"
+        >
           <Button
             variant="outline"
             onClick={handleRefresh}
@@ -616,14 +626,19 @@ export default function ProductsPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Product
             </Button>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {loading ? (
         <ProductSkeleton isAdmin={isAdmin} />
       ) : (
         <>
-          <div className="rounded-lg border border-border/50 shadow-sm bg-card overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-lg border border-border/50 shadow-sm bg-card overflow-hidden"
+          >
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -765,11 +780,16 @@ export default function ProductsPage() {
                 </TableBody>
               </Table>
             </div>
-          </div>
+          </motion.div>
 
           {/* Pagination Controls */}
           {total > perPage && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card rounded-lg border border-border/50 px-4 py-3 shadow-sm">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card rounded-lg border border-border/50 px-4 py-3 shadow-sm"
+            >
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
                 <div className="text-sm text-muted-foreground">
                   Showing{" "}
@@ -810,7 +830,7 @@ export default function ProductsPage() {
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Simple pagination for single page */}

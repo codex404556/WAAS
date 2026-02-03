@@ -24,15 +24,20 @@ const ProductsCard = ({ product, clasName = "" }: Props) => {
     <div className="text-sm border border-dark_blue/10 shadow-md rounded-md group bg-white overflow-hidden">
       <div className="relative group overflow-hidden">
         {product?.images && (
-          <Link href={`/product/${product?.slug?.current}`}>
-            <Image
-              src={urlFor(product?.images[0]).url()}
-              alt="product-images"
-              loading="lazy"
-              width={700}
-              height={700}
-              className={`${product?.stock !== 0 ? "group-hover:scale-115 hoverEffect" : "opacity-50"}`}
-            />
+          <Link
+            href={`/product/${product?.slug?.current}`}
+            className="p-5 block"
+          >
+            <div className="relative aspect-square w-full rounded-md">
+              <Image
+                src={urlFor(product?.images[0]).url()}
+                alt="product-images"
+                loading="lazy"
+                fill
+                sizes="(min-width: 1024px) 200px, (min-width: 768px) 33vw, 50vw"
+                className={`object-cover ${product?.stock !== 0 ? "group-hover:scale-105 hoverEffect" : "opacity-50"}`}
+              />
+            </div>
           </Link>
         )}
         {product?.status === "sale" && product?.stock !== 0 && (

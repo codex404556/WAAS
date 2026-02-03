@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,13 +40,14 @@ import {
   Edit,
   Trash,
   Plus,
-  Loader2,
   ChevronLeft,
   ChevronRight,
   ArrowUp,
   ArrowDown,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
+import CategoriesSkeleton from "@/app/(app)/(admin)/skeleton/CategoriesSkeleton";
 import { ImageUpload } from "@/components/ui/image-upload";
 import {
   Select,
@@ -422,14 +424,23 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div className="flex items-end gap-3">
           <h1 className="text-3xl font-bold">Categories</h1>
           <p className="text-sm font-medium">
             Total <span className="font-bold">{total}</span>
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex items-center gap-3"
+        >
           <Button
             variant="outline"
             onClick={handleRefresh}
@@ -464,16 +475,19 @@ export default function CategoriesPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Category
             </Button>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {loading ? (
-        <div className="flex justify-center items-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <CategoriesSkeleton isAdmin={isAdmin} />
       ) : (
         <>
-          <div className="rounded-md border">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-md border"
+          >
             <Table>
               <TableHeader>
                 <TableRow>
@@ -543,11 +557,16 @@ export default function CategoriesPage() {
                 )}
               </TableBody>
             </Table>
-          </div>
+          </motion.div>
 
           {/* Pagination Controls */}
           {total > 0 && (
-            <div className="flex items-center justify-between">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center justify-between"
+            >
               <div className="text-sm text-muted-foreground">
                 Showing {(page - 1) * perPage + 1} to{" "}
                 {Math.min(page * perPage, total)} of {total} categories
@@ -572,7 +591,7 @@ export default function CategoriesPage() {
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
-            </div>
+            </motion.div>
           )}
         </>
       )}
