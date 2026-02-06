@@ -1,7 +1,6 @@
 "use client";
 import CartItem from "@/components/CartItem";
 import Container from "@/components/Container";
-import DeleveryInfo from "@/components/DeleveryInfo";
 import EmptyCart from "@/components/EmptyCart";
 import MobOrderSummary from "@/components/MobOrderSummary";
 import NoAccess from "@/components/NoAccess";
@@ -51,7 +50,6 @@ const CartPage = () => {
                 <div className="flex flex-col w-full md:max-w-1/3">
                   <OrderSummary />
                   <MobOrderSummary />
-                  <DeleveryInfo />
                 </div>
               </div>
               <Button

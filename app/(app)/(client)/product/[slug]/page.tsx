@@ -73,7 +73,7 @@ const SingleProductPage = async ({
           <p className="text-xs font-light">(120)</p>
         </div>
         <div className="">
-          <PriceView price={product?.price} discount={product?.discount} />
+          <PriceView price={product?.price} oldPrice={product?.oldPrice} />
           <p
             className={`rounded-full inline-block px-2 text-center text-[12px] mt-2 font-semibold ${isStock ? "bg-shop_light_yellow " : "bg-red-500"}`}
           >

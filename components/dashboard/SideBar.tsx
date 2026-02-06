@@ -18,6 +18,7 @@ import {
   Package,
   User,
   FileText,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -146,6 +147,13 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
           to="/dashboard/brands"
           icon={<Bookmark size={20} />}
           label="Brands"
+          open={open}
+          pathname={pathname}
+        />
+        <NavItem
+          to="/dashboard/reviews"
+          icon={<Star size={20} />}
+          label="Reviews"
           open={open}
           pathname={pathname}
         />

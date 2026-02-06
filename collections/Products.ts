@@ -111,12 +111,12 @@ const Products: CollectionConfig = {
       min: 0,
     },
 
-    // Discount (required, min 0)
+    // Old Price (optional, stored as-is)
     {
-      name: "discount",
-      label: "Discount",
+      name: "oldPrice",
+      label: "Old Price",
       type: "number",
-      required: true,
+      required: false,
       min: 0,
       defaultValue: 0,
     },

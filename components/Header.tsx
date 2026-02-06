@@ -9,13 +9,11 @@ import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
 import SearchBar from "./SearchBar";
 import SignIn from "./SignIn";
-import { ClerkLoaded } from "@clerk/nextjs";
-import { SignedIn, UserButton, useUser } from "@clerk/nextjs";
+import { ClerkLoaded, SignedIn, SignedOut } from "@clerk/nextjs";
+import UserButton from "@/components/header/UserButton";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user } = useUser();
-  console.log(user);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,7 +47,9 @@ const Header = () => {
             <SignedIn>
               <UserButton />
             </SignedIn>
-            {!user && <SignIn isScrolled={isScrolled} />}
+            <SignedOut>
+              <SignIn isScrolled={isScrolled} />
+            </SignedOut>
           </ClerkLoaded>
         </div>
       </Container>

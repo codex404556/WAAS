@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Title } from "./ui/text";
 import PriceFormatter from "./PriceFormatter";
 import useStore from "@/store";
@@ -8,6 +9,7 @@ import { Button } from "./ui/button";
 const OrderSummary = () => {
   const { getSubTotalPrice, getTotalPrice } = useStore();
   const [ loading, setLoading ] = useState(false);
+  const router = useRouter();
   
  
   //featch data using strip or whatever tools you need 
@@ -52,7 +54,10 @@ const OrderSummary = () => {
           size="lg"
           className="w-full rounded-md font-semibold tracking-wide hoverEffect"
           disabled={loading}
-          onClick={() =>setLoading(true)}
+          onClick={() => {
+            setLoading(true);
+            router.push("/checkout");
+          }}
         >
           {loading ? "Processing..." : "Proceed to Checkout"}
         </Button>

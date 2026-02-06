@@ -74,7 +74,7 @@ const getDocId = (doc?: { id?: number | string; _id?: string }) =>
   doc?.id ?? doc?._id;
 
 const toSlug = (value: string) =>
-  value
+  value 
     .toLowerCase()
     .trim()
     .replace(/[\s_]+/g, "-")

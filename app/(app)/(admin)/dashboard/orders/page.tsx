@@ -45,6 +45,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface Order {
+  id?: string;
   _id: string;
   orderId: string;
   user: {
@@ -57,7 +58,7 @@ interface Order {
       _id: string;
       name: string;
       price: number;
-      image: string;
+      images?: Array<{ url?: string } | string>;
     };
     quantity: number;
     price: number;
@@ -99,7 +100,7 @@ export default function OrdersPage() {
       page: String(page),
       limit: String(perPage),
       sort: "-createdAt",
-      depth: "1",
+      depth: "2",
     });
 
     if (statusFilter !== "all") {
@@ -123,7 +124,7 @@ export default function OrdersPage() {
         docs?: Order[];
         totalDocs?: number;
         totalPages?: number;
-      }>(`/api/orders?${query}`);
+      }>(`/api/admin/orders?${query}`);
       setOrders(response.docs || []);
       setTotal(response.totalDocs || 0);
       setTotalPages(response.totalPages || 1);
@@ -143,7 +144,7 @@ export default function OrdersPage() {
         docs?: Order[];
         totalDocs?: number;
         totalPages?: number;
-      }>(`/api/orders?${query}`);
+      }>(`/api/admin/orders?${query}`);
       setOrders(response.docs || []);
       setTotal(response.totalDocs || 0);
       setTotalPages(response.totalPages || 1);
@@ -219,7 +220,8 @@ export default function OrdersPage() {
   const handleUpdateOrder = async (updatedOrder: Order) => {
     setIsUpdating(true);
     try {
-      await payloadFetch(`/api/orders/${updatedOrder._id}`, {
+      const orderId = updatedOrder.id || updatedOrder._id;
+      await payloadFetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         body: { status: updatedOrder.status },
       });
@@ -240,7 +242,7 @@ export default function OrdersPage() {
   const handleDeleteOrder = async (orderId: string) => {
     setIsDeleting(true);
     try {
-      await payloadFetch(`/api/orders/${orderId}`, {
+      await payloadFetch(`/api/admin/orders/${orderId}`, {
         method: "DELETE",
       });
 
@@ -693,27 +695,39 @@ export default function OrdersPage() {
                   Order Items
                 </Label>
                 <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
-                  {selectedOrder.items.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
-                    >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={item.product.image}
-                          alt={item.product.name}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                        <div>
-                          <p className="font-medium">{item.product.name}</p>
-                          <p className="text-sm text-gray-600">
-                            Qty: {item.quantity}
-                          </p>
+                  {selectedOrder.items.map((item, index) => {
+                    const images = item.product.images;
+                    const imageUrl = Array.isArray(images)
+                      ? typeof images[0] === "string"
+                        ? images[0]
+                        : images[0]?.url
+                      : undefined;
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={imageUrl || "/placeholder-image.jpg"}
+                            alt={item.product.name}
+                            className="w-12 h-12 object-cover rounded"
+                            onError={(event) => {
+                              event.currentTarget.src = "/placeholder-image.jpg";
+                            }}
+                          />
+                          <div>
+                            <p className="font-medium">{item.product.name}</p>
+                            <p className="text-sm text-gray-600">
+                              Qty: {item.quantity}
+                            </p>
+                          </div>
                         </div>
+                        <p className="font-medium">${item.price.toFixed(2)}</p>
                       </div>
-                      <p className="font-medium">${item.price.toFixed(2)}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -802,9 +816,13 @@ export default function OrdersPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() =>
-                selectedOrder && handleDeleteOrder(selectedOrder._id)
-              }
+              onClick={() => {
+                if (!selectedOrder) return;
+                const orderId = selectedOrder.id || selectedOrder._id;
+                if (orderId) {
+                  handleDeleteOrder(orderId);
+                }
+              }}
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Delete Order"}

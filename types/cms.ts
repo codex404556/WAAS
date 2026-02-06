@@ -34,6 +34,7 @@ export type Product = {
   name?: string;
   slug?: Slug;
   price?: number;
+  oldPrice?: number;
   discount?: number;
   stock?: number;
   status?: string;
@@ -46,6 +47,7 @@ export type Product = {
 
 export type Address = {
   _id: string;
+  user?: string;
   name?: string;
   address?: string;
   city?: string;

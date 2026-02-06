@@ -34,8 +34,8 @@ const ProductsCard = ({ product, clasName = "" }: Props) => {
                 alt="product-images"
                 loading="lazy"
                 fill
-                sizes="(min-width: 1024px) 200px, (min-width: 768px) 33vw, 50vw"
-                className={`object-cover ${product?.stock !== 0 ? "group-hover:scale-105 hoverEffect" : "opacity-50"}`}
+                sizes="(min-width: 1024px) 240px, (min-width: 768px) 200px, 45vw"
+                className={`object-contain ${product?.stock !== 0 ? "group-hover:scale-105 hoverEffect" : "opacity-50"}`}
               />
             </div>
           </Link>
@@ -74,7 +74,9 @@ const ProductsCard = ({ product, clasName = "" }: Props) => {
         <p className="uppercase line-clamp-1 text-xs text-lightColor">
           {product?.categories &&
             product?.categories
-              ?.filter((cat): cat is string => typeof cat === "string" && cat !== null)
+              ?.filter(
+                (cat): cat is string => typeof cat === "string" && cat !== null
+              )
               .join(", ")}
         </p>
         <Title className="!text-sm line-clamp-1">{product?.name}</Title>
@@ -114,7 +116,7 @@ const ProductsCard = ({ product, clasName = "" }: Props) => {
                   </p>
                 )}
               </div>
-              <PriceView price={product?.price} discount={product?.discount} />
+              <PriceView price={product?.price} oldPrice={product?.oldPrice} />
             </div>
             <AddToCartButton product={product} />
           </div>

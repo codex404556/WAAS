@@ -28,6 +28,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -76,7 +77,7 @@ type Product = {
   description: string;
   additionalInformation?: string;
   price: number;
-  discount: number;
+  oldPrice?: number;
   stock: number;
   averageRating: number;
   variant?: string;
@@ -219,6 +220,8 @@ export default function ProductsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [showOldPriceAdd, setShowOldPriceAdd] = useState(false);
+  const [showOldPriceEdit, setShowOldPriceEdit] = useState(false);
   const [selectedProductImageIds, setSelectedProductImageIds] = useState<
     Array<number | string>
   >([]);
@@ -233,7 +236,7 @@ export default function ProductsPage() {
       description: "",
       additionalInformation: "",
       price: 0,
-      discount: 10,
+      oldPrice: 0,
       stock: 10,
       category: "",
       brand: "",
@@ -249,7 +252,7 @@ export default function ProductsPage() {
       description: "",
       additionalInformation: "",
       price: 0,
-      discount: 0,
+      oldPrice: 0,
       stock: 0,
       category: "",
       brand: "",
@@ -407,13 +410,18 @@ export default function ProductsPage() {
       description: product.description,
       additionalInformation: product.additionalInformation ?? "",
       price: product.price,
-      discount: product.discount,
+      oldPrice: product.oldPrice ?? 0,
       stock: product.stock,
       category: getDocIdString(product.category),
       brand: getDocIdString(product.brand),
       variant: product.variant ?? "",
       images: product.imageUrls ?? [],
     });
+    const hasOldPrice = Number(product.oldPrice) > 0;
+    setShowOldPriceEdit(hasOldPrice);
+    if (!hasOldPrice) {
+      formEdit.setValue("oldPrice", 0);
+    }
     setIsEditModalOpen(true);
   };
 
@@ -438,7 +446,7 @@ export default function ProductsPage() {
         body: {
         ...data,
         price: Number(data.price),
-        discount: Number(data.discount),
+        oldPrice: showOldPriceAdd ? Number(data.oldPrice) : 0,
         stock: Number(data.stock),
         category: parseRelationId(data.category),
         brand: parseRelationId(data.brand),
@@ -448,6 +456,7 @@ export default function ProductsPage() {
       });
       toast.success("Product created successfully");
       formAdd.reset();
+      setShowOldPriceAdd(false);
       setIsAddModalOpen(false);
       fetchProducts(true); // Reset to page 1 and refetch
     } catch (error: unknown) {
@@ -502,7 +511,7 @@ export default function ProductsPage() {
         body: {
         ...data,
         price: Number(data.price),
-        discount: Number(data.discount),
+        oldPrice: showOldPriceEdit ? Number(data.oldPrice) : 0,
         stock: Number(data.stock),
         category: parseRelationId(data.category),
         brand: parseRelationId(data.brand),
@@ -512,6 +521,7 @@ export default function ProductsPage() {
       });
       toast.success("Product updated successfully");
       setIsEditModalOpen(false);
+      setShowOldPriceEdit(false);
       fetchProducts();
     } catch (error: unknown) {
       console.log("Failed to update product", error);
@@ -620,7 +630,11 @@ export default function ProductsPage() {
           </Select>
           {isAdmin && (
             <Button
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                setShowOldPriceAdd(false);
+                formAdd.setValue("oldPrice", 0);
+                setIsAddModalOpen(true);
+              }}
               className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
             >
               <Plus className="mr-2 h-4 w-4" /> Add Product
@@ -650,7 +664,7 @@ export default function ProductsPage() {
                       Name
                     </TableHead>
                     <TableHead className="font-semibold">Price</TableHead>
-                    <TableHead className="font-semibold">Discount</TableHead>
+                    <TableHead className="font-semibold">Old Price</TableHead>
                     <TableHead className="font-semibold">Stock</TableHead>
                     <TableHead className="font-semibold">Rating</TableHead>
                     <TableHead className="font-semibold">Category</TableHead>
@@ -694,9 +708,13 @@ export default function ProductsPage() {
                         ${product.price.toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800 whitespace-nowrap">
-                          {product.discount}%
-                        </span>
+                        {Number(product.oldPrice) > 0 ? (
+                          <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800 whitespace-nowrap">
+                            ${Number(product.oldPrice).toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <span
@@ -924,29 +942,48 @@ export default function ProductsPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={formAdd.control}
-                name="discount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discount (%)</FormLabel>
-                    <FormControl>
-                      <Input
-                          {...field}
-                        type="number"
-                        min="0"
-                        max="100"
-                        disabled={formLoading}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
+                <FormItem className="flex items-center gap-3 space-y-0 pt-7">
+                  <FormControl>
+                    <Switch
+                      checked={showOldPriceAdd}
+                      onCheckedChange={(checked) => {
+                        const next = Boolean(checked);
+                        setShowOldPriceAdd(next);
+                        if (!next) {
+                          formAdd.setValue("oldPrice", 0);
                         }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      }}
+                      disabled={formLoading}
+                    />
+                  </FormControl>
+                  <FormLabel className="leading-none">Old price</FormLabel>
+                </FormItem>
               </div>
+              {showOldPriceAdd && (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={formAdd.control}
+                    name="oldPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Old Price</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min="0"
+                            disabled={formLoading}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={formAdd.control}
@@ -1083,14 +1120,14 @@ export default function ProductsPage() {
                 )}
               />
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAddModalOpen(false)}
-                  disabled={formLoading}
-                >
-                  Cancel
-                </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setIsAddModalOpen(false)}
+                              disabled={formLoading}
+                            >
+                              Cancel
+                            </Button>
                 <Button type="submit" disabled={formLoading}>
                   {formLoading ? (
                     <>
@@ -1189,29 +1226,48 @@ export default function ProductsPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={formEdit.control}
-                name="discount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discount (%)</FormLabel>
-                    <FormControl>
-                      <Input
-                          {...field}
-                        type="number"
-                        min="0"
-                        max="100"
-                        disabled={formLoading}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
+                <FormItem className="flex items-center gap-3 space-y-0 pt-7">
+                  <FormControl>
+                    <Switch
+                      checked={showOldPriceEdit}
+                      onCheckedChange={(checked) => {
+                        const next = Boolean(checked);
+                        setShowOldPriceEdit(next);
+                        if (!next) {
+                          formEdit.setValue("oldPrice", 0);
                         }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      }}
+                      disabled={formLoading}
+                    />
+                  </FormControl>
+                  <FormLabel className="leading-none">Old price</FormLabel>
+                </FormItem>
               </div>
+              {showOldPriceEdit && (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={formEdit.control}
+                    name="oldPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Old Price</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min="0"
+                            disabled={formLoading}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={formEdit.control}

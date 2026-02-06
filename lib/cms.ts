@@ -31,11 +31,23 @@ type PayloadBrand = {
   image?: PayloadMedia | string | null;
 };
 
+type PayloadAddress = {
+  id: string;
+  user?: { id?: string } | string | null;
+  name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  defaulte?: boolean;
+};
+
 type PayloadProduct = {
   id: string;
   name?: string;
   slug?: string;
   price?: number;
+  oldPrice?: number;
   discount?: number;
   stock?: number;
   status?: string;
@@ -86,11 +98,23 @@ const mapBrand = (brand: PayloadBrand): Brand => ({
   image: brand.image ? mapImage(brand.image) ?? undefined : undefined,
 });
 
+const mapAddress = (address: PayloadAddress): Address => ({
+  _id: address.id,
+  user: typeof address.user === "string" ? address.user : address.user?.id,
+  name: address.name,
+  address: address.address,
+  city: address.city,
+  state: address.state,
+  zip: address.zip,
+  defaulte: address.defaulte,
+});
+
 const mapProduct = (product: PayloadProduct): Product => ({
   _id: product.id,
   name: product.name,
   slug: product.slug ? { current: product.slug } : undefined,
   price: product.price,
+  oldPrice: product.oldPrice,
   discount: product.discount,
   stock: product.stock,
   status: product.status,
@@ -345,5 +369,10 @@ export const listProductsByCategory = async (
 };
 
 export const listAddresses = async (): Promise<Address[]> => {
-  return [];
+  const res = await fetch("/api/addresses/me", { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Address request failed: ${res.status}`);
+  }
+  const data = (await res.json()) as PayloadListResponse<PayloadAddress>;
+  return data.docs.map(mapAddress);
 };

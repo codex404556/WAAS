@@ -11,10 +11,14 @@ import { Users } from "./collections/Users";
 import { Media } from "./collections/Media";
 import { Banners } from "./collections/Banners";
 import { Orders } from "./collections/Orders";
+import { Notifications } from "./collections/Notifications";
+import { Wishlists } from "./collections/Wishlists";
+import { Addresses } from "./collections/Addresses";
 
 import { Categories } from "./collections/Categories";
 import Products from "./collections/Products";
 import Brands from "./collections/Brands";
+import Reviews from "./collections/Reviews";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -157,7 +161,19 @@ export default buildConfig({
       },
     },
   ],
-  collections: [Users, Media, Products, Categories, Brands, Banners, Orders],
+  collections: [
+    Users,
+    Media,
+    Products,
+    Categories,
+    Brands,
+    Reviews,
+    Banners,
+    Orders,
+    Addresses,
+    Notifications,
+    Wishlists,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {
