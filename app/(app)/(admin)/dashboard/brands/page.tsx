@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -47,6 +46,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Edit, Trash, Plus, RefreshCw, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { ImageUpload } from "@/components/ui/image-upload";
 import BrandsSkeleton from "@/app/(app)/(admin)/skeleton/BrandsSkeleton";
 
@@ -408,11 +408,13 @@ export default function BrandsPage() {
                 <TableRow key={getDocId(brand) ?? brand.name}>
                   <TableCell>
                     {brand.imageUrl ? (
-                      <div className="h-12 w-12 rounded overflow-hidden bg-muted">
-                        <img
+                      <div className="relative h-12 w-12 rounded overflow-hidden bg-muted">
+                        <Image
                           src={brand.imageUrl}
                           alt={brand.name}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="48px"
+                          className="object-cover"
                         />
                       </div>
                     ) : (

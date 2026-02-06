@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -68,6 +67,7 @@ import {
   Eye,
   RefreshCw,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -803,12 +803,14 @@ export default function UsersPage() {
                   className="hover:bg-gray-50"
                 >
                   <TableCell>
-                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold shadow-sm overflow-hidden">
+                    <div className="relative h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold shadow-sm overflow-hidden">
                       {user.avatar ? (
-                        <img
+                        <Image
                           src={user.avatar}
                           alt={user.name}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="48px"
+                          className="object-cover"
                         />
                       ) : (
                         <span className="text-lg">
@@ -959,12 +961,14 @@ export default function UsersPage() {
           {selectedUser && (
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="h-20 w-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold shadow-sm overflow-hidden">
+                <div className="relative h-20 w-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold shadow-sm overflow-hidden">
                   {selectedUser.avatar ? (
-                    <img
+                    <Image
                       src={selectedUser.avatar}
                       alt={selectedUser.name}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="80px"
+                      className="object-cover"
                     />
                   ) : (
                     <span className="text-2xl">

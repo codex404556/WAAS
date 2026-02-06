@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -47,6 +46,7 @@ import {
   RefreshCw,
   Loader2,
 } from "lucide-react";
+import Image from "next/image";
 import CategoriesSkeleton from "@/app/(app)/(admin)/skeleton/CategoriesSkeleton";
 import { ImageUpload } from "@/components/ui/image-upload";
 import {
@@ -503,16 +503,18 @@ export default function CategoriesPage() {
               <TableBody>
                 {categories.map((category) => (
                   <TableRow key={getDocId(category) ?? category.name}>
-                    <TableCell>
-                      {category.imageUrl ? (
-                        <div className="h-12 w-12 rounded overflow-hidden bg-muted">
-                          <img
-                            src={category.imageUrl}
-                            alt={category.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      ) : (
+                  <TableCell>
+                    {category.imageUrl ? (
+                      <div className="relative h-12 w-12 rounded overflow-hidden bg-muted">
+                        <Image
+                          src={category.imageUrl}
+                          alt={category.name}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
                         <div className="h-12 w-12 rounded bg-muted flex items-center justify-center text-muted-foreground">
                           No Image
                         </div>

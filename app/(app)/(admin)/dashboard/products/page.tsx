@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -69,6 +68,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import ProductSkeleton from "@/app/(app)/(admin)/skeleton/ProductSkeleton";
+import Image from "next/image";
 
 type Product = {
   id?: number;
@@ -685,14 +685,17 @@ export default function ProductsPage() {
                       }`}
                     >
                       <TableCell className="py-3">
-                        <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shadow-sm border flex-shrink-0">
-                          <img
-                            src={product?.imageUrl ?? product?.image}
-                            alt={product?.name}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = "/placeholder-image.jpg";
-                            }}
+                        <div className="relative h-12 w-12 rounded-md overflow-hidden bg-muted shadow-sm border flex-shrink-0">
+                          <Image
+                            src={
+                              product?.imageUrl ??
+                              product?.image ??
+                              "/placeholder-image.jpg"
+                            }
+                            alt={product?.name ?? "Product image"}
+                            fill
+                            sizes="48px"
+                            className="object-contain"
                           />
                         </div>
                       </TableCell>

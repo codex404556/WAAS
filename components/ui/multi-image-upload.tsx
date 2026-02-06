@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,6 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
 
 interface MultiImageUploadProps {
   value: string[];
@@ -76,11 +76,14 @@ export function MultiImageUpload({
           {previews.length ? (
             <div className="grid grid-cols-3 gap-3 w-full">
               {previews.map((src, index) => (
-                <div key={`${src}-${index}`} className="relative">
-                  <img
+                <div key={`${src}-${index}`} className="relative h-28 w-full">
+                  <Image
                     src={src}
                     alt={`Preview ${index + 1}`}
-                    className="w-full h-28 object-cover rounded-md"
+                    fill
+                    sizes="(min-width: 1024px) 200px, (min-width: 768px) 160px, 33vw"
+                    className="object-contain rounded-md"
+                    unoptimized
                   />
                   <Button
                     type="button"

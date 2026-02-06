@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -45,6 +44,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Edit, Loader2, Plus, Trash, RefreshCw } from "lucide-react";
+import Image from "next/image";
 import { ImageUpload } from "@/components/ui/image-upload";
 
 // Define the Banner type based on the Banner model
@@ -262,11 +262,13 @@ export default function BannersPage() {
               {banners.map((banner) => (
                 <TableRow key={banner._id}>
                   <TableCell>
-                    <div className="h-12 w-12 rounded overflow-hidden bg-muted">
-                      <img
+                    <div className="relative h-12 w-12 rounded overflow-hidden bg-muted">
+                      <Image
                         src={banner.image}
                         alt={banner.name}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="48px"
+                        className="object-cover"
                       />
                     </div>
                   </TableCell>

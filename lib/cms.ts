@@ -55,7 +55,7 @@ type PayloadProduct = {
   description?: string;
   additionalInformation?: string;
   images?: (PayloadMedia | string | null)[];
-  categories?: (PayloadCategory | string | null)[];
+  category?: PayloadCategory | string | null;
   brand?: PayloadBrand | string | null;
   reviews?: ProductReview[];
 };
@@ -124,12 +124,13 @@ const mapProduct = (product: PayloadProduct): Product => ({
     product.images
       ?.map(mapImage)
       .filter((image): image is Image => Boolean(image)) ?? [],
-  categories:
-    product.categories?.map((category) => {
-      if (!category) return null;
-      if (typeof category === "string") return category;
-      return category.title ?? category.slug ?? null;
-    }) ?? [],
+  categories: product.category
+    ? [
+        typeof product.category === "string"
+          ? product.category
+          : product.category.title ?? product.category.slug ?? null,
+      ]
+    : [],
   brand:
     product.brand && typeof product.brand !== "string"
       ? mapBrand(product.brand)
@@ -262,14 +263,13 @@ export const searchProducts = async (
       product.brand && typeof product.brand !== "string"
         ? product.brand.title ?? product.brand.brandName ?? ""
         : "",
-    categories:
-      product.categories
-        ?.map((category) => {
-          if (!category) return "";
-          if (typeof category === "string") return category;
-          return category.title ?? category.slug ?? "";
-        })
-        .filter((value) => value.length > 0) ?? [],
+    categories: product.category
+      ? [
+          typeof product.category === "string"
+            ? product.category
+            : product.category.title ?? product.category.slug ?? "",
+        ].filter((value) => value.length > 0)
+      : [],
   }));
 };
 
@@ -310,7 +310,7 @@ export const listProductsByFilters = async (_filters: {
       );
     const categoryId = categoryData.docs?.[0]?.id;
     if (categoryId) {
-      addFilter("categories", "equals", categoryId);
+      addFilter("category", "equals", categoryId);
     }
   }
 
@@ -360,7 +360,7 @@ export const listProductsByCategory = async (
 
   const productsResult =
     await fetchFromPayload<PayloadListResponse<PayloadProduct>>(
-      `/api/products?where[categories][equals]=${encodeURIComponent(
+      `/api/products?where[category][equals]=${encodeURIComponent(
         categoryId
       )}&depth=2`
     );
