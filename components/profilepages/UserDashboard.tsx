@@ -55,8 +55,8 @@ export default function UserDashboard() {
   const pendingOrders = orders.filter(
     (order) => order.status === "pending"
   ).length;
-  const completedOrders = orders.filter(
-    (order) => order.status === "delivered" || order.status === "shipped"
+  const completedOrders = orders.filter((order) =>
+    ["completed", "paid"].includes(order.status)
   ).length;
   const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
 
