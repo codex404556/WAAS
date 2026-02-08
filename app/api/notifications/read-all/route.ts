@@ -1,4 +1,5 @@
 import { resolvePayloadUser } from "@/lib/resolvePayloadUser";
+import type { Notification } from "@/payload-types";
 
 export const runtime = "nodejs";
 
@@ -19,9 +20,9 @@ export const PUT = async () => {
     depth: 0,
   });
 
-  const ids = result.docs
-    .map((doc) => (doc as { id?: string; _id?: string }).id ?? (doc as { _id?: string })._id)
-    .filter((id): id is string => Boolean(id));
+  const ids = (result.docs as Notification[])
+    .map((doc) => doc.id)
+    .filter((id): id is number => typeof id === "number");
 
   await Promise.all(
     ids.map((id) =>
