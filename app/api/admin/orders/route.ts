@@ -1,5 +1,5 @@
 import configPromise from "@payload-config";
-import { getPayload } from "payload";
+import { getPayload, type Where } from "payload";
 
 export const runtime = "nodejs";
 
@@ -33,7 +33,7 @@ export const GET = async (request: Request) => {
   const status = searchParams.get("where[status][equals]");
   const paymentStatus = searchParams.get("where[paymentStatus][equals]");
 
-  const where: Record<string, unknown> = {};
+  const where: Where = {};
   if (status) {
     where.status = { equals: status };
   }
