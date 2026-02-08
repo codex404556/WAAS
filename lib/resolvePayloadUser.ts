@@ -21,7 +21,7 @@ export const resolvePayloadUser = async () => {
   let userDoc = userResult.docs[0] as User | undefined;
   let payloadUserId = userDoc?.id;
   if (!payloadUserId) {
-    const clerkUser = await clerkClient.users.getUser(userId);
+    const clerkUser = await (await clerkClient()).users.getUser(userId);
     const primaryEmail =
       clerkUser.emailAddresses.find(
         (email) => email.id === clerkUser.primaryEmailAddressId
