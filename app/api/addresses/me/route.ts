@@ -62,8 +62,8 @@ export const POST = async (request: Request) => {
     collection: "addresses" as never,
     data: {
       ...data,
-      user: resolved.payloadUserId,
-    },
+      user: resolved.payloadUserId as unknown as string,
+    } as unknown,
     overrideAccess: true,
   });
 
