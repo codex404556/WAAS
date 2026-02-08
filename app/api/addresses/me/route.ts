@@ -63,7 +63,7 @@ export const POST = async (request: Request) => {
     data: {
       ...data,
       user: resolved.payloadUserId as unknown as string,
-    } as unknown,
+    } as unknown as never,
     overrideAccess: true,
   });
 
