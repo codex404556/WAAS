@@ -1,4 +1,5 @@
 import { resolvePayloadUser } from "@/lib/resolvePayloadUser";
+import type { Payload } from "payload";
 
 export const runtime = "nodejs";
 
@@ -59,20 +60,7 @@ const generateOrderId = () => {
   return `${letter}${numbers}`;
 };
 
-type PayloadFindArgs = {
-  collection: string;
-  where: unknown;
-  limit: number;
-  depth: number;
-};
-
-type PayloadFindResult = {
-  docs?: unknown[];
-};
-
-const generateUniqueOrderId = async (payload: {
-  find: (args: PayloadFindArgs) => Promise<PayloadFindResult>;
-}) => {
+const generateUniqueOrderId = async (payload: Payload) => {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const candidate = generateOrderId();
     const existing = await payload.find({
