@@ -27,7 +27,7 @@ export const PUT = async (
       .user as { id?: string; _id?: string } | null
   );
 
-  if (!notificationUser || notificationUser !== payloadUserId) {
+  if (!notificationUser || String(notificationUser) !== String(payloadUserId)) {
     return new Response("Forbidden", { status: 403 });
   }
 
