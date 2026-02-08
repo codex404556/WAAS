@@ -1,4 +1,5 @@
-import SuccessPage from "@/components/pages/SuccessPageClient";
+
+import SuccessPage from "@/components/profilepages/SuccessPageClient";
 import React from "react";
 
 const Success = () => {
