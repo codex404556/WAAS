@@ -56,7 +56,20 @@ const generateOrderId = () => {
   return `${letter}${numbers}`;
 };
 
-const generateUniqueOrderId = async (payload: { find: Function }) => {
+type PayloadFindArgs = {
+  collection: string;
+  where: unknown;
+  limit: number;
+  depth: number;
+};
+
+type PayloadFindResult = {
+  docs?: unknown[];
+};
+
+const generateUniqueOrderId = async (payload: {
+  find: (args: PayloadFindArgs) => Promise<PayloadFindResult>;
+}) => {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const candidate = generateOrderId();
     const existing = await payload.find({

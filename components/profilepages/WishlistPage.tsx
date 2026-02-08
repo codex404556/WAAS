@@ -220,28 +220,32 @@ const WishlistPage = () => {
                           />
                         </>
                       ) : (
-                        <PriceFormatter amount={price} className="font-semibold" />
+                        <PriceFormatter
+                          amount={price}
+                          className="font-semibold"
+                        />
                       )}
                     </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleRemoveItem(product._id)}
-                      disabled={removing === product._id}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      {removing === product._id ? (
-                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Trash2 size={14} />
-                      )}
-                    </Button>
-                    <Button size="sm" className="flex-1">
-                      <ShoppingBag size={14} className="mr-1" />
-                      Add to Cart
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleRemoveItem(product._id)}
+                        disabled={removing === product._id}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        {removing === product._id ? (
+                          <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Trash2 size={14} />
+                        )}
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        <ShoppingBag size={14} className="mr-1" />
+                        Add to Cart
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
