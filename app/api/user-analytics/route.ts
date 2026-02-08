@@ -159,8 +159,9 @@ export const GET = async (request: Request) => {
       }
     }
 
-    const orderId =
-      order.id ?? order._id ?? order.orderId ?? `${Math.random()}`;
+    const orderId = String(
+      order.id ?? order._id ?? order.orderId ?? `${Math.random()}`
+    );
     const items = order.items ?? [];
     for (const item of items) {
       const quantity = item.quantity ?? 0;
