@@ -45,6 +45,7 @@ import InvoiceTemplate from "../components/invoice/InvoiceTemplate";
 
 type InvoiceData = React.ComponentProps<typeof InvoiceTemplate>["invoiceData"];
 type Order = InvoiceData["order"];
+type OrderItem = InvoiceData["order"]["items"][number];
 
 const InvoicePage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
