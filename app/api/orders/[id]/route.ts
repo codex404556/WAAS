@@ -5,8 +5,8 @@ export const runtime = "nodejs";
 type MediaDoc = { url?: string } | string | number | null | undefined;
 type ProductDoc =
   | {
-      id?: string;
-      _id?: string;
+      id?: string | number;
+      _id?: string | number;
       name?: string;
       images?: MediaDoc[] | null;
     }
@@ -21,10 +21,10 @@ type OrderItemDoc = {
 };
 
 type OrderDoc = {
-  id?: string;
-  _id?: string;
+  id?: string | number;
+  _id?: string | number;
   orderId?: string;
-  user?: { id?: string; _id?: string } | string | null;
+  user?: { id?: string | number; _id?: string | number } | string | number | null;
   items?: OrderItemDoc[];
   totalAmount?: number;
   status?: "pending" | "paid" | "completed" | "cancelled";
@@ -40,8 +40,11 @@ type OrderDoc = {
   updatedAt?: string;
 };
 
-const getId = (doc?: { id?: string; _id?: string } | null) =>
-  doc?.id ?? doc?._id;
+const normalizeId = (value?: string | number | null) =>
+  value === undefined || value === null ? undefined : String(value);
+
+const getId = (doc?: { id?: string | number; _id?: string | number } | null) =>
+  normalizeId(doc?.id ?? doc?._id);
 
 const getMediaUrl = (media: MediaDoc) => {
   if (media && typeof media === "object" && "url" in media) {
@@ -51,19 +54,19 @@ const getMediaUrl = (media: MediaDoc) => {
 };
 
 const mapOrder = (order: OrderDoc) => {
-  const payloadId = order.id ?? order._id ?? "";
+  const payloadId = normalizeId(order.id ?? order._id) ?? "";
   const orderId = order.orderId ?? payloadId;
   const userId =
-    typeof order.user === "string"
-      ? order.user
-      : getId(order.user as { id?: string; _id?: string } | null) || "";
+    typeof order.user === "string" || typeof order.user === "number"
+      ? String(order.user)
+      : getId(order.user as { id?: string | number; _id?: string | number } | null) || "";
 
   const items = (order.items ?? []).map((item) => {
     const product = item.product;
     const productId =
       typeof product === "string"
         ? product
-        : getId(product as { id?: string; _id?: string } | null) || "";
+      : getId(product as { id?: string | number; _id?: string | number } | null) || "";
     const name =
       product && typeof product === "object" ? product.name || "" : "";
     const images =
@@ -101,9 +104,9 @@ const ensureOwnership = (
 ) => {
   if (!order) return false;
   const orderUser =
-    typeof order.user === "string"
-      ? order.user
-      : getId(order.user as { id?: string; _id?: string } | null);
+    typeof order.user === "string" || typeof order.user === "number"
+      ? String(order.user)
+      : getId(order.user as { id?: string | number; _id?: string | number } | null);
   return orderUser === payloadUserId;
 };
 

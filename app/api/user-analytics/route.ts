@@ -4,14 +4,14 @@ export const runtime = "nodejs";
 
 type MediaDoc = { url?: string } | string | number | null | undefined;
 type CategoryDoc =
-  | { id?: string; _id?: string; title?: string }
+  | { id?: string | number; _id?: string | number; title?: string }
   | string
   | null
   | undefined;
 type ProductDoc =
   | {
-      id?: string;
-      _id?: string;
+      id?: string | number;
+      _id?: string | number;
       name?: string;
       category?: CategoryDoc;
       images?: MediaDoc[] | null;
@@ -28,8 +28,8 @@ type OrderItem = {
 };
 
 type OrderDoc = {
-  id?: string;
-  _id?: string;
+  id?: string | number;
+  _id?: string | number;
   orderId?: string;
   totalAmount?: number;
   status?: string;
@@ -38,8 +38,11 @@ type OrderDoc = {
   createdAt?: string;
 };
 
-const getId = (doc?: { id?: string; _id?: string } | null) =>
-  doc?.id ?? doc?._id;
+const normalizeId = (value?: string | number | null) =>
+  value === undefined || value === null ? undefined : String(value);
+
+const getId = (doc?: { id?: string | number; _id?: string | number } | null) =>
+  normalizeId(doc?.id ?? doc?._id);
 
 const getMediaUrl = (media: MediaDoc) => {
   if (media && typeof media === "object" && "url" in media) {

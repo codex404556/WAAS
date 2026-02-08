@@ -2,6 +2,7 @@ import configPromise from "@payload-config";
 import { getPayload } from "payload";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import crypto from "crypto";
+import type { User } from "@/payload-types";
 
 export const resolvePayloadUser = async () => {
   const { userId } = await auth();
@@ -17,8 +18,8 @@ export const resolvePayloadUser = async () => {
     depth: 0,
   });
 
-  let userDoc = userResult.docs[0] as { id?: string; _id?: string } | undefined;
-  let payloadUserId = userDoc?.id ?? userDoc?._id;
+  let userDoc = userResult.docs[0] as User | undefined;
+  let payloadUserId = userDoc?.id;
   if (!payloadUserId) {
     const clerkUser = await clerkClient.users.getUser(userId);
     const primaryEmail =
@@ -45,8 +46,8 @@ export const resolvePayloadUser = async () => {
       },
     });
 
-    userDoc = created as { id?: string; _id?: string } | undefined;
-    payloadUserId = userDoc?.id ?? userDoc?._id;
+    userDoc = created as User | undefined;
+    payloadUserId = userDoc?.id;
   }
 
   if (!payloadUserId) {
