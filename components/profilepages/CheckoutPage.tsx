@@ -164,7 +164,7 @@ const CheckoutPageContent = () => {
       setSelectedAddress(updatedAddresses[0]);
     } else if (updatedAddresses.length > 1) {
       // If multiple addresses, prefer default or keep current selection
-      const defaultAddress = updatedAddresses.find((addr) => addr.isDefault);
+      const defaultAddress = updatedAddresses.find((addr) => addr.defaulte);
       if (defaultAddress) {
         setSelectedAddress(defaultAddress);
       } else if (
