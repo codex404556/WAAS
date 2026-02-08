@@ -222,8 +222,7 @@ export default function UserDashboard() {
                       </p>
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          order.status === "delivered" ||
-                          order.status === "shipped"
+                          order.status === "completed" || order.status === "paid"
                             ? "bg-green-100 text-green-700"
                             : order.status === "pending"
                               ? "bg-yellow-100 text-yellow-700"
