@@ -75,7 +75,7 @@ const CategoryProducts = ({ categories, slug }: Props) => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.25, ease: "easeOut" },
+      transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
     },
     exit: { opacity: 0, y: 8, transition: { duration: 0.2 } },
   };
