@@ -1,15 +1,15 @@
-import React from "react";
-import { getAllBrands, getCategories } from "@/lib/cms";
-import Shop from "@/components/Shop";
+import React, { Suspense } from "react";
+import ShopData from "@/components/ShopData";
+import ShopSkeleton from "@/components/skeleton/ShopSkeleton";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-const ShopPage = async () => {
-  const categories = await getCategories();
-  const brands = await getAllBrands();
+const ShopPage = () => {
   return (
     <div className="mt-20">
-      <Shop categories={categories} brands={brands} />
+      <Suspense fallback={<ShopSkeleton />}>
+        <ShopData />
+      </Suspense>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import TopFooter from "./TopFooter";
 
 const Footer = () => {
   return (
-    <footer className="py-10">
+    <footer id="contact" className="py-10">
       <Container>
         <TopFooter />
         <BottomFooter />

@@ -1,6 +1,6 @@
 "use client";
 import { BRANDS_QUERYResult, Category, Product } from "@/types/cms";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Container from "./Container";
 import { Title } from "./ui/text";
 import CatergoryList from "./filters/CatergoryList";
@@ -8,9 +8,10 @@ import PriceList from "./filters/PriceList";
 import BrandList from "./filters/BrandList";
 import { useSearchParams } from "next/navigation";
 import { listProductsByFilters } from "@/lib/cms";
-import { Loader2 } from "lucide-react";
 import NoProductsAvailable from "./NoProductsAvailable";
 import ProductsCard from "./ProductsCard";
+import ShopProductCardSkeleton from "./skeleton/ShopProductCardSkeleton";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Props {
   categories: Category[];
@@ -23,6 +24,7 @@ const Shop = ({ categories, brands }: Props) => {
   const brandParams = searchParams?.get("brand");
   const searchTerm = (searchParams?.get("search") || "").trim();
   const [loading, setLoding] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     categoryParams || null
@@ -32,6 +34,16 @@ const Shop = ({ categories, brands }: Props) => {
     brandParams || null
   );
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
+  const animationKey = useMemo(
+    () =>
+      [
+        selectedCategory ?? "all",
+        selectedBrand ?? "all",
+        selectedPrice ?? "all",
+        searchTerm || "all",
+      ].join("|"),
+    [selectedBrand, selectedCategory, selectedPrice, searchTerm]
+  );
   const fetchProducts = useCallback(async () => {
     setLoding(true);
     try {
@@ -54,6 +66,7 @@ const Shop = ({ categories, brands }: Props) => {
       console.log("Shop Product fetching error", error);
     } finally {
       setLoding(false);
+      setHasLoaded(true);
     }
   }, [selectedBrand, selectedCategory, selectedPrice, searchTerm]);
   useEffect(() => {
@@ -100,29 +113,59 @@ const Shop = ({ categories, brands }: Props) => {
             />
           </div>
           <div className="">
-            <div className="">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center p-50 mt-10">
-                  <Loader2 className="w-10 h-10 text-shop_dark_yellow animate-spin" />
-                  <p className="text-xl font-semibold text-gray-600">
-                    Product is Loading....
-                  </p>
-                </div>
-              ) : (
-                <div className="">
-                  {products?.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {products?.map((product) => (
-                        <ProductsCard product={product} key={product._id} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="">
-                      <NoProductsAvailable className="p-60" />
-                    </div>
-                  )}
-                </div>
-              )}
+            <div className="mt-10">
+              <AnimatePresence mode="wait">
+                {!hasLoaded || loading ? (
+                  <motion.div
+                    key="shop-skeleton"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-10"
+                  >
+                    {Array.from({ length: 12 }).map((_, index) => (
+                      <ShopProductCardSkeleton key={`shop-skeleton-${index}`} />
+                    ))}
+                  </motion.div>
+                ) : products?.length > 0 ? (
+                  <motion.div
+                    key={`shop-grid-${animationKey}`}
+                    initial="hidden"
+                    animate="show"
+                    exit="hidden"
+                    variants={{
+                      hidden: { opacity: 0 },
+                      show: {
+                        opacity: 1,
+                        transition: { staggerChildren: 0.04 },
+                      },
+                    }}
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
+                  >
+                    {products?.map((product) => (
+                      <motion.div
+                        key={product._id}
+                        variants={{
+                          hidden: { opacity: 0, y: 8 },
+                          show: { opacity: 1, y: 0 },
+                        }}
+                        layout
+                      >
+                        <ProductsCard product={product} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="shop-empty"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <NoProductsAvailable className="p-60" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>

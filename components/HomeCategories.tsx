@@ -1,24 +1,30 @@
 import React from "react";
 import { Title } from "./ui/text";
+import { getCategories } from "@/lib/cms";
 import { Category } from "@/types/cms";
 import Image from "next/image";
 import { urlFor } from "@/lib/image";
 import Link from "next/link";
 import { Button } from "./ui/button";
 
-const HomeCategories = ({ categories }: { categories: Category[] }) => {
+const HomeCategories = async ({
+  categories,
+}: {
+  categories?: Category[];
+}) => {
+  const resolvedCategories = categories ?? (await getCategories());
   return (
     <div className="bg-white border border-shop_light_yellow/20 my-10 md:my-20 p-5 lg:p-7 rounded-md">
       <div className="flex items-center justify-between">
         <Title className="border-b pb-3">Popular Categories</Title>
-        {categories?.[0]?.slug?.current && (
-          <Link href={`/category/${categories[0].slug.current}`}>
+        {resolvedCategories?.[0]?.slug?.current && (
+          <Link href={`/category/${resolvedCategories[0].slug.current}`}>
             <Button variant="outline">See All</Button>
           </Link>
         )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-5 gap-5">
-        {categories?.slice(0,6).map((item) => (
+        {resolvedCategories?.slice(0, 6).map((item) => (
           <Link
             href={`/category/${item?.slug?.current}`}
             key={item?._id}
