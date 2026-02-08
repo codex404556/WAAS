@@ -471,7 +471,9 @@ const InvoicePage: React.FC = () => {
           {filteredOrders.map((order) => (
                     <TableRow key={order.id || order._id}>
                       <TableCell className="font-medium">
-                        {(order.orderId || order.id || order._id).slice(-8)}
+                        {String(
+                          order.orderId || order.id || order._id || ""
+                        ).slice(-8)}
                       </TableCell>
                       <TableCell>
                         <div>
