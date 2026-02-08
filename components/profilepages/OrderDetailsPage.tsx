@@ -817,16 +817,22 @@ const OrderDetailsPage = () => {
         </h2>
         <div className="bg-babyshopLightBg p-5 rounded-lg">
           <div className="space-y-2 text-gray-700">
-            <p className="font-semibold text-babyshopBlack text-lg">
-              {order.shippingAddress.street}
-            </p>
-            <p>
-              {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
-              {order.shippingAddress.zipCode}
-            </p>
-            <p className="text-babyshopTextLight">
-              {order.shippingAddress.country}
-            </p>
+            {order.shippingAddress ? (
+              <>
+                <p className="font-semibold text-babyshopBlack text-lg">
+                  {order.shippingAddress.street}
+                </p>
+                <p>
+                  {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+                  {order.shippingAddress.zipCode}
+                </p>
+                <p className="text-babyshopTextLight">
+                  {order.shippingAddress.country}
+                </p>
+              </>
+            ) : (
+              <p className="text-babyshopTextLight">No shipping address on file.</p>
+            )}
           </div>
         </div>
       </div>
