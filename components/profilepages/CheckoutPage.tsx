@@ -127,7 +127,7 @@ const CheckoutPageContent = () => {
               street: "",
               city: "",
               country: "",
-              postalCode: "",
+              zipCode: "",
             },
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
