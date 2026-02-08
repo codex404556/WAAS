@@ -822,7 +822,7 @@ const OrderDetailsPage = () => {
             </p>
             <p>
               {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
-              {order.shippingAddress.postalCode}
+              {order.shippingAddress.zipCode}
             </p>
             <p className="text-babyshopTextLight">
               {order.shippingAddress.country}

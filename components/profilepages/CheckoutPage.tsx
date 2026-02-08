@@ -169,7 +169,7 @@ const CheckoutPageContent = () => {
         setSelectedAddress(defaultAddress);
       } else if (
         !selectedAddress ||
-        !updatedAddresses.find((addr) => addr._id === selectedAddress._id)
+        !updatedAddresses.find((addr) => addr.id === selectedAddress.id)
       ) {
         // If no default and current selection is invalid, select first
         setSelectedAddress(updatedAddresses[0]);
