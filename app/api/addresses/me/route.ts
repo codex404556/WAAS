@@ -58,14 +58,16 @@ export const POST = async (request: Request) => {
     defaulte?: boolean;
   };
 
-  const created = await resolved.payload.create({
+  const createArgs = {
     collection: "addresses" as never,
     data: {
       ...data,
       user: resolved.payloadUserId as unknown as string,
-    } as unknown as never,
+    },
     overrideAccess: true,
-  });
+  } as unknown as Parameters<typeof resolved.payload.create>[0];
+
+  const created = await resolved.payload.create(createArgs);
 
   return Response.json(created);
 };
