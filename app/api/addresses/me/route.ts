@@ -119,13 +119,10 @@ export const PATCH = async (request: Request) => {
     });
 
     await Promise.all(
-      currentDefaults.docs
-        .map(
-          (doc) =>
-            (doc as { id?: string; _id?: string }).id ??
-            (doc as { _id?: string })._id
-        )
-        .filter((id): id is string => Boolean(id) && id !== data.addressId)
+      (currentDefaults.docs as Address[])
+        .map((doc) => doc.id)
+        .filter((id): id is number => typeof id === "number")
+        .filter((id) => String(id) !== data.addressId)
         .map((id) =>
           resolved.payload.update({
             collection: "addresses",
