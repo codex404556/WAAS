@@ -110,14 +110,15 @@ export const PATCH = async (request: Request) => {
             (doc as { _id?: string })._id
         )
         .filter((id): id is string => Boolean(id) && id !== data.addressId)
-        .map((id) =>
-          resolved.payload.update({
-            collection: "addresses" as never,
+        .map((id) => {
+          const updateArgs = {
+            collection: "addresses",
             id,
             data: { defaulte: false },
             overrideAccess: true,
-          })
-        )
+          } as Parameters<typeof resolved.payload.update>[0];
+          return resolved.payload.update(updateArgs);
+        })
     );
   }
 
