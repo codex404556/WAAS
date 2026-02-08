@@ -495,13 +495,13 @@ const OrderDetailsPage = () => {
               <PriceFormatter amount={order.total} />
             </p>
           </div>
-          {order.paidAt && (
+          {order.paymentStatus === "paid" && (
             <div className="bg-babyshopLightBg p-4 rounded-lg">
               <p className="text-sm text-babyshopTextLight mb-1">
                 Payment Date
               </p>
               <p className="font-semibold text-babyshopBlack">
-                {new Date(order.paidAt).toLocaleDateString()}
+                {new Date(order.updatedAt).toLocaleDateString()}
               </p>
             </div>
           )}
@@ -653,9 +653,9 @@ const OrderDetailsPage = () => {
                         ? "Payment received successfully"
                         : "Payment is pending for this order"}
                     </p>
-                    {order.paidAt && (
+                    {order.paymentStatus === "paid" && (
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(order.paidAt).toLocaleDateString("en-US", {
+                        {new Date(order.updatedAt).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
