@@ -18,7 +18,7 @@ const resolvePayloadUserId = async () => {
     depth: 0,
   });
 
-  const userDoc = userResult.docs[0] as { id?: string; _id?: string } | undefined;
+  const userDoc = userResult.docs[0] as { id?: string | number; _id?: string | number } | undefined;
   const payloadUserId = userDoc?.id ?? userDoc?._id;
   if (!payloadUserId) {
     return { error: new Response("User not found", { status: 404 }) };
