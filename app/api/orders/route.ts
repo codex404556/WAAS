@@ -171,14 +171,28 @@ export const POST = async (request: Request) => {
     return new Response("Missing order items", { status: 400 });
   }
 
-  const orderItems = items.map((item) => {
-    const productId = item.productId ?? item._id;
-    return {
-      product: productId,
-      quantity: item.quantity ?? 0,
-      price: item.price ?? 0,
-    };
-  });
+  const orderItems = items
+    .map((item) => {
+      const productId = item.productId ?? item._id;
+      if (!productId) return null;
+      const numericId = Number(productId);
+      if (Number.isNaN(numericId)) return null;
+      const product = numericId;
+      return {
+        product,
+        quantity: item.quantity ?? 0,
+        price: item.price ?? 0,
+      };
+    })
+    .filter(
+      (
+        item
+      ): item is {
+        product: number;
+        quantity: number;
+        price: number;
+      } => Boolean(item)
+    );
 
   const totalAmount = orderItems.reduce(
     (sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 0),
