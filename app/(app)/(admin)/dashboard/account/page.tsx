@@ -351,8 +351,8 @@ export default function AccountPage() {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip
-                    formatter={(value: number) => [
-                      formatCurrency(value),
+                    formatter={(value?: number) => [
+                      formatCurrency(value ?? 0),
                       "Revenue",
                     ]}
                   />
