@@ -31,7 +31,7 @@ const getDisplayName = (event: WebhookEvent) => {
   return combined || event.data.username || "";
 };
 
-const getPayloadId = (doc: { id?: string; _id?: string }) =>
+const getPayloadId = (doc: { id?: string | number; _id?: string | number }) =>
   doc.id || doc._id || "";
 
 export const POST = async (request: Request) => {
