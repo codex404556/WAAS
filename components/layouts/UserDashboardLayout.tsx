@@ -17,7 +17,7 @@ import Container from "@/components/common/Container";
 interface NavItem {
   href: string;
   label: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;
 }
 
 export default function UserDashboardLayout({
