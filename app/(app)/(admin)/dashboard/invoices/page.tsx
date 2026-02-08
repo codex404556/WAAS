@@ -41,10 +41,10 @@ import {
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { payloadFetch } from "@/lib/payload-client";
-import InvoiceTemplate, {
-  type InvoiceData,
-  type Order,
-} from "../components/invoice/InvoiceTemplate";
+import InvoiceTemplate from "../components/invoice/InvoiceTemplate";
+
+type InvoiceData = React.ComponentProps<typeof InvoiceTemplate>["invoiceData"];
+type Order = InvoiceData["order"];
 
 const InvoicePage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
