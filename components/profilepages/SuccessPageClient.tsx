@@ -16,45 +16,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import { getOrderById, type Order } from "@/lib/orderApi";
-{/*import { useUserStore } from "@/lib/store";*/}
-{/*import {
-  handlePaymentSuccess,
-  pollOrderStatus,
-  needsPaymentUpdate,
-} from "@/lib/paymentUtils";*/}
 import PriceFormatter from "@/components/common/PriceFormatter";
-{/*import Cookies from "js-cookie";*/}
 import Container from "@/components/common/Container";
+import { useUser } from "@clerk/nextjs";
 
 const SuccessPageClient = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [statusUpdated, setStatusUpdated] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { auth_token, authUser, verifyAuth } = useUserStore();
+  const { isLoaded, isSignedIn } = useUser();
 
   const orderId = searchParams.get("orderId");
-  const sessionId = searchParams.get("session_id"); // Stripe adds this parameter
-
-  // Verify authentication on component mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      setAuthLoading(true);
-      if (auth_token && !authUser) {
-        await verifyAuth();
-      }
-
-      setAuthLoading(false);
-    };
-
-    checkAuth();
-  }, [auth_token, authUser, verifyAuth]);
 
   useEffect(() => {
-    if (authLoading) {
-      return; // Wait for auth check
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      router.push("/login");
+      return;
     }
 
     if (!orderId) {
@@ -63,74 +42,11 @@ const SuccessPageClient = () => {
     }
 
     const fetchOrder = async () => {
-      // Check token in cookies first, then fallback to store
-      const token = Cookies.get("auth_token") || auth_token;
-
-      console.log(
-        "Success: Token check - cookies:",
-        !!Cookies.get("auth_token"),
-        "store:",
-        !!auth_token,
-        "final:",
-        !!token
-      );
-
-      if (!token) {
-        console.log("Success: No token found, redirecting to signin");
-        toast.error("Authentication required");
-        router.push("/auth/signin");
-        return;
-      }
-
       try {
         setLoading(true);
-        const orderData = await getOrderById(orderId, token);
+        const orderData = await getOrderById(orderId);
         if (orderData) {
           setOrder(orderData);
-          console.log("Success: Order fetched:", orderData);
-
-          // Handle payment status update
-          if (
-            sessionId &&
-            needsPaymentUpdate(orderData, sessionId) &&
-            !statusUpdated
-          ) {
-            console.log("Success: Order needs payment update", {
-              orderStatus: orderData.status,
-              sessionId,
-              statusUpdated,
-            });
-            try {
-              const paymentResult = await handlePaymentSuccess(
-                orderId,
-                sessionId,
-                token
-              );
-
-              if (paymentResult.success && paymentResult.order) {
-                setOrder(paymentResult.order);
-                setStatusUpdated(true);
-                console.log("Success: Order status updated to paid");
-              } else {
-                console.log(
-                  "Success: Direct update failed, will rely on polling"
-                );
-              }
-            } catch (error) {
-              console.error("Success: Error in payment status update:", error);
-            }
-          } else if (orderData.status === "paid" && sessionId) {
-            // Order is already paid, probably updated by webhook
-            console.log("Success: Order already marked as paid");
-            toast.success("Payment confirmed!");
-            setStatusUpdated(true);
-          } else {
-            console.log("Success: No payment update needed", {
-              orderStatus: orderData.status,
-              hasSessionId: !!sessionId,
-              statusUpdated,
-            });
-          }
         }
       } catch (error) {
         console.error("Error fetching order:", error);
@@ -141,50 +57,14 @@ const SuccessPageClient = () => {
     };
 
     fetchOrder();
-  }, [orderId, auth_token, router, authLoading, sessionId, statusUpdated]);
+  }, [orderId, router, isLoaded, isSignedIn]);
 
   useEffect(() => {
     // Show success toast when component mounts
-    if (!authLoading && !loading) {
+    if (!loading) {
       toast.success("Payment completed successfully!");
     }
-  }, [authLoading, loading]);
-
-  // Periodically check if order status needs updating (fallback mechanism)
-  useEffect(() => {
-    if (!order || !sessionId || statusUpdated || order.status !== "pending") {
-      return;
-    }
-
-    const token = Cookies.get("auth_token") || auth_token;
-    if (!token || !orderId) return;
-
-    console.log("Success: Starting polling for order status update");
-
-    const startPolling = async () => {
-      try {
-        const pollResult = await pollOrderStatus(
-          orderId,
-          token,
-          "paid",
-          6,
-          5000
-        );
-
-        if (pollResult.success && pollResult.order) {
-          setOrder(pollResult.order);
-          setStatusUpdated(true);
-          toast.success("Payment status updated!");
-        } else {
-          console.log("Success: Polling completed without status update");
-        }
-      } catch (error) {
-        console.error("Success: Error in polling:", error);
-      }
-    };
-
-    startPolling();
-  }, [order, sessionId, statusUpdated, orderId, auth_token]);
+  }, [loading]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -196,7 +76,7 @@ const SuccessPageClient = () => {
     });
   };
 
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <Container className="py-8">
         <PageBreadcrumb
@@ -263,7 +143,7 @@ const SuccessPageClient = () => {
                     <span className="font-medium">Order ID</span>
                   </div>
                   <p className="font-mono text-lg font-bold text-gray-900">
-                    #{order._id.slice(-8).toUpperCase()}
+                    #{String(order._id || "").slice(-8).toUpperCase()}
                   </p>
                 </div>
 
@@ -283,7 +163,7 @@ const SuccessPageClient = () => {
                     <span className="font-medium">Payment Status</span>
                   </div>
                   <div className="flex items-center justify-center gap-2">
-                    {order.status === "paid" ? (
+                    {order.paymentStatus === "paid" || order.status === "paid" ? (
                       <>
                         <CheckCircle className="w-5 h-5 text-green-500" />
                         <span className="font-semibold text-green-600">

@@ -38,11 +38,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { getOrderById, deleteOrder, type Order } from "@/lib/orderApi";
-{/*import {
+import {
   createCheckoutSession,
   redirectToCheckout,
   type StripeCheckoutItem,
-} from "@/lib/stripe";*/}
+} from "@/lib/stripe";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
 

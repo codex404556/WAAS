@@ -19,11 +19,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { getOrderById, type Order, createOrderFromCart } from "@/lib/orderApi";
-{/*import {
+import {
   createCheckoutSession,
   redirectToCheckout,
   type StripeCheckoutItem,
-} from "@/lib/stripe";*/}
+} from "@/lib/stripe";
+import useStore from "@/store";
 import { useCartStore } from "@/store/useCartStore";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ const CheckoutPageContent = () => {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
   const { cartItemsWithQuantities, clearCart } = useCartStore();
+  const hasHydrated = useStore((state) => state.hasHydrated);
 
   const generateOrderId = () => {
     const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
@@ -89,13 +91,18 @@ const CheckoutPageContent = () => {
             setOrder(orderData);
           } else {
             toast.error("Order not found");
-            router.push("/user/cart");
+            router.push("/cart");
           }
         } else {
           // If no orderId, check if we have cart items
-          if (cartItemsWithQuantities.length === 0) {
+          if (
+            hasHydrated &&
+            cartItemsWithQuantities.length === 0 &&
+            !orderId &&
+            !order
+          ) {
             toast.error("Your cart is empty");
-            router.push("/user/cart");
+            router.push("/cart");
             return;
           }
 
@@ -130,7 +137,7 @@ const CheckoutPageContent = () => {
       } catch (error) {
         console.error("Error initializing checkout:", error);
         toast.error("Failed to load checkout details");
-        router.push("/user/cart");
+        router.push("/cart");
       } finally {
         setLoading(false);
       }
@@ -145,6 +152,7 @@ const CheckoutPageContent = () => {
     isLoaded,
     user,
     cartItemsWithQuantities,
+    hasHydrated,
   ]);
 
   const handleAddressesUpdate = (updatedAddresses: Address[]) => {
@@ -275,7 +283,7 @@ const CheckoutPageContent = () => {
         items: stripeItems,
         customerEmail: user?.primaryEmailAddress?.emailAddress || "",
         successUrl: `${window.location.origin}/success?orderId=${finalOrder._id}&session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${window.location.origin}/user/checkout?orderId=${finalOrder._id}`,
+        cancelUrl: `${window.location.origin}/checkout?orderId=${finalOrder._id}`,
         metadata: {
           orderId: finalOrder._id,
           shippingAddress: JSON.stringify(selectedAddress),
@@ -283,7 +291,11 @@ const CheckoutPageContent = () => {
       });
 
       if ("sessionId" in result) {
-        await redirectToCheckout(result.sessionId);
+        console.log("Stripe checkout session:", result);
+        if (!result.url) {
+          throw new Error("Missing Stripe checkout URL");
+        }
+        await redirectToCheckout(result.url);
       } else {
         throw new Error(result.error);
       }

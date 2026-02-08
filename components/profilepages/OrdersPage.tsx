@@ -40,12 +40,11 @@ import { getUserOrders, deleteOrder, Order } from "@/lib/orderApi";
 import OrderDetailsModal from "@/components/profilepages/OrderDetailsModal";
 import PriceFormatter from "@/components/common/PriceFormatter";
 import { OrderTableSkeleton } from "../skeleton/OrderSkeleton";
-{/*import {
+import {
   createCheckoutSession,
   redirectToCheckout,
   type StripeCheckoutItem,
 } from "@/lib/stripe";
-import { OrderTableSkeleton } from "../skeleton/OrderSkeleton";*/}
 
 const OrdersPageContent = () => {
   const searchParams = useSearchParams();
