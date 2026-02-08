@@ -5,6 +5,7 @@ import { listProductsByCategory } from "@/lib/cms";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { cubicBezier } from "motion";
 import NoProductsAvailable from "./NoProductsAvailable";
 import ProductsCard from "./ProductsCard";
 import CategorySkeleton from "@/app/(app)/(client)/skeleton/CategorySkeleton";
@@ -75,7 +76,7 @@ const CategoryProducts = ({ categories, slug }: Props) => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 0.25, ease: cubicBezier(0.16, 1, 0.3, 1) },
     },
     exit: { opacity: 0, y: 8, transition: { duration: 0.2 } },
   };
