@@ -47,7 +47,7 @@ const findOrCreateWishlist = async (
   const created = await payload.create({
     collection: "wishlists",
     data: {
-      user: payloadUserId,
+      user: Number(payloadUserId),
       products: [],
     },
     overrideAccess: true,
