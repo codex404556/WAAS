@@ -14,6 +14,14 @@ export interface Order {
   total: number;
   status: "pending" | "paid" | "completed" | "cancelled";
   paymentStatus?: "pending" | "paid" | "failed" | "refunded";
+  status_updates?: {
+    address_confirmed?: { timestamp?: string };
+    confirmed?: { timestamp?: string };
+    packed?: { timestamp?: string };
+    delivering?: { timestamp?: string; by?: { name?: string } };
+    delivered?: { timestamp?: string };
+    cancelled?: { timestamp?: string };
+  };
   shippingAddress?: {
     street?: string;
     city?: string;
