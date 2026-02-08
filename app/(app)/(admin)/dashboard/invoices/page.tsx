@@ -41,51 +41,10 @@ import {
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { payloadFetch } from "@/lib/payload-client";
-import InvoiceTemplate from "../components/invoice/InvoiceTemplate";
-
-interface OrderItem {
-  product: {
-    _id: string;
-    name: string;
-    price: number;
-    image?: string;
-  };
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id?: string;
-  _id?: string;
-  orderId: string;
-  user: {
-    _id: string;
-    name: string;
-    email: string;
-  };
-  items: OrderItem[];
-  shippingAddress: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  totalAmount: number;
-  status: string;
-  paymentStatus: "paid" | "pending" | "failed";
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface InvoiceData {
-  invoiceNumber: string;
-  invoiceDate: string;
-  dueDate: string;
-  notes: string;
-  terms: string;
-  order: Order;
-}
+import InvoiceTemplate, {
+  type InvoiceData,
+  type Order,
+} from "../components/invoice/InvoiceTemplate";
 
 const InvoicePage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);

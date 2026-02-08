@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 
-interface OrderItem {
+export interface OrderItem {
   product: {
     _id: string;
     name: string;
@@ -12,9 +12,10 @@ interface OrderItem {
   price: number;
 }
 
-interface Order {
-  _id: string;
-  orderId: string;
+export interface Order {
+  id?: string;
+  _id?: string;
+  orderId?: string;
   user: {
     _id: string;
     name: string;
@@ -35,7 +36,7 @@ interface Order {
   updatedAt: string;
 }
 
-interface InvoiceData {
+export interface InvoiceData {
   invoiceNumber: string;
   invoiceDate: string;
   dueDate: string;
@@ -105,7 +106,8 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoiceData }) => {
           </h3>
           <div className="space-y-2">
             <p>
-              <span className="font-medium">Order ID:</span> {order._id}
+              <span className="font-medium">Order ID:</span>{" "}
+              {order.orderId || order.id || order._id || "N/A"}
             </p>
             <p>
               <span className="font-medium">Order Date:</span>{" "}
