@@ -3,8 +3,8 @@ import type { Product, Wishlist } from "@/payload-types";
 
 export const runtime = "nodejs";
 
-type ProductDoc = (Product & { _id?: string | number }) | string;
-type WishlistDoc = Wishlist & { products?: Array<ProductDoc> };
+type ProductDoc = { id?: number; _id?: string | number } & Partial<Product>;
+type WishlistDoc = Wishlist & { products?: Array<ProductDoc | string> };
 
 const normalizeId = (value?: string | number | null) =>
   value === undefined || value === null ? undefined : String(value);
@@ -16,10 +16,10 @@ const normalizeProducts = (products: Array<ProductDoc | string> = []) =>
   products
     .map((product) => {
       if (typeof product === "string") {
-        return { _id: product } as Product;
+        return { _id: product } as ProductDoc;
       }
       const id = getId(product);
-      return { ...product, _id: id } as Product;
+      return { ...product, _id: id } as ProductDoc;
     })
     .filter((product) => Boolean(product._id));
 
