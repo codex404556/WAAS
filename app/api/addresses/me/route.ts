@@ -34,7 +34,7 @@ export const GET = async () => {
   }
 
   const addressesResult = await resolved.payload.find({
-    collection: "addresses",
+    collection: "addresses" as never,
     where: { user: { equals: resolved.payloadUserId } },
     limit: 100,
     depth: 0,
@@ -59,7 +59,7 @@ export const POST = async (request: Request) => {
   };
 
   const created = await resolved.payload.create({
-    collection: "addresses",
+    collection: "addresses" as never,
     data: {
       ...data,
       user: resolved.payloadUserId,
@@ -91,7 +91,7 @@ export const PATCH = async (request: Request) => {
 
   if (data.defaulte) {
     const currentDefaults = await resolved.payload.find({
-      collection: "addresses",
+      collection: "addresses" as never,
       where: {
         user: { equals: resolved.payloadUserId },
         defaulte: { equals: true },
@@ -110,7 +110,7 @@ export const PATCH = async (request: Request) => {
         .filter((id): id is string => Boolean(id) && id !== data.addressId)
         .map((id) =>
           resolved.payload.update({
-            collection: "addresses",
+            collection: "addresses" as never,
             id,
             data: { defaulte: false },
             overrideAccess: true,
@@ -120,7 +120,7 @@ export const PATCH = async (request: Request) => {
   }
 
   const updated = await resolved.payload.update({
-    collection: "addresses",
+    collection: "addresses" as never,
     id: data.addressId,
     data: {
       name: data.name,
@@ -148,7 +148,7 @@ export const DELETE = async (request: Request) => {
   }
 
   await resolved.payload.delete({
-    collection: "addresses",
+    collection: "addresses" as never,
     id: data.addressId,
     overrideAccess: true,
   });
