@@ -1066,7 +1066,7 @@ const OrderDetailsPage = () => {
                     bKash, Nagad, Rocket, Card (BDT)
                   </div>
                   <div className="text-xs text-gray-400 mt-1">
-                    Bangladesh's trusted payment gateway
+                    Bangladesh&apos;s trusted payment gateway
                   </div>
                 </Label>
               </div>
