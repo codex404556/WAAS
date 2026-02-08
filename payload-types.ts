@@ -72,8 +72,12 @@ export interface Config {
     products: Product;
     categories: Category;
     brands: Brand;
+    reviews: Review;
     banners: Banner;
     orders: Order;
+    addresses: Address;
+    notifications: Notification;
+    wishlists: Wishlist;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,15 +90,19 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     brands: BrandsSelect<false> | BrandsSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     banners: BannersSelect<false> | BannersSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    addresses: AddressesSelect<false> | AddressesSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    wishlists: WishlistsSelect<false> | WishlistsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
   globals: {};
@@ -131,14 +139,14 @@ export interface UserAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
-  updatedAt: string;
-  createdAt: string;
+  id: number;
   name: string;
-  email: string;
   clerkId?: string | null;
   avatar?: string | null;
   role: 'admin' | 'user' | 'deliveryman';
+  updatedAt: string;
+  createdAt: string;
+  email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
   salt?: string | null;
@@ -159,8 +167,8 @@ export interface User {
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
-  alt: string;
+  id: number;
+  alt?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -178,57 +186,199 @@ export interface Media {
  * via the `definition` "products".
  */
 export interface Product {
-  id: string;
+  id: number;
+  name: string;
+  /**
+   * Auto-generated from Product Name (you can edit it).
+   */
+  slug: string;
+  images?: (number | Media)[] | null;
+  description?: string | null;
+  additionalInformation?: string | null;
+  price: number;
+  oldPrice?: number | null;
+  category?: (number | null) | Category;
+  stock: number;
+  brand?: (number | null) | Brand;
+  reviews?:
+    | {
+        userName: string;
+        userImage?: (number | null) | Media;
+        rating: number;
+        comment: string;
+        date: string;
+        id?: string | null;
+      }[]
+    | null;
+  status?: ('new' | 'hot' | 'sale') | null;
+  variant?: ('best-sellers' | 'big-deals' | 'lowest-price' | 'top') | null;
   updatedAt: string;
   createdAt: string;
-  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories".
  */
 export interface Category {
-  id: string;
+  id: number;
+  title: string;
+  slug: string;
+  categoryType: 'Featured' | 'Hot Categories' | 'Top Categories';
+  image?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
-  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "brands".
  */
 export interface Brand {
-  id: string;
+  id: number;
+  title: string;
+  /**
+   * Auto-generated from Brand Title
+   */
+  slug: string;
+  description?: string | null;
+  image?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
-  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "banners".
+ * via the `definition` "reviews".
  */
-export interface Banner {
-  id: string;
+export interface Review {
+  id: number;
+  product: number | Product;
+  user?: (number | null) | User;
+  order?: (number | null) | Order;
+  rating: number;
+  comment: string;
+  source: 'user' | 'admin_seed';
+  status: 'pending' | 'approved' | 'rejected';
+  verified?: boolean | null;
   updatedAt: string;
   createdAt: string;
-  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "orders".
  */
 export interface Order {
-  id: string;
+  id: number;
+  orderId: string;
+  user: number | User;
+  items: {
+    product: number | Product;
+    quantity: number;
+    price: number;
+    id?: string | null;
+  }[];
+  totalAmount: number;
+  status: 'pending' | 'paid' | 'completed' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  shippingAddress?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zipCode?: string | null;
+    country?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
-  [k: string]: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "banners".
+ */
+export interface Banner {
+  id: number;
+  name: string;
+  title: string;
+  startFrom: number;
+  image: number | Media;
+  bannerType: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "addresses".
+ */
+export interface Address {
+  id: number;
+  user: number | User;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  defaulte?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  user: number | User;
+  type:
+    | 'order_placed'
+    | 'order_confirmed'
+    | 'order_shipped'
+    | 'order_delivered'
+    | 'order_cancelled'
+    | 'payment_success'
+    | 'payment_failed'
+    | 'refund_processed'
+    | 'general'
+    | 'offer'
+    | 'deal'
+    | 'announcement'
+    | 'promotion'
+    | 'alert'
+    | 'admin_message';
+  title: string;
+  message: string;
+  isRead?: boolean | null;
+  relatedOrderId?: string | null;
+  image?: string | null;
+  actionUrl?: string | null;
+  actionText?: string | null;
+  external?: boolean | null;
+  priority?: ('low' | 'normal' | 'high' | 'urgent') | null;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wishlists".
+ */
+export interface Wishlist {
+  id: number;
+  user: number | User;
+  products: (number | Product)[];
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -245,20 +395,56 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'brands';
+        value: number | Brand;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
+      } | null)
+    | ({
+        relationTo: 'banners';
+        value: number | Banner;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'addresses';
+        value: number | Address;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'wishlists';
+        value: number | Wishlist;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -268,10 +454,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   key?: string | null;
   value?:
@@ -291,7 +477,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -302,13 +488,13 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  updatedAt?: T;
-  createdAt?: T;
   name?: T;
-  email?: T;
   clerkId?: T;
   avatar?: T;
   role?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
   resetPasswordToken?: T;
   resetPasswordExpiration?: T;
   salt?: T;
@@ -346,35 +532,158 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "products_select".
  */
 export interface ProductsSelect<T extends boolean = true> {
-  [k: string]: T;
+  name?: T;
+  slug?: T;
+  images?: T;
+  description?: T;
+  additionalInformation?: T;
+  price?: T;
+  oldPrice?: T;
+  category?: T;
+  stock?: T;
+  brand?: T;
+  reviews?:
+    | T
+    | {
+        userName?: T;
+        userImage?: T;
+        rating?: T;
+        comment?: T;
+        date?: T;
+        id?: T;
+      };
+  status?: T;
+  variant?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
-  [k: string]: T;
+  title?: T;
+  slug?: T;
+  categoryType?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "brands_select".
  */
 export interface BrandsSelect<T extends boolean = true> {
-  [k: string]: T;
+  title?: T;
+  slug?: T;
+  description?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  product?: T;
+  user?: T;
+  order?: T;
+  rating?: T;
+  comment?: T;
+  source?: T;
+  status?: T;
+  verified?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "banners_select".
  */
 export interface BannersSelect<T extends boolean = true> {
-  [k: string]: T;
+  name?: T;
+  title?: T;
+  startFrom?: T;
+  image?: T;
+  bannerType?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
-  [k: string]: T;
+  orderId?: T;
+  user?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        price?: T;
+        id?: T;
+      };
+  totalAmount?: T;
+  status?: T;
+  paymentStatus?: T;
+  shippingAddress?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        state?: T;
+        zipCode?: T;
+        country?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "addresses_select".
+ */
+export interface AddressesSelect<T extends boolean = true> {
+  user?: T;
+  name?: T;
+  address?: T;
+  city?: T;
+  state?: T;
+  zip?: T;
+  defaulte?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  user?: T;
+  type?: T;
+  title?: T;
+  message?: T;
+  isRead?: T;
+  relatedOrderId?: T;
+  image?: T;
+  actionUrl?: T;
+  actionText?: T;
+  external?: T;
+  priority?: T;
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wishlists_select".
+ */
+export interface WishlistsSelect<T extends boolean = true> {
+  user?: T;
+  products?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
