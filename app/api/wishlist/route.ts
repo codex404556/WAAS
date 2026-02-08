@@ -4,7 +4,8 @@ import type { Product, Wishlist } from "@/payload-types";
 export const runtime = "nodejs";
 
 type ProductDoc = { id?: number; _id?: string | number } & Partial<Product>;
-type WishlistDoc = Wishlist & { products?: Array<ProductDoc | string> };
+type WishlistProduct = ProductDoc | string | number | Product;
+type WishlistDoc = Wishlist & { products?: Array<WishlistProduct> };
 
 const normalizeId = (value?: string | number | null) =>
   value === undefined || value === null ? undefined : String(value);
@@ -12,10 +13,10 @@ const normalizeId = (value?: string | number | null) =>
 const getId = (doc?: { id?: string | number; _id?: string | number } | null) =>
   normalizeId(doc?.id ?? doc?._id);
 
-const normalizeProducts = (products: Array<ProductDoc | string> = []) =>
+const normalizeProducts = (products: Array<WishlistProduct> = []) =>
   products
     .map((product) => {
-      if (typeof product === "string") {
+      if (typeof product === "string" || typeof product === "number") {
         return { _id: product } as ProductDoc;
       }
       const id = getId(product);
@@ -89,7 +90,9 @@ export const POST = async (request: Request) => {
   const wishlist = await findOrCreateWishlist(payload, payloadUserId);
   const currentProducts = Array.isArray(wishlist.products)
     ? wishlist.products.map((product) =>
-        typeof product === "string" ? product : getId(product)
+        typeof product === "string" || typeof product === "number"
+          ? String(product)
+          : getId(product)
       )
     : [];
 
@@ -128,7 +131,9 @@ export const DELETE = async (request: Request) => {
   const wishlist = await findOrCreateWishlist(payload, payloadUserId);
   const currentProducts = Array.isArray(wishlist.products)
     ? wishlist.products.map((product) =>
-        typeof product === "string" ? product : getId(product)
+        typeof product === "string" || typeof product === "number"
+          ? String(product)
+          : getId(product)
       )
     : [];
 
