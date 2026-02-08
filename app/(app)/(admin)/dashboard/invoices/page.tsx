@@ -373,10 +373,7 @@ const InvoicePage: React.FC = () => {
         break;
       case "copy":
         navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
-          toast({
-            title: "Copied to clipboard",
-            description: "Invoice details copied to clipboard",
-          });
+          toast.success("Invoice details copied to clipboard");
         });
         break;
       default:
