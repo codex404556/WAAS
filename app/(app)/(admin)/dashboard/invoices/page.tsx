@@ -114,15 +114,11 @@ const InvoicePage: React.FC = () => {
       setOrders(response.docs || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch orders",
-        variant: "destructive",
-      });
+      toast.error("Failed to fetch orders");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [perPage]);
 
   const filterOrders = useCallback(() => {
     let filtered = orders;
