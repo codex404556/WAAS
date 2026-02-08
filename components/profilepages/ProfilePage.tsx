@@ -469,7 +469,8 @@ const ProfilePage = () => {
         >
           <Card className="shadow-lg border-0 bg-linear-to-r from-babyshopSky to-babyshopPurple text-babyshopWhite overflow-hidden">
             <CardContent className="p-6 md:p-8">
-              <div className="flex flex-col md:flex-row items-center gap-6">
+              {authUser ? (
+                <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="relative">
                   {authUser.avatar ? (
                     <div className="relative h-24 w-24 ring-4 ring-white/50 rounded-full overflow-hidden">
@@ -538,12 +539,15 @@ const ProfilePage = () => {
                   </Button>
                 </div>
               </div>
+              ) : (
+                <div className="text-white/90">Loading profile...</div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
 
         {/* OAuth User Section */}
-        {authUser.isOAuthUser && (
+        {authUser?.isOAuthUser && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
