@@ -31,7 +31,7 @@ const findOrCreateWishlist = async (
       ? P
       : never
     : never,
-  payloadUserId: string
+  payloadUserId: number
 ) => {
   const existing = await payload.find({
     collection: "wishlists",
@@ -47,7 +47,7 @@ const findOrCreateWishlist = async (
   const created = await payload.create({
     collection: "wishlists",
     data: {
-      user: Number(payloadUserId),
+      user: payloadUserId,
       products: [],
     },
     overrideAccess: true,
