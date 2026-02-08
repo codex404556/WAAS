@@ -437,8 +437,8 @@ export default function AnalyticsPage() {
                       />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip
-                        formatter={(value: number) => [
-                          formatCurrency(value),
+                        formatter={(value?: number) => [
+                          formatCurrency(value ?? 0),
                           "Total Spent",
                         ]}
                       />
