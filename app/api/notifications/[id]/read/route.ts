@@ -7,8 +7,9 @@ const getId = (doc?: { id?: string; _id?: string } | null) =>
 
 export const PUT = async (
   _request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
+  const { id } = await context.params;
   const resolved = await resolvePayloadUser();
   if ("error" in resolved) {
     return resolved.error;
@@ -17,7 +18,7 @@ export const PUT = async (
   const { payload, payloadUserId } = resolved;
   const notification = await payload.findByID({
     collection: "notifications",
-    id: context.params.id,
+    id,
     depth: 0,
   });
 
@@ -32,7 +33,7 @@ export const PUT = async (
 
   await payload.update({
     collection: "notifications",
-    id: context.params.id,
+    id,
     data: { isRead: true },
     overrideAccess: true,
   });
