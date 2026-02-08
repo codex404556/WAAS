@@ -1,6 +1,7 @@
 import configPromise from "@payload-config";
 import { getPayload } from "payload";
 import { auth } from "@clerk/nextjs/server";
+import type { Address, User } from "@/payload-types";
 
 export const runtime = "nodejs";
 
@@ -18,8 +19,8 @@ const resolvePayloadUserId = async () => {
     depth: 0,
   });
 
-  const userDoc = userResult.docs[0] as { id?: string | number; _id?: string | number } | undefined;
-  const payloadUserId = userDoc?.id ?? userDoc?._id;
+  const userDoc = userResult.docs[0] as User | undefined;
+  const payloadUserId = userDoc?.id;
   if (!payloadUserId) {
     return { error: new Response("User not found", { status: 404 }) };
   }
@@ -34,7 +35,7 @@ export const GET = async () => {
   }
 
   const addressesResult = await resolved.payload.find({
-    collection: "addresses" as never,
+    collection: "addresses",
     where: { user: { equals: resolved.payloadUserId } },
     limit: 100,
     depth: 0,
@@ -58,14 +59,29 @@ export const POST = async (request: Request) => {
     defaulte?: boolean;
   };
 
+  if (
+    !data.name ||
+    !data.address ||
+    !data.city ||
+    !data.state ||
+    !data.zip
+  ) {
+    return new Response("Missing required address fields", { status: 400 });
+  }
+
   const createArgs = {
-    collection: "addresses" as never,
+    collection: "addresses",
     data: {
-      ...data,
-      user: resolved.payloadUserId as unknown as string,
+      name: data.name,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      zip: data.zip,
+      defaulte: data.defaulte ?? false,
+      user: resolved.payloadUserId,
     },
     overrideAccess: true,
-  } as unknown as Parameters<typeof resolved.payload.create>[0];
+  } satisfies Parameters<typeof resolved.payload.create>[0];
 
   const created = await resolved.payload.create(createArgs);
 
@@ -93,7 +109,7 @@ export const PATCH = async (request: Request) => {
 
   if (data.defaulte) {
     const currentDefaults = await resolved.payload.find({
-      collection: "addresses" as never,
+      collection: "addresses",
       where: {
         user: { equals: resolved.payloadUserId },
         defaulte: { equals: true },
@@ -110,29 +126,33 @@ export const PATCH = async (request: Request) => {
             (doc as { _id?: string })._id
         )
         .filter((id): id is string => Boolean(id) && id !== data.addressId)
-        .map((id) => {
-          const updateArgs = {
+        .map((id) =>
+          resolved.payload.update({
             collection: "addresses",
             id,
             data: { defaulte: false },
             overrideAccess: true,
-          } as Parameters<typeof resolved.payload.update>[0];
-          return resolved.payload.update(updateArgs);
-        })
+          })
+        )
     );
   }
 
+  const updateData: Partial<Address> = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.address !== undefined) updateData.address = data.address;
+  if (data.city !== undefined) updateData.city = data.city;
+  if (data.state !== undefined) updateData.state = data.state;
+  if (data.zip !== undefined) updateData.zip = data.zip;
+  if (data.defaulte !== undefined) updateData.defaulte = data.defaulte;
+
+  if (Object.keys(updateData).length === 0) {
+    return new Response("No fields to update", { status: 400 });
+  }
+
   const updated = await resolved.payload.update({
-    collection: "addresses" as never,
+    collection: "addresses",
     id: data.addressId,
-    data: {
-      name: data.name,
-      address: data.address,
-      city: data.city,
-      state: data.state,
-      zip: data.zip,
-      defaulte: data.defaulte,
-    },
+    data: updateData,
     overrideAccess: true,
   });
 
@@ -151,7 +171,7 @@ export const DELETE = async (request: Request) => {
   }
 
   await resolved.payload.delete({
-    collection: "addresses" as never,
+    collection: "addresses",
     id: data.addressId,
     overrideAccess: true,
   });
