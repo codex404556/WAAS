@@ -1,6 +1,5 @@
 import React from "react";
 import Container from "@/components/common/Container";
-import { Title } from "@/components/common/text";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb";
 import {
   Truck,
@@ -11,6 +10,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { Title } from "@/components/ui/text";
 
 const TrackOrderPage = () => {
   const trackingSteps = [
