@@ -1,25 +1,25 @@
 import { resolvePayloadUser } from "@/lib/resolvePayloadUser";
+import type { Product, Wishlist } from "@/payload-types";
 
 export const runtime = "nodejs";
 
-type ProductDoc = { id?: string; _id?: string } & Record<string, unknown>;
-type WishlistDoc = {
-  id?: string;
-  _id?: string;
-  products?: Array<ProductDoc | string>;
-};
+type ProductDoc = (Product & { _id?: string | number }) | string;
+type WishlistDoc = Wishlist & { products?: Array<ProductDoc> };
 
-const getId = (doc?: { id?: string; _id?: string } | null) =>
-  doc?.id ?? doc?._id;
+const normalizeId = (value?: string | number | null) =>
+  value === undefined || value === null ? undefined : String(value);
+
+const getId = (doc?: { id?: string | number; _id?: string | number } | null) =>
+  normalizeId(doc?.id ?? doc?._id);
 
 const normalizeProducts = (products: Array<ProductDoc | string> = []) =>
   products
     .map((product) => {
       if (typeof product === "string") {
-        return { _id: product } as ProductDoc;
+        return { _id: product } as Product;
       }
       const id = getId(product);
-      return { ...product, _id: id } as ProductDoc;
+      return { ...product, _id: id } as Product;
     })
     .filter((product) => Boolean(product._id));
 
@@ -65,7 +65,7 @@ export const GET = async () => {
   const { payload, payloadUserId } = resolved;
   const wishlist = await findOrCreateWishlist(payload, payloadUserId);
   const products = normalizeProducts(wishlist.products);
-  const wishlistIds = products.map((product) => product._id as string);
+  const wishlistIds = products.map((product) => String(product._id));
 
   return Response.json({
     success: true,
@@ -110,7 +110,7 @@ export const POST = async (request: Request) => {
 
   return Response.json({
     success: true,
-    wishlist: normalized.map((product) => product._id as string),
+    wishlist: normalized.map((product) => String(product._id)),
     products: normalized,
   });
 };
@@ -149,7 +149,7 @@ export const DELETE = async (request: Request) => {
 
   return Response.json({
     success: true,
-    wishlist: normalized.map((product) => product._id as string),
+    wishlist: normalized.map((product) => String(product._id)),
     products: normalized,
   });
 };
