@@ -29,7 +29,9 @@ export const PATCH = async (
 
   const { id } = await context.params;
   const { payload } = resolved;
-  const body = (await request.json()) as { status?: string };
+  const body = (await request.json()) as {
+    status?: "pending" | "cancelled" | "paid" | "completed";
+  };
 
   const updated = await payload.update({
     collection: "orders",
