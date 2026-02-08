@@ -549,7 +549,14 @@ const ProfilePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <OAuthUserSection user={authUser} />
+            <div className="rounded-xl border border-babyshopTextLight/20 bg-white p-6 shadow-md">
+              <h3 className="text-lg font-semibold text-babyshopBlack">
+                OAuth Account
+              </h3>
+              <p className="mt-2 text-sm text-babyshopTextLight">
+                This account was created using an OAuth provider.
+              </p>
+            </div>
           </motion.div>
         )}
 

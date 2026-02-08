@@ -24,7 +24,7 @@ export const addAddress = async (
   _userId: string,
   input: AddressInput
 ): Promise<{ addresses: Address[]; message: string }> => {
-  const created = await payloadFetch<PayloadAddress>("/api/addresses/me", {
+  await payloadFetch<PayloadAddress>("/api/addresses/me", {
     method: "POST",
     body: {
       name: input.name,
@@ -45,7 +45,7 @@ export const updateAddress = async (
   addressId: string,
   input: AddressInput
 ): Promise<{ addresses: Address[]; message: string }> => {
-  const updated = await payloadFetch<PayloadAddress>(`/api/addresses/me`, {
+  await payloadFetch<PayloadAddress>(`/api/addresses/me`, {
     method: "PATCH",
     body: {
       addressId,
