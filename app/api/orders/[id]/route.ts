@@ -99,7 +99,7 @@ const mapOrder = (order: OrderDoc) => {
 };
 
 const ensureOwnership = (
-  payloadUserId: string,
+  payloadUserId: string | number,
   order: OrderDoc | null | undefined
 ) => {
   if (!order) return false;
@@ -107,7 +107,7 @@ const ensureOwnership = (
     typeof order.user === "string" || typeof order.user === "number"
       ? String(order.user)
       : getId(order.user as { id?: string | number; _id?: string | number } | null);
-  return orderUser === payloadUserId;
+  return orderUser === String(payloadUserId);
 };
 
 export const GET = async (
