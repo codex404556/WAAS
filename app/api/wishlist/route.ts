@@ -98,7 +98,9 @@ export const POST = async (request: Request) => {
 
   const updatedProducts = Array.from(
     new Set([...currentProducts, body.productId].filter(Boolean))
-  );
+  )
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
 
   const updated = await payload.update({
     collection: "wishlists",
@@ -140,11 +142,14 @@ export const DELETE = async (request: Request) => {
   const updatedProducts = productId
     ? currentProducts.filter((id) => id !== productId)
     : [];
+  const updatedProductIds = updatedProducts
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
 
   const updated = await payload.update({
     collection: "wishlists",
     id: getId(wishlist) as string,
-    data: { products: updatedProducts },
+    data: { products: updatedProductIds },
     overrideAccess: true,
   });
 
