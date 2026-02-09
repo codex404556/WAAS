@@ -18,7 +18,7 @@ const Logo: React.FC<LogoProps> = ({ className, isScrolled }) => {
         <Image src={logo} alt="logo" className="w-9 h-9 mb-3" />
         <h2
           className={cn(
-            "text-xl md:text-2xl font-black font-sans tracking-wider uppercase line-clamp-1",
+            "text-xl md:block font-black font-sans tracking-wider uppercase max-[500px]:hidden",
             className
           )}
         >

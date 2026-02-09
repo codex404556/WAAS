@@ -100,9 +100,9 @@ const SearchBar = ({ isScrolled }: { isScrolled: boolean }) => {
       </button>
       {/* modal search */}
       {open && (
-        <div className="fixed inset-0 bg-black/30">
+        <div className="fixed inset-0 z-[60] bg-black/30 overflow-hidden">
           {/* Center container */}
-          <div className="relative z-10 flex min-h-screen items-start justify-center p-4 md:p-10">
+          <div className="relative z-[70] flex min-h-screen items-start justify-center p-4 md:p-10">
             {/* Modal panel */}
             <div
               ref={panelRef}
@@ -131,7 +131,9 @@ const SearchBar = ({ isScrolled }: { isScrolled: boolean }) => {
               {/* Body */}
               <div className="mt-4 flex-1 overflow-y-auto overscroll-contain scrollbar-hide">
                 {debouncedSearchTerm.trim().length === 0 ? (
-                  <p className="text-2xl font-medium space-y-10">Type to search</p>
+                  <p className="text-2xl font-medium space-y-10">
+                    Type to search
+                  </p>
                 ) : loading ? (
                   <div className="flex items-center gap-2">
                     <Loader2
