@@ -12,6 +12,16 @@ import NoProductsAvailable from "./NoProductsAvailable";
 import ProductsCard from "./ProductsCard";
 import ShopProductCardSkeleton from "./skeleton/ShopProductCardSkeleton";
 import { AnimatePresence, motion } from "framer-motion";
+import { Button } from "./ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "./ui/sheet";
+import { SlidersHorizontal } from "lucide-react";
 
 interface Props {
   categories: Category[];
@@ -34,6 +44,7 @@ const Shop = ({ categories, brands }: Props) => {
     brandParams || null
   );
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const animationKey = useMemo(
     () =>
       [
@@ -72,6 +83,15 @@ const Shop = ({ categories, brands }: Props) => {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+  const hasActiveFilters =
+    selectedBrand !== null ||
+    selectedPrice !== null ||
+    selectedCategory !== null;
+  const resetFilters = () => {
+    setSelectedBrand(null);
+    setSelectedCategory(null);
+    setSelectedPrice(null);
+  };
 
   return (
     <div className="border-t">
@@ -79,24 +99,72 @@ const Shop = ({ categories, brands }: Props) => {
         <div className="sticky top-0 z-10 mb-5 ">
           <div className="flex items-center justify-between">
             <Title className="text-lg">Get the products as your needs</Title>
-            {(selectedBrand !== null ||
-              selectedPrice !== null ||
-              selectedCategory !== null) && (
-              <button
-                onClick={() => {
-                  setSelectedBrand(null);
-                  setSelectedCategory(null);
-                  setSelectedPrice(null);
-                }}
-                className="text-shop_dark_yellow underline text-sm mt-2 font-medium hover:text-red-500 hoverEffect"
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="md:hidden"
+                onClick={() => setMobileFiltersOpen(true)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+              </Button>
+            {hasActiveFilters && (
+              <Button
+                variant="destructive"
+                onClick={resetFilters}
+                className="hidden md:inline-flex"
               >
                 Reset Filters
-              </button>
+              </Button>
             )}
+            </div>
           </div>
         </div>
+        <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+          <SheetContent side="left" className="w-[85vw] max-w-sm overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+              <SheetDescription>
+                Narrow products by category, price, and brand.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="px-4 pb-2">
+              <CatergoryList
+                categories={categories}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+              />
+              <PriceList
+                selectedPrice={selectedPrice}
+                setSelectedPrice={setSelectedPrice}
+              />
+              <BrandList
+                brands={brands}
+                selectedBrand={selectedBrand}
+                setSelectedBrand={setSelectedBrand}
+              />
+            </div>
+            <SheetFooter className="border-t">
+              <Button
+                variant="outline"
+                onClick={() => setMobileFiltersOpen(false)}
+              >
+                Close
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  resetFilters();
+                  setMobileFiltersOpen(false);
+                }}
+              >
+                Reset Filters
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
         <div className="flex flex-col md:flex-row gap-5 border-t border-t-shop_dark_yellow">
-          <div className="md:sticky md:top-20 md:self-start md:h-[calc(100vh-160px)] md:overflow-y-auto md:min-w-64 pb-5 md:border-r border-r-shop_light_yellow scrollbar-hide">
+          <div className="hidden md:block md:sticky md:top-20 md:self-start md:h-[calc(100vh-160px)] md:overflow-y-auto md:min-w-64 pb-5 md:border-r border-r-shop_light_yellow scrollbar-hide">
             <CatergoryList
               categories={categories}
               selectedCategory={selectedCategory}
