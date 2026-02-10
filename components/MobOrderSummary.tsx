@@ -1,89 +1,87 @@
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Title } from "./ui/text";
 import PriceFormatter from "./PriceFormatter";
 import useStore from "@/store";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
-import { AlignJustify } from "lucide-react";
-import { motion } from "framer-motion";
-import { useOutsideClick } from "@/hooks";
 
 const MobOrderSummary = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { getSubTotalPrice, getTotalPrice } = useStore();
-  const sideRef = useOutsideClick<HTMLDivElement>(() => {
-    setIsOpen(false);
-    document.body.style.overflow = "auto";
-  });
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const { getSubTotalPrice, getPromoDiscount, getTotalPrice } = useStore();
+  const router = useRouter();
+  const subtotal = getSubTotalPrice();
+  const discount = getPromoDiscount();
+  const total = getTotalPrice();
 
   return (
-    <motion.div
-      ref={sideRef}
-      initial={false}
-      animate={{ height: isOpen ? "50%" : "48px" }}
-      transition={{ type: "spring", stiffness: 120, damping: 16 }}
-      className="bottom-0 left-0 fixed w-full bg-white shadow-top-lg rounded-t-xl overflow-hidden md:hidden"
+    <div
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] backdrop-blur md:hidden"
     >
-      <button
-        onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) {
-            setTimeout(() => {
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }, 10);
-            document.body.style.overflow = "hidden";
-          } else {
-            document.body.style.overflow = "auto";
-          }
-        }}
-        className="w-full bg-white rounded-t-md flex items-center justify-center md:hidden shadow-inner"
-      >
-        <motion.div
-          animate={{ x: !isOpen ? [0, -9, 9, -9, 9, 0] : 0 }}
-          transition={{
-            duration: 2,
-            repeat: isOpen ? 0 : Infinity,
-            repeatType: "loop",
-            ease: "linear",
-          }}
-        >
-          <AlignJustify size={21} className="mt-1 text-lightColor" />
-        </motion.div>
-      </button>
-      <div className="block md:hidden border-b-4 rounded-lg rounded-t-none w-full bg-white p-8 pb-6 md:pb-8">
-        <Title className="text-darkColor mb-7">Order Summary</Title>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span>Suptotal</span>
+      <div className="mx-auto max-w-7xl px-4 pt-3">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-gray-500">Total</p>
             <PriceFormatter
-              amount={getSubTotalPrice()}
-              className="text-lightColor font-bold"
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="">Discount</span>
-            <PriceFormatter
-              amount={getSubTotalPrice() - getTotalPrice()}
-              className="font-bold text-lightColor"
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between font-semibold text-lg mt-6">
-            <span>Total</span>
-            <PriceFormatter
-              amount={getSubTotalPrice() - getTotalPrice()}
-              className="text-lg font-bold text-darkColor"
+              amount={total}
+              className="truncate text-base font-bold text-darkColor"
             />
           </div>
           <Button
             size="lg"
-            className="w-full rounded-md font-semibold tracking-wide hoverEffect"
+            className="h-11 min-w-[190px] rounded-full bg-darkColor px-4 font-semibold text-white hover:bg-shop_light_yellow/90"
+            onClick={() => router.push("/checkout")}
           >
             Proceed to Checkout
           </Button>
         </div>
+
+        <button
+          type="button"
+          aria-expanded={isDetailsOpen}
+          onClick={() => setIsDetailsOpen((prev) => !prev)}
+          className="mt-2 w-full text-left text-sm font-medium text-lightColor underline underline-offset-2"
+        >
+          {isDetailsOpen ? "Hide details" : "View details"}
+        </button>
+
+        <div
+          className={`grid transition-all duration-300 ${
+            isDetailsOpen ? "mt-3 grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="rounded-xl border border-gray-100 bg-white p-4">
+              <Title className="mb-4 text-darkColor">Order Summary</Title>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span>Suptotal</span>
+                  <PriceFormatter
+                    amount={subtotal}
+                    className="font-bold text-lightColor"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Discount</span>
+                  <PriceFormatter
+                    amount={discount}
+                    className="font-bold text-lightColor"
+                  />
+                </div>
+                <Separator />
+                <div className="mt-4 flex items-center justify-between text-lg font-semibold">
+                  <span>Total</span>
+                  <PriceFormatter
+                    amount={total}
+                    className="text-lg font-bold text-darkColor"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

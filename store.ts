@@ -14,6 +14,7 @@ export interface CartItem {
 
 interface StoreState {
   items: CartItem[];
+  promoDiscount: number;
   hasHydrated: boolean;
   setHasHydrated: (value: boolean) => void;
   getItemCount: (productId: string) => number;
@@ -26,6 +27,9 @@ interface StoreState {
   ) => Promise<void>;
   getGroupedItems: () => CartItem[];
   getitemCount: (productId: string) => number;
+  setPromoDiscount: (amount: number) => void;
+  resetPromoDiscount: () => void;
+  getPromoDiscount: () => number;
   getSubTotalPrice: () => number;
   getTotalPrice: () => number;
   resetCart: () => void;
@@ -37,6 +41,7 @@ const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
       items: [],
+      promoDiscount: 0,
       hasHydrated: false,
       setHasHydrated: (value) => set({ hasHydrated: value }),
       favoriteProduct: [],
@@ -107,21 +112,27 @@ const useStore = create<StoreState>()(
         return item ? item.quantity : 0;
       },
       getGroupedItems: () => get().items,
-      getSubTotalPrice: () => {
-        return get().items.reduce((total, item) => {
-          const price = item.product.price ?? 0;
-          const discount = ((item.product.discount ?? 0) * price) / 100;
-          const discountedPrice = price + discount;
-          return total + discountedPrice * item.quantity;
-        }, 0);
+      setPromoDiscount: (amount: number) => {
+        set({ promoDiscount: Math.max(0, amount) });
       },
-      getTotalPrice: () => {
+      resetPromoDiscount: () => {
+        set({ promoDiscount: 0 });
+      },
+      getPromoDiscount: () => {
+        const subtotal = get().getSubTotalPrice();
+        return Math.min(get().promoDiscount, subtotal);
+      },
+      getSubTotalPrice: () => {
         return get().items.reduce(
           (total, item) => total + (item.product.price ?? 0) * item.quantity,
           0
         );
       },
-      resetCart: () => set({ items: [] }),
+      getTotalPrice: () => {
+        const subtotal = get().getSubTotalPrice();
+        return Math.max(0, subtotal - get().getPromoDiscount());
+      },
+      resetCart: () => set({ items: [], promoDiscount: 0 }),
     }),
     {
       name: "cart-store",

@@ -9,6 +9,7 @@ import type {
 
 type PayloadListResponse<T> = {
   docs: T[];
+  totalDocs?: number;
 };
 
 type PayloadMedia = {
@@ -83,11 +84,15 @@ const mapImage = (
   return { url: image.url ?? undefined };
 };
 
-const mapCategory = (category: PayloadCategory): Category => ({
+const mapCategory = (
+  category: PayloadCategory,
+  productCount?: number
+): Category => ({
   _id: category.id,
   title: category.title,
   slug: category.slug ? { current: category.slug } : undefined,
   image: category.image ? mapImage(category.image) ?? undefined : undefined,
+  productCount,
 });
 
 const mapBrand = (brand: PayloadBrand): Brand => ({
@@ -165,7 +170,27 @@ export const getCategories = async (quantity?: number): Promise<Category[]> => {
   const data = await fetchFromPayload<PayloadListResponse<PayloadCategory>>(
     `/api/categories?limit=${limit}`
   );
-  return data.docs.map(mapCategory);
+  const productCountEntries = await Promise.all(
+    data.docs.map(async (category) => {
+      const productsData =
+        await fetchFromPayload<PayloadListResponse<PayloadProduct>>(
+          `/api/products?where[category][equals]=${encodeURIComponent(
+            category.id
+          )}&limit=1`
+        );
+
+      return [
+        category.id,
+        productsData.totalDocs ?? productsData.docs.length,
+      ] as const;
+    })
+  );
+
+  const productCountByCategory = new Map(productCountEntries);
+
+  return data.docs.map((category) =>
+    mapCategory(category, productCountByCategory.get(category.id) ?? 0)
+  );
 };
 
 export const getAllBrands = async (): Promise<Brand[]> => {

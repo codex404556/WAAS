@@ -7,7 +7,7 @@ import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 
 const OrderSummary = () => {
-  const { getSubTotalPrice, getTotalPrice } = useStore();
+  const { getSubTotalPrice, getPromoDiscount, getTotalPrice } = useStore();
   const [ loading, setLoading ] = useState(false);
   const router = useRouter();
   
@@ -38,7 +38,7 @@ const OrderSummary = () => {
         <div className="flex items-center justify-between">
           <span className="">Discount</span>
           <PriceFormatter
-            amount={getTotalPrice()}
+            amount={getPromoDiscount()}
             className="font-bold text-lightColor"
           />
         </div>
@@ -46,7 +46,7 @@ const OrderSummary = () => {
         <div className="flex items-center justify-between font-semibold text-lg mt-6">
           <span>Total</span>
           <PriceFormatter
-            amount={getSubTotalPrice() - getTotalPrice()}
+            amount={getTotalPrice()}
             className="text-lg font-bold text-darkColor"
           />
         </div>

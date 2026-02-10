@@ -38,7 +38,7 @@ const ShopByBrands = async () => {
         <div className="mb-6 flex items-center justify-between sm:mb-8">
           <Title>Shop By Brands</Title>
           <Link
-            href={"/shop"}
+            href={"/brand"}
             className="rounded-full bg-darkColor px-3 py-1.5 text-xs font-semibold text-white hover:bg-shop_light_yellow hover:text-darkColor hover:scale-105 hoverEffect"
           >
             View All

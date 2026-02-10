@@ -50,7 +50,7 @@ const HomeCategories = async ({
               </h3>
               <p className="text-sm text-lightColor">
                 <span className="font-bold text-shop_dark_yellow">
-                  ({item?.productCount})
+                  ({item?.productCount ?? 0})
                 </span>{" "}
                 Available
               </p>
