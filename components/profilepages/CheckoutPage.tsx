@@ -98,8 +98,7 @@ const CheckoutPageContent = () => {
           if (
             hasHydrated &&
             cartItemsWithQuantities.length === 0 &&
-            !orderId &&
-            !order
+            !orderId
           ) {
             toast.error("Your cart is empty");
             router.push("/cart");
@@ -352,9 +351,50 @@ const CheckoutPageContent = () => {
     handleCardPayment();
   };
 
+  const renderPlaceOrderContent = () => {
+    if (processing) {
+      return (
+        <>
+          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          Processing...
+        </>
+      );
+    }
+    if (isCreatingOrder) {
+      return (
+        <>
+          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          Creating Order...
+        </>
+      );
+    }
+    if (!selectedAddress) {
+      return (
+        <>
+          <AlertCircle className="mr-2 h-4 w-4" />
+          Select Address to Continue
+        </>
+      );
+    }
+    if (paymentMethod === "cod") {
+      return (
+        <>
+          <Banknote className="mr-2 h-4 w-4" />
+          Place Order (Cash on Delivery)
+        </>
+      );
+    }
+    return (
+      <>
+        <Lock className="mr-2 h-4 w-4" />
+        Pay with Stripe
+      </>
+    );
+  };
+
   if (loading) {
     return (
-      <Container className="py-8">
+      <Container className="pt-24 pb-8 sm:pt-28">
         {/* Breadcrumb Skeleton */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-8">
           <div className="flex items-center justify-between">
@@ -374,9 +414,9 @@ const CheckoutPageContent = () => {
         </div>
 
         {/* Content Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          <div className="space-y-6 lg:col-span-2">
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
               <Skeleton className="h-6 w-32 mb-4" />
               <div className="space-y-4">
                 {[1, 2, 3].map((index) => (
@@ -394,7 +434,7 @@ const CheckoutPageContent = () => {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
               <Skeleton className="h-6 w-24 mb-6" />
               <div className="space-y-4">
                 {[1, 2, 3, 4].map((index) => (
@@ -414,8 +454,8 @@ const CheckoutPageContent = () => {
 
   if (!order) {
     return (
-      <Container className="py-16">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      <Container className="pt-24 pb-10 sm:pt-28 sm:pb-16">
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
               Order Not Found
@@ -432,22 +472,27 @@ const CheckoutPageContent = () => {
   }
 
   return (
-    <Container className="py-8">
+    <Container className="pt-24 pb-28 sm:pt-28 sm:pb-8">
       {/* Breadcrumb */}
       <PageBreadcrumb
-        items={[{ label: "Cart", href: "/cart" }]}
+        items={[
+          { label: "Shop", href: "/shop" },
+          { label: "Cart", href: "/cart" },
+        ]}
         currentPage="Checkout"
         showSocialShare={false}
       />
 
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Checkout</h1>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="mb-2 text-3xl font-bold text-gray-900 sm:text-4xl">
+          Checkout
+        </h1>
         <p className="text-gray-600">Complete your order</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         {/* Order Details */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           {/* Shipping Address */}
           <AddressSelection
             selectedAddress={selectedAddress}
@@ -457,7 +502,7 @@ const CheckoutPageContent = () => {
           />
 
           {/* Order Items */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6">
               Order Details
             </h2>
@@ -466,34 +511,37 @@ const CheckoutPageContent = () => {
               {order.items.map((item, index) => (
                 <div
                   key={index.toString()}
-                  className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg"
+                  className="rounded-lg border border-gray-100 p-3 sm:p-4"
                 >
-                  <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                    {item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                        <CreditCard className="w-6 h-6 text-gray-400" />
-                      </div>
-                    )}
+                  <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                      {item.image ? (
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gray-200">
+                          <CreditCard className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="mb-1 line-clamp-2 font-medium text-gray-900 sm:line-clamp-1">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Quantity: {item.quantity} ×{" "}
+                        <PriceFormatter amount={item.price} />
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 mb-1">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Quantity: {item.quantity} ×{" "}
-                      <PriceFormatter amount={item.price} />
-                    </p>
-                  </div>
-
-                  <div className="text-right">
+                  <div className="mt-3 flex items-center justify-between sm:mt-0 sm:justify-end">
+                    <span className="text-xs text-gray-500 sm:hidden">Total</span>
                     <PriceFormatter
                       amount={item.price * item.quantity}
                       className="text-base font-semibold text-gray-900"
@@ -508,7 +556,7 @@ const CheckoutPageContent = () => {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-4">
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6 lg:sticky lg:top-24">
             <h2 className="text-xl font-bold text-gray-900 mb-6">
               Order Summary
             </h2>
@@ -547,7 +595,7 @@ const CheckoutPageContent = () => {
               {calculateShipping() === 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <p className="text-green-700 text-sm font-medium">
-                    🎉 You qualify for free shipping!
+                    You qualify for free shipping.
                   </p>
                 </div>
               )}
@@ -648,43 +696,14 @@ const CheckoutPageContent = () => {
             <Button
               size="lg"
               onClick={handlePlaceOrder}
-              disabled={
-                processing ||
-                isCreatingOrder ||
-                !selectedAddress
-              }
-              className="w-full mt-6 bg-darkColor hover:bg-shop_light_yellow/90 text-white rounded-full py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={processing || isCreatingOrder || !selectedAddress}
+              className="mt-6 hidden w-full rounded-full bg-darkColor py-3 font-semibold text-white hover:bg-shop_light_yellow/90 disabled:opacity-50 disabled:cursor-not-allowed lg:flex"
             >
-              {processing ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Processing...
-                </>
-              ) : isCreatingOrder ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Creating Order...
-                </>
-              ) : !selectedAddress ? (
-                <>
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  Select Address to Continue
-                </>
-              ) : paymentMethod === "cod" ? (
-                <>
-                  <Banknote className="w-4 h-4 mr-2" />
-                  Place Order (Cash on Delivery)
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4 mr-2" />
-                  Pay with Stripe
-                </>
-              )}
+              {renderPlaceOrderContent()}
             </Button>
 
             {!selectedAddress && (
-              <div className="mt-2 text-center">
+              <div className="mt-2 text-center hidden lg:block">
                 <p className="text-sm text-amber-600">
                   Please select a shipping address to proceed
                 </p>
@@ -700,6 +719,30 @@ const CheckoutPageContent = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-gray-500">Total</p>
+            <PriceFormatter
+              amount={calculateTotal()}
+              className="truncate text-base font-bold text-gray-900"
+            />
+          </div>
+          <Button
+            onClick={handlePlaceOrder}
+            disabled={processing || isCreatingOrder || !selectedAddress}
+            className="h-11 min-w-[190px] rounded-full bg-darkColor px-4 text-white hover:bg-shop_light_yellow/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {renderPlaceOrderContent()}
+          </Button>
+        </div>
+        {!selectedAddress && (
+          <p className="mx-auto mt-2 max-w-7xl text-xs text-amber-600">
+            Please select a shipping address to proceed
+          </p>
+        )}
       </div>
     </Container>
   );

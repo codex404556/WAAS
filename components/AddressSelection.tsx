@@ -1,7 +1,7 @@
 import { addAddress, deleteAddress, updateAddress } from "@/lib/addressApi";
 import { useUser } from "@clerk/nextjs";
 import type { Address, AddressInput } from "@/types/address";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Edit, MapPin, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -39,14 +39,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { user, isLoaded, isSignedIn } = useUser();
 
-  // Update form when dialog opens
-  useEffect(() => {
-    if (isAddDialogOpen) {
-      resetForm();
-    }
-  }, [isAddDialogOpen, addresses.length]);
-
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
       name: "",
       address: "",
@@ -55,7 +48,13 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
       zip: "",
       defaulte: addresses.length === 0, // Auto-check if this is the first address
     });
-  };
+  }, [addresses.length]);
+
+  // Reset Add form each time the add-address dialog is opened.
+  useEffect(() => {
+    if (!isAddDialogOpen) return;
+    resetForm();
+  }, [isAddDialogOpen, resetForm]);
 
   const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +126,153 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
     });
     setIsEditDialogOpen(true);
   };
+
+  const handleFieldChange =
+    (field: keyof AddressInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    };
+
+  const renderAddressForm = ({
+    mode,
+    onSubmit,
+    onCancel,
+    fieldPrefix,
+  }: {
+    mode: "add" | "edit";
+    onSubmit: (e: React.FormEvent) => Promise<void>;
+    onCancel: () => void;
+    fieldPrefix: string;
+  }) => (
+    <form onSubmit={onSubmit} className="space-y-5 px-4 pb-4 sm:px-6 sm:pb-6">
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor={`${fieldPrefix}-name`} className="text-sm font-medium">
+            Full Name *
+          </Label>
+          <Input
+            id={`${fieldPrefix}-name`}
+            value={formData.name}
+            onChange={handleFieldChange("name")}
+            placeholder="John Doe"
+            required
+            className="mt-1 h-10"
+          />
+        </div>
+
+        <div>
+          <Label
+            htmlFor={`${fieldPrefix}-address`}
+            className="text-sm font-medium"
+          >
+            Address *
+          </Label>
+          <Input
+            id={`${fieldPrefix}-address`}
+            value={formData.address}
+            onChange={handleFieldChange("address")}
+            placeholder="123 Main Street, Apt 4B"
+            required
+            className="mt-1 h-10"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <Label htmlFor={`${fieldPrefix}-city`} className="text-sm font-medium">
+              City *
+            </Label>
+            <Input
+              id={`${fieldPrefix}-city`}
+              value={formData.city}
+              onChange={handleFieldChange("city")}
+              placeholder="New York"
+              required
+              className="mt-1 h-10"
+            />
+          </div>
+          <div>
+            <Label
+              htmlFor={`${fieldPrefix}-state`}
+              className="text-sm font-medium"
+            >
+              State *
+            </Label>
+            <Input
+              id={`${fieldPrefix}-state`}
+              value={formData.state}
+              onChange={handleFieldChange("state")}
+              placeholder="CA"
+              required
+              className="mt-1 h-10"
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor={`${fieldPrefix}-zip`} className="text-sm font-medium">
+            Zip Code *
+          </Label>
+          <Input
+            id={`${fieldPrefix}-zip`}
+            value={formData.zip}
+            onChange={handleFieldChange("zip")}
+            placeholder="90210"
+            required
+            className="mt-1 h-10"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+        <div className="flex items-start gap-2.5">
+          <input
+            type="checkbox"
+            id={`${fieldPrefix}-isDefault`}
+            checked={formData.defaulte}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                defaulte: e.target.checked,
+              }))
+            }
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <Label
+            htmlFor={`${fieldPrefix}-isDefault`}
+            className="text-sm text-gray-700"
+          >
+            Set as default shipping address
+          </Label>
+        </div>
+        {mode === "add" && addresses.length === 0 && (
+          <p className="mt-2 text-xs text-blue-700">
+            This will be your primary shipping address for future orders.
+          </p>
+        )}
+      </div>
+
+      <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          className="h-10 w-full sm:w-auto sm:min-w-[100px]"
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isLoading} className="h-10 w-full sm:w-auto">
+          {isLoading
+            ? mode === "add"
+              ? "Adding..."
+              : "Updating..."
+            : mode === "add"
+              ? "Add Address"
+              : "Update Address"}
+        </Button>
+      </div>
+    </form>
+  );
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -145,6 +291,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
               Add your shipping address to proceed with your order. This will be
               used for delivery.
             </p>
+            {/* Add-address modal: controlled via `isAddDialogOpen` */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2">
@@ -152,163 +299,16 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
                   Add Your First Address
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
+              <DialogContent className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-[560px]">
+                <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
                   <DialogTitle>Add New Address</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleAddAddress} className="space-y-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label
-                        htmlFor="name"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Full Name *
-                      </Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        placeholder="John Doe"
-                        required
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label
-                        htmlFor="address"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Address *
-                      </Label>
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) =>
-                          setFormData({ ...formData, address: e.target.value })
-                        }
-                        placeholder="123 Main Street, Apt 4B"
-                        required
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label
-                          htmlFor="city"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          City *
-                        </Label>
-                        <Input
-                          id="city"
-                          value={formData.city}
-                          onChange={(e) =>
-                            setFormData({ ...formData, city: e.target.value })
-                          }
-                          placeholder="New York"
-                          required
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label
-                          htmlFor="state"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          State *
-                        </Label>
-                        <Input
-                          id="state"
-                          value={formData.state}
-                          onChange={(e) =>
-                            setFormData({ ...formData, state: e.target.value })
-                          }
-                          placeholder="CA"
-                          required
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label
-                        htmlFor="zip"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Zip Code *
-                      </Label>
-                      <Input
-                        id="zip"
-                        value={formData.zip}
-                        onChange={(e) =>
-                          setFormData({ ...formData, zip: e.target.value })
-                        }
-                        placeholder="90210"
-                        required
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        id="isDefault"
-                        checked={formData.defaulte}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            defaulte: e.target.checked,
-                          })
-                        }
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <Label
-                        htmlFor="isDefault"
-                        className="text-sm text-gray-700"
-                      >
-                        Set as default shipping address
-                      </Label>
-                    </div>
-                    {addresses.length === 0 && (
-                      <div className="mt-3 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-                        💡 This will be your primary shipping address for future
-                        orders
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          Adding...
-                        </>
-                      ) : (
-                        "Add Address"
-                      )}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsAddDialogOpen(false)}
-                      className="flex-1 sm:flex-none sm:min-w-[100px]"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
+                {renderAddressForm({
+                  mode: "add",
+                  onSubmit: handleAddAddress,
+                  onCancel: () => setIsAddDialogOpen(false),
+                  fieldPrefix: "first-add",
+                })}
               </DialogContent>
             </Dialog>
           </div>
@@ -345,7 +345,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
                       <RadioGroupItem
                         value={address.id}
                         id={address.id}
-                        className="mt-1 flex-shrink-0"
+                        className="mt-1 flex shrink-0"
                       />
 
                       {/* Address Content */}
@@ -385,7 +385,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-1 flex-shrink-0">
+                      <div className="flex flex-col sm:flex-row gap-1 shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -418,6 +418,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
                 ))}
               </div>
             </RadioGroup>
+            {/* Same add-address modal for users who already have addresses */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -428,196 +429,30 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
                   Add New Address
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
+              <DialogContent className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-[560px]">
+                <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
                   <DialogTitle>Add New Address</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleAddAddress} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="John Doe"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) =>
-                        setFormData({ ...formData, address: e.target.value })
-                      }
-                      placeholder="123 Main St"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) =>
-                        setFormData({ ...formData, city: e.target.value })
-                      }
-                      placeholder="New York"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      value={formData.state}
-                      onChange={(e) =>
-                        setFormData({ ...formData, state: e.target.value })
-                      }
-                      placeholder="CA"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="zip">Zip Code</Label>
-                    <Input
-                      id="zip"
-                      value={formData.zip}
-                      onChange={(e) =>
-                        setFormData({ ...formData, zip: e.target.value })
-                      }
-                      placeholder="90210"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="isDefault"
-                      checked={formData.defaulte}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          defaulte: e.target.checked,
-                        })
-                      }
-                    />
-                    <Label htmlFor="isDefault">Set as default address</Label>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={isLoading}>
-                      {isLoading ? "Adding..." : "Add Address"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsAddDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
+                {renderAddressForm({
+                  mode: "add",
+                  onSubmit: handleAddAddress,
+                  onCancel: () => setIsAddDialogOpen(false),
+                  fieldPrefix: "add",
+                })}
               </DialogContent>
             </Dialog>
 
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
+              <DialogContent className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-[560px]">
+                <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
                   <DialogTitle>Edit Address</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleEditAddress} className="space-y-4">
-                  <div>
-                    <Label htmlFor="edit-name">Full Name</Label>
-                    <Input
-                      id="edit-name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="John Doe"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-address">Address</Label>
-                    <Input
-                      id="edit-address"
-                      value={formData.address}
-                      onChange={(e) =>
-                        setFormData({ ...formData, address: e.target.value })
-                      }
-                      placeholder="123 Main St"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-city">City</Label>
-                    <Input
-                      id="edit-city"
-                      value={formData.city}
-                      onChange={(e) =>
-                        setFormData({ ...formData, city: e.target.value })
-                      }
-                      placeholder="New York"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-state">State</Label>
-                    <Input
-                      id="edit-state"
-                      value={formData.state}
-                      onChange={(e) =>
-                        setFormData({ ...formData, state: e.target.value })
-                      }
-                      placeholder="CA"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-zip">Zip Code</Label>
-                    <Input
-                      id="edit-zip"
-                      value={formData.zip}
-                      onChange={(e) =>
-                        setFormData({ ...formData, zip: e.target.value })
-                      }
-                      placeholder="90210"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="edit-isDefault"
-                      checked={formData.defaulte}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          defaulte: e.target.checked,
-                        })
-                      }
-                    />
-                    <Label htmlFor="edit-isDefault">
-                      Set as default address
-                    </Label>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={isLoading}>
-                      {isLoading ? "Updating..." : "Update Address"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsEditDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
+                {renderAddressForm({
+                  mode: "edit",
+                  onSubmit: handleEditAddress,
+                  onCancel: () => setIsEditDialogOpen(false),
+                  fieldPrefix: "edit",
+                })}
               </DialogContent>
             </Dialog>
           </>

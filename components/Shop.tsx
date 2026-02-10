@@ -189,7 +189,7 @@ const Shop = ({ categories, brands }: Props) => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-10"
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
                   >
                     {Array.from({ length: 12 }).map((_, index) => (
                       <ShopProductCardSkeleton key={`shop-skeleton-${index}`} />

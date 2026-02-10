@@ -1,11 +1,11 @@
 import CategoryProducts from "@/components/CategoryProducts";
 import Container from "@/components/Container";
-import { Title } from "@/components/ui/text";
+import PageBreadcrumb from "@/components/common/PageBreadcrumb";
 import { getCategories } from "@/lib/cms";
 
 import React from "react";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const CategoryPage = async ({
   params,
@@ -14,17 +14,18 @@ const CategoryPage = async ({
 }) => {
   const categories = await getCategories();
   const { slug } = await params;
+  const selectedCategory = categories.find(
+    (category) => category.slug?.current?.toLowerCase() === slug.toLowerCase()
+  );
+  const currentPageLabel = selectedCategory?.title ?? slug;
+
   return (
     <div className="mt-16 py-10">
       <Container>
-        <Title className="text-darkColor group">
-          Products By Category:{" "}
-          <span className="font-bold text-shop_orange capitalize tracking-wide">
-            {slug && slug}
-          </span>
-          <div className="bg-shop_dark_yellow w-40 h-1 mt-2 group-hover:w-80 hoverEffect"></div>
-        </Title>
-
+        <PageBreadcrumb
+          items={[{ label: "Shop", href: "/shop" }]}
+          currentPage={currentPageLabel}
+        />
         <CategoryProducts categories={categories} slug={slug} />
       </Container>
     </div>
