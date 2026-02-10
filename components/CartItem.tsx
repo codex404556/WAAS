@@ -24,8 +24,8 @@ const CartItem = ({ product }: Props) => {
   const itemCount = getItemCount(product._id);
   const deleteProduct = useStore((state) => state.removeItem);
   return (
-    <div className="border-b p-2.5 last:border-b-0">
-      <div className="group flex flex-1 items-start gap-5 h-36 md:h-44 px-3">
+    <div className="w-full border-b p-2 last:border-b-0 sm:p-3">
+      <div className="group flex w-full items-start gap-2 sm:gap-4 px-1 sm:px-2">
         {product?.images && (
           <Link
             href={`/product/${product?.slug?.current}`}
@@ -37,37 +37,37 @@ const CartItem = ({ product }: Props) => {
               width={500}
               height={500}
               loading="lazy"
-              className="w-32 md:w-40 h-32 md:h-40 object-cover group-hover:scale-107 hoverEffect"
+              className="h-16 w-16 object-cover group-hover:scale-105 hoverEffect sm:h-32 sm:w-32 md:h-40 md:w-40"
             />
           </Link>
         )}
-        <div className="flex flex-1 justify-between h-full py-2 md:py-4 w-full">
-          <div className="flex flex-col h-full justify-between">
-            <div className="flex flex-col gap-0.5 md:gap-1.5">
-              <h2 className="text-base font-semibold line-clamp-1">
+        <div className="flex w-full flex-1 justify-between py-1 sm:py-2 md:py-3">
+          <div className="flex min-h-16 flex-col justify-between sm:min-h-24 md:min-h-[120px]">
+            <div className="flex flex-col gap-0.5 sm:gap-1 md:gap-1.5">
+              <h2 className="line-clamp-1 text-xs font-semibold sm:text-sm md:text-base">
                 {product?.name?.split(" ").slice(0, 3).join(" ")}
               </h2>
-              <p className="text-sm capitalize">
+              <p className="text-sm capitalize hidden md:block">
                 Variant:{" "}
                 <span className="font-semibold text-sm text-darkColor">
                   {product?.variant}
                 </span>
               </p>
-              <p className="text-sm capitalize">
+              <p className="text-[11px] capitalize sm:text-xs md:text-sm">
                 Status:{" "}
-                <span className="font-semibold text-sm text-darkColor">
+                <span className="font-semibold text-[11px] text-darkColor sm:text-xs md:text-sm">
                   {product?.status}
                 </span>
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <AddToFavorites
                 product={product}
                 showProduct={true}
-                className=""
+                className="h-5 w-5 p-1 sm:h-10 sm:w-10 sm:p-2 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-5 sm:[&_svg]:w-5"
               />
               <Trash
-                className="cursor-pointer text-lightColor hover:text-red-500 hover:scale-110 hoverEffect"
+                className="h-4 w-4 cursor-pointer text-lightColor hover:text-red-500 hover:scale-110 hoverEffect sm:h-5 sm:w-5"
                 onClick={() => {
                   deleteProduct(product?._id);
                   toast.success("Product Deleted Successfuly!");
@@ -76,10 +76,10 @@ const CartItem = ({ product }: Props) => {
             </div>
           </div>
 
-          <div className="flex flex-col justify-between h-full">
+          <div className="flex min-h-16 flex-col justify-between sm:min-h-24 md:min-h-[120px]">
             <PriceFormatter
               amount={(product?.price as number) * itemCount}
-              className="text-xl font-semibold text-gray-900"
+              className="text-sm font-semibold text-gray-900 sm:text-base md:text-xl"
             />
             <QuantityButton product={product} showProduct={false} />
           </div>

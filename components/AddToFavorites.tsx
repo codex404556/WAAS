@@ -55,7 +55,7 @@ const AddToFavorites = ({ showProduct, product, className }: Props) => {
         <button
           onClick={handleFavorite}
           className={cn(
-            `bg-shop_light_yellow rounded-full p-2 hover:scale-110 text-lightColor opacity-70 hover:opacity-90 hoverEffect ${existingProduct && "opacity-100 group-hover:opacity-100"}`,
+            `inline-flex items-center justify-center bg-shop_light_yellow rounded-full p-2 hover:scale-110 text-lightColor opacity-70 hover:opacity-90 hoverEffect ${existingProduct && "opacity-100 group-hover:opacity-100"}`,
             className
           )}
         >
