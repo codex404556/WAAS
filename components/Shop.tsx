@@ -230,7 +230,7 @@ const Shop = ({ categories, brands }: Props) => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <NoProductsAvailable className="p-60" />
+                    <NoProductsAvailable />
                   </motion.div>
                 )}
               </AnimatePresence>
