@@ -92,7 +92,7 @@ const UserButton = () => {
           <span className="text-left">
             <p className="text-xs font-medium">Welcome</p>
             <p className="font-semibold text-sm">
-              {user.fullName || "My Profile"}
+              {user.firstName || "My Profile"}
             </p>
           </span>
         </button>

@@ -109,9 +109,9 @@ const SearchBar = ({ isScrolled }: { isScrolled: boolean }) => {
       {isMounted &&
         open &&
         createPortal(
-          <div className="fixed inset-0 z-[100] bg-black/30 overflow-hidden">
+          <div className="fixed inset-0 z-100 bg-black/30 overflow-hidden">
             {/* Center container */}
-            <div className="relative z-[110] flex min-h-screen items-start justify-center p-4 md:p-10">
+            <div className="relative z-110 flex min-h-screen items-start justify-center p-4 md:p-10">
               {/* Modal panel */}
               <div
                 ref={panelRef}

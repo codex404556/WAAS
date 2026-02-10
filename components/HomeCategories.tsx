@@ -14,36 +14,41 @@ const HomeCategories = async ({
 }) => {
   const resolvedCategories = categories ?? (await getCategories());
   return (
-    <div className="bg-white border border-shop_light_yellow/20 my-10 md:my-20 p-5 lg:p-7 rounded-md">
-      <div className="flex items-center justify-between">
-        <Title className="border-b pb-3">Popular Categories</Title>
+    <section className="my-10 px-4 sm:px-6 md:my-16 lg:my-20 lg:px-8">
+      <div className="mx-auto max-w-7xl rounded-2xl border border-shop_light_yellow/20 bg-white p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+        <Title className="border-b pb-2 sm:pb-3">Popular Categories</Title>
         {resolvedCategories?.[0]?.slug?.current && (
           <Link href={`/category/${resolvedCategories[0].slug.current}`}>
-            <Button variant="outline">See All</Button>
+            <Button variant="outline" className="h-9 px-4 text-sm">
+              See All
+            </Button>
           </Link>
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-5 gap-5">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:mt-6 lg:grid-cols-3 lg:gap-5">
         {resolvedCategories?.slice(0, 6).map((item) => (
           <Link
             href={`/category/${item?.slug?.current}`}
             key={item?._id}
-            className="bg-shop_light_bg flex items-center gap-3 hover:shadow-lg hoverEffect px-1 py-2 rounded-lg hover:scale-105 hover:bg-shop_light_yellow/70 cursor-pointer"
+            className="group flex min-h-24 items-center gap-3 rounded-xl border border-shop_light_yellow/20 bg-shop_light_bg p-2.5 transition-all duration-300 hover:bg-shop_light_yellow/70 hover:shadow-md md:hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-shop_dark_yellow"
           >
             {item?.image && (
-              <div className="overflow-hidden border border-shop_light_yellow/20 w-20 h-20 p-1">
+              <div className="h-18 w-18 shrink-0 overflow-hidden rounded-md border border-shop_light_yellow/20 bg-white p-1 sm:h-20 sm:w-20">
                 <Image
                   src={urlFor(item?.image).url()}
                   alt="category-image"
                   width={500}
                   height={500}
-                  className="w-full h-full object-contain group-hover:scale-110 hoverEffect"
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
             )}
-            <div className="space-y-2">
-              <h3 className="text-base font-semibold">{item?.title}</h3>
-              <p className="text-sm">
+            <div className="min-w-0 space-y-1">
+              <h3 className="truncate text-sm font-semibold sm:text-base">
+                {item?.title}
+              </h3>
+              <p className="text-sm text-lightColor">
                 <span className="font-bold text-shop_dark_yellow">
                   ({item?.productCount})
                 </span>{" "}
@@ -53,7 +58,8 @@ const HomeCategories = async ({
           </Link>
         ))}
       </div>
-    </div>
+      </div>
+    </section>
   );
 };
 

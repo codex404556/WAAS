@@ -11,78 +11,79 @@ const orderData = [
   {
     title: "Free Delivery",
     description: "Free shipping over $100",
-    icon: <Truck size={45} />,
+    icon: <Truck size={30} />,
   },
   {
     title: "Free Return",
     description: "Free return over $100",
-    icon: <GitCompareArrows size={45} />,
+    icon: <GitCompareArrows size={30} />,
   },
   {
     title: "Customer Support",
     description: "Friendly 7/24 customer support",
-    icon: <Headset size={45} />,
+    icon: <Headset size={30} />,
   },
   {
     title: "Money Back",
     description: "Quality checked by our team",
-    icon: <ShieldCheck size={45} />,
+    icon: <ShieldCheck size={30} />,
   },
 ];
 
 const ShopByBrands = async () => {
   const brands = await getAllBrands();
   return (
-    <div className="lg:mb-25 bg-shop_light_bg p-5 lg:p-7 mx-16 rounded-md">
-      <div className="flex items-center justify-between mb-10">
-        <Title>Shop By Brands</Title>
-        <Link
-          href={"/shop"}
-          className="px-3 py-1 text-xs font-semibold rounded-full bg-darkColor hover:bg-shop_light_yellow hover:scale-105 text-white hover:text-darkColor hoverEffect"
-        >
-          View All
-        </Link>
-      </div>
-      <div className="flex flex-wrap md:flex-nowrap justify-between  gap-1.5">
-        {brands?.slice(0, 8).map((brand: Brand) => (
+    <section className="mb-12 px-4 sm:px-6 lg:mb-20 lg:px-8">
+      <div className="mx-auto max-w-7xl rounded-2xl bg-shop_light_bg p-4 sm:p-6 lg:p-8">
+        <div className="mb-6 flex items-center justify-between sm:mb-8">
+          <Title>Shop By Brands</Title>
           <Link
-            className="bg-white w-50 h-24 flex items-center justify-center rounded-md overflow-hidden hover:shadow-lg shadow-shop_light_yellow/20 hoverEffect group"
-            key={brand?._id}
-            href={{ pathname: "/shop", query: { brand: brand?.slug?.current } }}
+            href={"/shop"}
+            className="rounded-full bg-darkColor px-3 py-1.5 text-xs font-semibold text-white hover:bg-shop_light_yellow hover:text-darkColor hover:scale-105 hoverEffect"
           >
-            {brand?.image && (
-              <Image
-                src={urlFor(brand?.image).url()}
-                alt="brand-image"
-                width={250}
-                height={250}
-                className="group-hover:scale-110 hoverEffect object-contain w-30 h-20"
-              />
-            )}
+            View All
           </Link>
-        ))}
-      </div>
-      <div className="flex flex-wrap md:flex-nowrap items-cente justify-between gap-7 mt-10 md:gap-4 shadow-lg rounded-md py-5 px-5">
-        {orderData.map((brand) => (
-          <div
-            key={brand.title}
-            className="flex items-center justify-between gap-3 mb-5 mt-7 group"
-          >
-            <span className="text-lightColor hover:scale-110 group-hover:text-shop_dark_yellow hoverEffect">
-              {brand?.icon}
-            </span>
-            <div className="">
-              <p className="text-xs font-semibold text-lightColor capitalize group-hover:text-shop_dark_yellow">
-                {brand?.title}
-              </p>
-              <p className="text-xs font-medium text-lightColor/80">
-                {brand?.description}
-              </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-6">
+          {brands?.slice(0, 8).map((brand: Brand) => (
+            <Link
+              className="group flex min-h-20 items-center justify-center overflow-hidden rounded-lg border border-shop_light_yellow/25 bg-white p-3 shadow-sm hover:-translate-y-0.5 hover:shadow-md hoverEffect sm:min-h-24"
+              key={brand?._id}
+              href={{ pathname: "/shop", query: { brand: brand?.slug?.current } }}
+            >
+              {brand?.image && (
+                <Image
+                  src={urlFor(brand?.image).url()}
+                  alt="brand-image"
+                  width={250}
+                  height={250}
+                  className="h-14 w-full object-contain group-hover:scale-105 hoverEffect sm:h-16"
+                />
+              )}
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 gap-3 rounded-xl border border-shop_light_yellow/20 bg-white p-4 shadow-sm sm:grid-cols-2 lg:mt-10 lg:grid-cols-4 lg:gap-4 lg:p-5">
+          {orderData.map((brand) => (
+            <div key={brand.title} className="group flex items-center gap-3 rounded-lg p-2">
+              <span className="text-lightColor group-hover:text-shop_dark_yellow hover:scale-105 hoverEffect">
+                {brand?.icon}
+              </span>
+              <div>
+                <p className="text-sm font-semibold capitalize text-lightColor group-hover:text-shop_dark_yellow">
+                  {brand?.title}
+                </p>
+                <p className="text-xs font-medium text-lightColor/80 sm:text-sm">
+                  {brand?.description}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 
