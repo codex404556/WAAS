@@ -26,21 +26,19 @@ const CartItem = ({ product }: Props) => {
   return (
     <div className="w-full border-b p-2 last:border-b-0 sm:p-3">
       <div className="group flex w-full items-start gap-2 sm:gap-4 px-1 sm:px-2">
-        {product?.images && (
-          <Link
-            href={`/product/${product?.slug?.current}`}
-            className="border rounded-md overflow-hidden shadow-sm"
-          >
-            <Image
-              src={urlFor(product?.images[0]).url()}
-              alt="product-image"
-              width={500}
-              height={500}
-              loading="lazy"
-              className="h-16 w-16 object-cover group-hover:scale-105 hoverEffect sm:h-32 sm:w-32 md:h-40 md:w-40"
-            />
-          </Link>
-        )}
+        <Link
+          href={`/product/${product?.slug?.current}`}
+          className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-white shadow-sm sm:h-32 sm:w-32 md:h-40 md:w-40"
+        >
+          <Image
+            src={urlFor(product?.images?.[0]).url()}
+            alt={product?.name ?? "product-image"}
+            loading="lazy"
+            fill
+            sizes="(min-width: 768px) 160px, (min-width: 640px) 128px, 64px"
+            className="object-contain p-1 group-hover:scale-105 hoverEffect"
+          />
+        </Link>
         <div className="flex w-full flex-1 justify-between py-1 sm:py-2 md:py-3">
           <div className="flex min-h-16 flex-col justify-between sm:min-h-24 md:min-h-[120px]">
             <div className="flex flex-col gap-0.5 sm:gap-1 md:gap-1.5">

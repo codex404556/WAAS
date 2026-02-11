@@ -393,6 +393,20 @@ export const listProductsByCategory = async (
   return productsResult.docs.map(mapProduct);
 };
 
+export const listRelatedProductsByCategory = async (
+  _categorySlug: string,
+  _currentProductId?: string,
+  _limit = 4
+): Promise<Product[]> => {
+  if (!_categorySlug) return [];
+
+  const products = await listProductsByCategory(_categorySlug);
+
+  return products
+    .filter((product) => product._id !== _currentProductId)
+    .slice(0, _limit);
+};
+
 export const listAddresses = async (): Promise<Address[]> => {
   const res = await fetch("/api/addresses/me", { cache: "no-store" });
   if (!res.ok) {

@@ -4,6 +4,7 @@ import Container from "@/components/Container";
 import ImagesView from "@/components/ImagesView";
 import PriceView from "@/components/PriceView";
 import ProductsCharacteristics from "@/components/ProductsCharacteristics";
+import RelatedProduct from "@/components/RelatedProduct";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb";
 import {
   getCategories,
@@ -85,24 +86,27 @@ const SingleProductPage = async ({ params }: Props) => {
   const isStock = product?.stock;
 
   return (
-    <div className="mt-20">
-      <Container className="px-20">
-        <PageBreadcrumb currentPage={product?.name ?? "Product"} items={breadcrumbItems} />
+    <div className="mt-16 sm:mt-20">
+      <Container className="px-3 sm:px-4 lg:px-6">
+        <PageBreadcrumb
+          currentPage={product?.name ?? "Product"}
+          items={breadcrumbItems}
+        />
       </Container>
 
-      <Container className="flex flex-col md:flex-row gap-12 px-20">
-        <div className="flex flex-col">
+      <Container className="flex flex-col gap-8 px-3 sm:px-4 lg:flex-row lg:gap-10 lg:px-6 xl:gap-12">
+        <div className="flex w-full flex-col lg:w-1/2">
           {product?.images && (
             <ImagesView images={product?.images} isStock={isStock} />
           )}
 
           <ProductTab titleInfo={titleInfo} reviews={reviews} />
         </div>
-        <div className="w-full min-w-1/2 flex flex-col gap-4">
-          <h2 className="text-2xl font-semibold text-darkColor">
+        <div className="flex w-full flex-col gap-4 lg:w-1/2">
+          <h2 className="text-xl font-semibold text-darkColor sm:text-2xl">
             {product?.name}
           </h2>
-          <p className="text-lightColor text-xs font-medium">
+          <p className="text-xs font-medium text-lightColor sm:text-sm">
             {product?.description}
           </p>
           <div className="flex items-center gap-0.5">
@@ -125,62 +129,68 @@ const SingleProductPage = async ({ params }: Props) => {
             )}
             <p className="text-xs font-light">(120)</p>
           </div>
-          <div className="">
+          <div>
             <PriceView price={product?.price} oldPrice={product?.oldPrice} />
             <p
-              className={`rounded-full inline-block px-2 text-center text-[12px] mt-2 font-semibold ${isStock ? "bg-shop_light_yellow " : "bg-red-500"}`}
+              className={`mt-2 inline-block rounded-full px-2 text-center text-[12px] font-semibold ${isStock ? "bg-shop_light_yellow" : "bg-red-500"}`}
             >
               {(isStock as number) > 0 ? "In Stock" : "Unvailed"}
             </p>
           </div>
-          <div className="flex items-center justify-between gap-5">
-            <AddToCartButton showProduct={true} product={product} />
-            <AddToFavorites product={product} showProduct={true} className="" />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="w-full">
+              <AddToCartButton showProduct={true} product={product} />
+            </div>
+            <AddToFavorites
+              product={product}
+              showProduct={true}
+              className="self-start sm:self-auto"
+            />
           </div>
           <ProductsCharacteristics product={product} />
-          <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-b-gray-200 py-5 mt-2 border-t border-t-gray-200">
-            <div className="flex items-center gap-2 text-sm text-darkColor hover:text-shop_dark_yellow hoverEffect hover:scale-105">
+          <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2.5 border-y border-y-gray-200 py-4">
+            <div className="flex items-center gap-2 text-sm text-darkColor hover:text-shop_dark_yellow hoverEffect">
               <RxBorderSplit className="text-lg" />
               <p>Compare Color</p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-darkColor hover:text-shop_dark_yellow hoverEffect hover:scale-105">
+            <div className="flex items-center gap-2 text-sm text-darkColor hover:text-shop_dark_yellow hoverEffect">
               <FaRegQuestionCircle className="text-lg" />
               <p>Ask a Question</p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-darkColor hover:text-shop_dark_yellow hoverEffect hover:scale-105">
+            <div className="flex items-center gap-2 text-sm text-darkColor hover:text-shop_dark_yellow hoverEffect">
               <TbTruckDelivery className="text-lg" />
               <p>Delivery & Return</p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-darkColor hover:text-shop_dark_yellow hoverEffect hover:scale-105">
+            <div className="flex items-center gap-2 text-sm text-darkColor hover:text-shop_dark_yellow hoverEffect">
               <FiShare2 className="text-lg" />
               <p>Share</p>
             </div>
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center justify-start gap-3 border border-gray-300 px-2 py-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-start gap-3 rounded-md border border-gray-300 px-3 py-3 sm:items-center">
               <Truck
-                size={30}
+                size={26}
                 className="text-shop_orange hover:scale-105 hoverEffect"
               />
               <div className="flex flex-col">
-                <p className="text-base font-semibold text-black">
+                <p className="text-sm font-semibold text-black sm:text-base">
                   Free Delivery
                 </p>
-                <p className="text-sm text-gray-500 underline underline-offset-2">
+                <p className="text-xs text-gray-500 underline underline-offset-2 sm:text-sm">
                   Enter Your Postal code for delivery availability
                 </p>
               </div>
             </div>
-            <div className="flex items-center justify-start gap-3 border border-gray-300 py-3 px-2">
+            <div className="flex items-start gap-3 rounded-md border border-gray-300 px-3 py-3 sm:items-center">
               <CornerDownLeft
-                size={30}
+                size={26}
                 className="text-shop_orange hover:scale-105 hoverEffect"
               />
               <div className="flex flex-col">
-                <p className="text-base font-semibold text-black">
+                <p className="text-sm font-semibold text-black sm:text-base">
                   Return Delivery
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs text-gray-500 sm:text-sm">
                   Free 30days Delivery Returns.{" "}
                   <span className="underline underline-offset-1">
                     Detailes
@@ -190,6 +200,13 @@ const SingleProductPage = async ({ params }: Props) => {
             </div>
           </div>
         </div>
+      </Container>
+
+      <Container className="px-3 sm:px-4 lg:px-6">
+        <RelatedProduct
+          categorySlug={matchedCategory?.slug?.current}
+          currentProductId={product?._id}
+        />
       </Container>
     </div>
   );
