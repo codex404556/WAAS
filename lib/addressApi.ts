@@ -66,7 +66,7 @@ export const deleteAddress = async (
   _userId: string,
   addressId: string
 ): Promise<{ addresses: Address[]; message: string }> => {
-  await payloadFetch(`/api/addresses/me`, {
+  await payloadFetch<void>(`/api/addresses/me`, {
     method: "DELETE",
     body: { addressId },
   });

@@ -25,5 +25,19 @@ export async function payloadFetch<T>(
     );
   }
 
-  return (await res.json()) as T;
+  if (res.status === 204 || res.status === 205) {
+    return undefined as T;
+  }
+
+  const responseText = await res.text();
+  if (!responseText.trim()) {
+    return undefined as T;
+  }
+
+  const contentType = res.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return JSON.parse(responseText) as T;
+  }
+
+  return responseText as T;
 }

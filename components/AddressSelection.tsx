@@ -28,6 +28,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [deletingAddressId, setDeletingAddressId] = useState<string | null>(null);
   const [formData, setFormData] = useState<AddressInput>({
     name: "",
     address: "",
@@ -99,7 +100,9 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
 
   const handleDeleteAddress = async (addressId: string) => {
     if (!isLoaded || !isSignedIn || !user) return;
+    if (deletingAddressId) return;
 
+    setDeletingAddressId(addressId);
     setIsLoading(true);
     try {
       const result = await deleteAddress(user.id, addressId);
@@ -111,6 +114,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
       );
     } finally {
       setIsLoading(false);
+      setDeletingAddressId(null);
     }
   };
 
@@ -389,7 +393,10 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => openEditDialog(address)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEditDialog(address);
+                          }}
                           className="p-2 h-8 w-8 hover:bg-gray-100"
                           title="Edit Address"
                         >
@@ -398,8 +405,11 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteAddress(address.id)}
-                          disabled={isLoading}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleDeleteAddress(address.id);
+                          }}
+                          disabled={isLoading || deletingAddressId === address.id}
                           className="p-2 h-8 w-8 hover:bg-red-50 hover:text-red-600"
                           title="Delete Address"
                         >

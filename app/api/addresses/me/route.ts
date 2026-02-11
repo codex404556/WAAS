@@ -28,6 +28,21 @@ const resolvePayloadUserId = async () => {
   return { payload, payloadUserId };
 };
 
+const getAddressOwnerId = (address: Address) => {
+  const userValue = address.user;
+  if (typeof userValue === "number" || typeof userValue === "string") {
+    return String(userValue);
+  }
+
+  if (userValue && typeof userValue === "object") {
+    if ("id" in userValue && userValue.id !== undefined && userValue.id !== null) {
+      return String(userValue.id);
+    }
+  }
+
+  return "";
+};
+
 export const GET = async () => {
   const resolved = await resolvePayloadUserId();
   if ("error" in resolved) {
@@ -165,6 +180,21 @@ export const DELETE = async (request: Request) => {
   const data = (await request.json()) as { addressId?: string };
   if (!data.addressId) {
     return new Response("Missing addressId", { status: 400 });
+  }
+
+  const existingAddress = (await resolved.payload.findByID({
+    collection: "addresses",
+    id: data.addressId,
+    depth: 0,
+  })) as Address | null;
+
+  if (!existingAddress) {
+    return new Response("Address not found", { status: 404 });
+  }
+
+  const ownerId = getAddressOwnerId(existingAddress);
+  if (ownerId !== String(resolved.payloadUserId)) {
+    return new Response("Forbidden", { status: 403 });
   }
 
   await resolved.payload.delete({
