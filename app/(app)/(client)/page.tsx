@@ -5,7 +5,6 @@ import LatestBlog from "@/components/LatestBlog";
 import ProductGrid from "@/components/ProductGrid";
 import ShopByBrands from "@/components/ShopByBrands";
 import { Skeleton } from "@/components/ui/skeleton";
-import CategorySkeleton from "@/app/(app)/(client)/skeleton/CategorySkeleton";
 import ProductCardSkeleton from "@/components/skeleton/ProductCardSkeleton";
 import React, { Suspense } from "react";
 
@@ -24,7 +23,7 @@ const Home = async () => {
       >
         <ProductGrid />
       </Suspense>
-      <Suspense fallback={<CategorySkeleton />}>
+      <Suspense fallback={null}>
         <HomeCategories />
       </Suspense>
       <Suspense

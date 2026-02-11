@@ -2,7 +2,7 @@
 import useStore from "@/store";
 import React, { useState } from "react";
 import Container from "./Container";
-import { Heart, X } from "lucide-react";
+import { Heart, Trash } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -21,7 +21,7 @@ const FavoritesList = () => {
     <Container>
       {favoriteProduct?.length > 0 ? (
         <>
-          <div className="mt-20 overflow-x-auto">
+          <div className="mt-30 overflow-x-auto">
             <table className="w-full border-collapse">
               <thead className="border-b">
                 <tr className="bg-black/2">
@@ -40,15 +40,18 @@ const FavoritesList = () => {
                   .slice(0, visibleProducts)
                   ?.map((product, index) => (
                     <tr key={index} className="border-b hover:bg-gray-100">
-                      <td className="px-2 py-4 flex items-center gap-2">
-                        <X
+                      <td className="px-2 py-4 flex items-center gap-5">
+                        <button
+                          type="button"
                           onClick={() => {
                             removeFromFavorite(product?._id);
                             toast.success("Poduct Removed Successfuly");
                           }}
-                          size={18}
-                          className="hover:text-red-700 hover:scale-105 hoverEffect cursor-pointer"
-                        />
+                          className="rounded p-1"
+                          aria-label="Remove from favorites"
+                        >
+                          <Trash className="h-4 w-4 cursor-pointer text-lightColor hover:text-red-500 hover:scale-110 hoverEffect sm:h-5 sm:w-5" />
+                        </button>
                         {product?.images && (
                           <Link href={`/product/${product?.slug?.current}`}>
                             <Image
@@ -60,14 +63,13 @@ const FavoritesList = () => {
                             />
                           </Link>
                         )}
-                        <p className="capitalize text-sm font-medium">
-                          {product?.name?.split(" ").slice(0, 5).join(" ")}
-                          <span> .....</span>
+                        <p className="capitalize hidden md:block text-lg font-semibold text-gray-700">
+                          {product?.name?.split(" ").slice(0, 3).join(" ")}
                         </p>
                       </td>
                       <td className="p-2 capitalize hidden md:table-cell">
                         {product?.categories && (
-                          <p>
+                          <p className="rounded-full bg-shop_light_yellow/80 text-center text-xs font-medium">
                             {product?.categories?.map((cat) => cat).join(",")}
                           </p>
                         )}

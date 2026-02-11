@@ -35,7 +35,7 @@ const CatergoryList = ({
             />
             <Label
               htmlFor={category?.slug?.current}
-              className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-gray-400 hover:text-black peer-focus-visible:ring-2 peer-focus-visible:ring-black/20 peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white"
+              className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-gray-400 peer-focus-visible:ring-2 peer-focus-visible:ring-black/20 peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white"
             >
               <span>{category?.title}</span>
               <span className="text-xs text-gray-400 peer-data-[state=checked]:text-white/90">

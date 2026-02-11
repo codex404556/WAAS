@@ -4,9 +4,9 @@ import { listProductsByFilters } from "@/lib/cms";
 import { Product } from "@/types/cms";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import NoProductsAvailable from "./NoProductsAvailable";
 import ProductsCard from "./ProductsCard";
-import ShopProductCardSkeleton from "./skeleton/ShopProductCardSkeleton";
+import ShopNoProductsState from "./ShopNoProductsState";
+import ProductCardSkeleton from "./skeleton/ProductCardSkeleton";
 
 interface ShopProductsSectionProps {
   selectedCategory: string | null;
@@ -15,12 +15,12 @@ interface ShopProductsSectionProps {
   searchTerm: string;
 }
 
-const ShopProductsSection = ({
+function ShopProductsSection({
   selectedCategory,
   selectedBrand,
   selectedPrice,
   searchTerm,
-}: ShopProductsSectionProps) => {
+}: ShopProductsSectionProps) {
   const [loading, setLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -81,7 +81,7 @@ const ShopProductsSection = ({
             className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4"
           >
             {Array.from({ length: 12 }).map((_, index) => (
-              <ShopProductCardSkeleton key={`shop-skeleton-${index}`} />
+              <ProductCardSkeleton key={`shop-skeleton-${index}`} />
             ))}
           </motion.div>
         ) : products?.length > 0 ? (
@@ -119,12 +119,12 @@ const ShopProductsSection = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
           >
-            <NoProductsAvailable />
+            <ShopNoProductsState />
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
-};
+}
 
 export default ShopProductsSection;

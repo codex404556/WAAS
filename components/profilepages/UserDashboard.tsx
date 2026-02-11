@@ -76,11 +76,11 @@ export default function UserDashboard() {
       link: "/user/cart",
     },
     {
-      title: "Wishlist",
+      title: "Favorites",
       value: wishlistIds.length,
       icon: <Heart className="w-6 h-6" />,
       color: "bg-red-500",
-      link: "/user/wishlist",
+      link: "/favorites",
     },
     {
       title: "Total Spent",

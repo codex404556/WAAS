@@ -35,11 +35,11 @@ const AccountPage = () => {
       ],
     },
     {
-      title: "Wishlist",
+      title: "Favorites",
       icon: <Heart size={24} />,
       description: "Keep track of items you want to purchase later",
-      href: "/user/wishlist",
-      items: ["Saved Items", "Share Wishlist", "Move to Cart", "Price Alerts"],
+      href: "/favorites",
+      items: ["Saved Items", "Share Favorites", "Move to Cart", "Price Alerts"],
     },
     {
       title: "Shopping Cart",

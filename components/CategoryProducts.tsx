@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { cubicBezier } from "motion";
 import NoProductsAvailable from "./NoProductsAvailable";
 import ProductsCard from "./ProductsCard";
-import CategorySkeleton from "@/app/(app)/(client)/skeleton/CategorySkeleton";
+import ProductCardSkeleton from "./skeleton/ProductCardSkeleton";
 
 interface Props {
   categories: Category[];
@@ -96,7 +96,11 @@ const CategoryProducts = ({ categories, slug }: Props) => {
       </div>
       <div className="w-full">
         {loading ? (
-          <CategorySkeleton />
+          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <ProductCardSkeleton key={`category-skeleton-${index}`} />
+            ))}
+          </div>
         ) : products?.length > 0 ? (
           <AnimatePresence mode="wait">
             <motion.div
