@@ -34,6 +34,7 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -125,6 +126,7 @@ const ProfilePage = () => {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
   const [isPasswordSidebarOpen, setIsPasswordSidebarOpen] = useState(false);
@@ -240,13 +242,13 @@ const ProfilePage = () => {
     setIsUploadingAvatar(true);
 
     try {
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setAvatarPreview(base64String);
-      };
-      reader.readAsDataURL(file);
+      if (avatarPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      setAvatarPreview(previewUrl);
+      setAvatarFile(file);
     } catch (error) {
       console.error("Avatar preview error:", error);
       toast.error("Preview failed", {
@@ -258,6 +260,14 @@ const ProfilePage = () => {
       setIsUploadingAvatar(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   const confirmLogout = async () => {
     setIsLoading(true);
@@ -324,6 +334,16 @@ const ProfilePage = () => {
           firstName,
           lastName: lastName || undefined,
         });
+
+        if (avatarFile) {
+          const userWithProfileImage = user as typeof user & {
+            setProfileImage?: (params: { file: File }) => Promise<unknown>;
+          };
+
+          if (userWithProfileImage.setProfileImage) {
+            await userWithProfileImage.setProfileImage({ file: avatarFile });
+          }
+        }
       }
       toast.success("Profile updated", {
         description: "Your profile has been updated successfully.",
@@ -331,6 +351,7 @@ const ProfilePage = () => {
         duration: 5000,
       });
       profileForm.reset({ name: data.name });
+      setAvatarFile(null);
       setAvatarPreview(null);
       setIsProfileSidebarOpen(false);
     } catch (error) {
@@ -467,78 +488,78 @@ const ProfilePage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="shadow-lg border-0 bg-linear-to-r from-babyshopSky to-babyshopPurple text-babyshopWhite overflow-hidden">
+          <Card className="shadow-lg bg-linear-to-r from-shop_light_yellow to-shop_light_yellow/70 overflow-hidden">
             <CardContent className="p-6 md:p-8">
               {authUser ? (
                 <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="relative">
-                  {authUser.avatar ? (
-                    <div className="relative h-24 w-24 ring-4 ring-white/50 rounded-full overflow-hidden">
-                      <Image
-                        src={authUser.avatar}
-                        alt={authUser.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-24 w-24 rounded-full bg-white/20 backdrop-blur-sm ring-4 ring-white/50 flex items-center justify-center text-4xl font-bold">
-                      {authUser?.name &&
-                        authUser?.name?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="absolute -bottom-1 -right-1 h-8 w-8 bg-green-500 rounded-full border-4 border-white"></div>
-                </div>
-
-                <div className="flex-1 text-center md:text-left">
-                  <h1 className="text-3xl font-bold mb-2">{authUser.name}</h1>
-                  <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start">
-                    <div className="flex items-center gap-2 text-white/90">
-                      <Mail className="h-4 w-4" />
-                      <span className="text-sm">{authUser.email}</span>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-white/20 backdrop-blur-sm text-white border-white/30"
-                    >
-                      <Shield className="h-3 w-3 mr-1" />
-                      {authUser.role}
-                    </Badge>
+                  <div className="relative">
+                    {authUser.avatar ? (
+                      <div className="relative h-24 w-24 ring-4 ring-white/50 rounded-full overflow-hidden">
+                        <Image
+                          src={authUser.avatar}
+                          alt={authUser.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-24 w-24 rounded-full bg-white/20 backdrop-blur-sm ring-4 ring-white/50 flex items-center justify-center text-4xl font-bold">
+                        {authUser?.name &&
+                          authUser?.name?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="absolute -bottom-1 -right-1 h-8 w-8 bg-green-500 rounded-full border-4 border-white"></div>
                   </div>
-                </div>
 
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    onClick={() => setIsProfileSidebarOpen(true)}
-                    variant="secondary"
-                    disabled={isLoading}
-                    className="bg-babyshopWhite/20 hover:bg-babyshopWhite/30 backdrop-blur-sm text-babyshopWhite border-babyshopWhite/30 transition-all"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                  {!authUser.isOAuthUser || authUser.hasSetPassword ? (
+                  <div className="flex-1 text-center md:text-left">
+                    <h1 className="text-3xl font-bold mb-2">{authUser.name}</h1>
+                    <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start">
+                      <div className="flex items-center gap-2 text-darkColor/90">
+                        <Mail className="h-4 w-4" />
+                        <span className="text-sm">{authUser.email}</span>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className="bg-white/20 backdrop-blur-sm text-darkColor border-white/30"
+                      >
+                        <Shield className="h-3 w-3 mr-1" />
+                        {authUser.role}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button
-                      onClick={() => setIsPasswordSidebarOpen(true)}
+                      onClick={() => setIsProfileSidebarOpen(true)}
                       variant="secondary"
                       disabled={isLoading}
                       className="bg-babyshopWhite/20 hover:bg-babyshopWhite/30 backdrop-blur-sm text-babyshopWhite border-babyshopWhite/30 transition-all"
                     >
-                      <Shield className="h-4 w-4 mr-2" />
-                      Change Password
+                      <User className="h-4 w-4 mr-2" />
+                      Edit Profile
                     </Button>
-                  ) : null}
-                  <Button
-                    onClick={handleLogout}
-                    variant="secondary"
-                    disabled={isLoading}
-                    className="bg-babyshopWhite/20 hover:bg-babyshopWhite/30 backdrop-blur-sm text-babyshopWhite border-babyshopWhite/30 transition-all"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </Button>
+                    {!authUser.isOAuthUser || authUser.hasSetPassword ? (
+                      <Button
+                        onClick={() => setIsPasswordSidebarOpen(true)}
+                        variant="secondary"
+                        disabled={isLoading}
+                        className="bg-babyshopWhite/20 hover:bg-babyshopWhite/30 backdrop-blur-sm text-babyshopWhite border-babyshopWhite/30 transition-all"
+                      >
+                        <Shield className="h-4 w-4 mr-2" />
+                        Change Password
+                      </Button>
+                    ) : null}
+                    <Button
+                      onClick={handleLogout}
+                      variant="secondary"
+                      disabled={isLoading}
+                      className="bg-babyshopWhite/20 hover:bg-babyshopWhite/30 backdrop-blur-sm text-babyshopWhite border-babyshopWhite/30 transition-all"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </div>
                 </div>
-              </div>
               ) : (
                 <div className="text-white/90">Loading profile...</div>
               )}
@@ -574,9 +595,9 @@ const ProfilePage = () => {
               transition={{ delay: 0.3 }}
             >
               <Card className="shadow-md hover:shadow-lg transition-shadow border border-babyshopTextLight/20">
-                <CardHeader className="border-b bg-linear-to-r from-babyshopSky/5 to-babyshopPurple/5">
-                  <CardTitle className="flex items-center gap-2 text-xl font-bold text-babyshopBlack">
-                    <Save className="h-5 w-5 text-babyshopSky" />
+                <CardHeader className="border-b">
+                  <CardTitle className="flex items-center gap-2 text-xl font-bold text-darkColor">
+                    <Save className="h-5 w-5 text-darkColor" />
                     Update Profile
                   </CardTitle>
                 </CardHeader>
@@ -671,12 +692,12 @@ const ProfilePage = () => {
                       <Button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-babyshopSky hover:bg-babyshopSky/90 text-babyshopWhite font-semibold rounded-lg shadow-md h-11 transition-all"
+                        className="h-11 w-full rounded-lg bg-shop_light_yellow font-semibold text-darkColor shadow-md transition-all hover:bg-darkColor hover:text-white hoverEffect"
                       >
                         {isLoading ? (
                           <span className="flex items-center gap-2">
                             <svg
-                              className="animate-spin h-5 w-5 text-white"
+                              className="h-5 w-5 animate-spin"
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
                               viewBox="0 0 24 24"
@@ -751,57 +772,53 @@ const ProfilePage = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {addresses.map(
-                        (address: Address, index: number) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="relative p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all bg-white"
-                          >
-                            {address.defaulte && (
-                              <Badge className="absolute top-2 right-2 bg-green-100 text-green-800 border-green-300">
-                                Default
-                              </Badge>
-                            )}
-                            <div className="space-y-1 pr-20">
-                              <p className="font-medium text-gray-900">
-                                {address.address}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {address.city}, {address.state}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {address.zip}
-                              </p>
-                            </div>
-                            <div className="absolute bottom-4 right-4 flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handleEditAddress(address, index)
-                                }
-                                className="text-babyshopSky hover:text-babyshopSky/80 hover:bg-babyshopSky/10 transition-all"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedAddressId(index.toString());
-                                  setIsDeleteDialogOpen(true);
-                                }}
-                                className="text-babyshopRed hover:text-babyshopRed/80 hover:bg-babyshopRed/10 transition-all"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </motion.div>
-                        )
-                      )}
+                      {addresses.map((address: Address, index: number) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="relative p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all bg-white"
+                        >
+                          {address.defaulte && (
+                            <Badge className="absolute top-2 right-2 bg-green-100 text-green-800 border-green-300">
+                              Default
+                            </Badge>
+                          )}
+                          <div className="space-y-1 pr-20">
+                            <p className="font-medium text-gray-900">
+                              {address.address}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {address.city}, {address.state}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {address.zip}
+                            </p>
+                          </div>
+                          <div className="absolute bottom-4 right-4 flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditAddress(address, index)}
+                              className="text-babyshopSky hover:text-babyshopSky/80 hover:bg-babyshopSky/10 transition-all"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAddressId(index.toString());
+                                setIsDeleteDialogOpen(true);
+                              }}
+                              className="text-babyshopRed hover:text-babyshopRed/80 hover:bg-babyshopRed/10 transition-all"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
@@ -846,7 +863,7 @@ const ProfilePage = () => {
                         </Badge>
                       </div>
                       <Separator />
-                      <Link href="/user/cart">
+                      <Link href="/cart">
                         <Button
                           variant="outline"
                           className="w-full border-babyshopSky text-babyshopSky hover:bg-babyshopSky/10 transition-all"
@@ -899,8 +916,7 @@ const ProfilePage = () => {
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 truncate">
                                   #
-                                  {(order.orderId ||
-                                    String(order._id || ""))
+                                  {(order.orderId || String(order._id || ""))
                                     .slice(-8)
                                     .toUpperCase()}
                                 </p>
@@ -1078,40 +1094,61 @@ const ProfilePage = () => {
           open={isProfileSidebarOpen}
           onOpenChange={setIsProfileSidebarOpen}
         >
-          <SheetContent className="overflow-y-auto w-full sm:max-w-lg">
-            <SheetHeader>
+          <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-lg">
+            <SheetHeader className="border-b px-5 py-4">
               <SheetTitle>Edit Profile</SheetTitle>
               <SheetDescription>
-                Update your profile information and avatar
+                Update your profile details and profile picture.
               </SheetDescription>
             </SheetHeader>
 
             <Form {...profileForm}>
               <form
+                id="profile-sheet-form"
                 onSubmit={profileForm.handleSubmit(onProfileSubmit)}
-                className="space-y-6 mt-6"
+                className="space-y-6 px-5 py-5"
               >
-                <FormField
-                  control={profileForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          disabled={isLoading}
-                          placeholder="Enter your name"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <section className="space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      Personal Information
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Keep your account details up to date.
+                    </p>
+                  </div>
+                  <FormField
+                    control={profileForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Full Name <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            disabled={isLoading}
+                            placeholder="Enter your full name"
+                            autoComplete="name"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </section>
 
                 {/* Avatar Upload in Sidebar */}
-                <div className="space-y-2">
-                  <FormLabel>Profile Picture</FormLabel>
+                <section className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="space-y-1">
+                    <FormLabel className="text-sm font-semibold text-gray-900">
+                      Profile Picture
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Recommended: square image, max 5MB.
+                    </p>
+                  </div>
                   <div className="flex flex-col gap-4">
                     <div className="relative mx-auto">
                       {avatarPreview || authUser?.avatar ? (
@@ -1148,7 +1185,7 @@ const ProfilePage = () => {
                           type="button"
                           variant="outline"
                           disabled={isLoading || isUploadingAvatar}
-                          className="w-full border-babyshopSky text-babyshopSky hover:bg-babyshopSky/10 cursor-pointer transition-all"
+                          className="w-full cursor-pointer border-babyshopSky text-babyshopSky transition-all hover:bg-babyshopSky/10"
                           onClick={() =>
                             document
                               .getElementById("avatar-upload-sidebar")
@@ -1164,46 +1201,56 @@ const ProfilePage = () => {
                       </p>
                     </div>
                   </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isLoading || isUploadingAvatar}
-                  className="w-full bg-babyshopSky hover:bg-babyshopSky/90 text-babyshopWhite transition-all"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="animate-spin h-4 w-4"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8H4z"
-                        />
-                      </svg>
-                      Saving...
-                    </span>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </>
-                  )}
-                </Button>
+                </section>
               </form>
             </Form>
+            <SheetFooter className="border-t px-5 py-4 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isLoading || isUploadingAvatar}
+                onClick={() => setIsProfileSidebarOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="profile-sheet-form"
+                disabled={isLoading || isUploadingAvatar}
+                className="bg-darkColor text-shop_light_yellow transition-all hover:bg-shop_light_yellow hover:text-darkColor"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="h-4 w-4 animate-spin"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8H4z"
+                      />
+                    </svg>
+                    Saving...
+                  </span>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </SheetFooter>
           </SheetContent>
         </Sheet>
 
@@ -1212,160 +1259,210 @@ const ProfilePage = () => {
           open={isPasswordSidebarOpen}
           onOpenChange={setIsPasswordSidebarOpen}
         >
-          <SheetContent className="overflow-y-auto w-full sm:max-w-lg">
-            <SheetHeader>
+          <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-lg">
+            <SheetHeader className="border-b px-5 py-4">
               <SheetTitle>Change Password</SheetTitle>
               <SheetDescription>
-                Enter your current password to set a new one
+                Update your password to keep your account secure.
               </SheetDescription>
             </SheetHeader>
 
             <Form {...passwordForm}>
               <form
+                id="password-sheet-form"
                 onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
-                className="space-y-6 mt-6"
+                className="space-y-6 px-5 py-5"
               >
-                <FormField
-                  control={passwordForm.control}
-                  name="currentPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showCurrentPassword ? "text" : "password"}
-                            disabled={isLoading}
-                            placeholder="Enter current password"
-                            className="pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowCurrentPassword(!showCurrentPassword)
-                            }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                          >
-                            {showCurrentPassword ? (
-                              <EyeOff className="h-5 w-5" />
-                            ) : (
-                              <Eye className="h-5 w-5" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <section className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      Security
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Your new password must be at least 8 characters.
+                    </p>
+                  </div>
 
-                <FormField
-                  control={passwordForm.control}
-                  name="newPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showNewPassword ? "text" : "password"}
-                            disabled={isLoading}
-                            placeholder="Enter new password (min 8 characters)"
-                            className="pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                          >
-                            {showNewPassword ? (
-                              <EyeOff className="h-5 w-5" />
-                            ) : (
-                              <Eye className="h-5 w-5" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={passwordForm.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Current Password{" "}
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              type={showCurrentPassword ? "text" : "password"}
+                              disabled={isLoading}
+                              placeholder="Enter current password"
+                              className="pr-10"
+                              autoComplete="current-password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowCurrentPassword(!showCurrentPassword)
+                              }
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                              aria-label={
+                                showCurrentPassword
+                                  ? "Hide current password"
+                                  : "Show current password"
+                              }
+                            >
+                              {showCurrentPassword ? (
+                                <EyeOff className="h-5 w-5" />
+                              ) : (
+                                <Eye className="h-5 w-5" />
+                              )}
+                            </button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={passwordForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm New Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showConfirmPassword ? "text" : "password"}
-                            disabled={isLoading}
-                            placeholder="Confirm new password"
-                            className="pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-5 w-5" />
-                            ) : (
-                              <Eye className="h-5 w-5" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={passwordForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          New Password <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              type={showNewPassword ? "text" : "password"}
+                              disabled={isLoading}
+                              placeholder="Enter new password"
+                              className="pr-10"
+                              autoComplete="new-password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowNewPassword(!showNewPassword)
+                              }
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                              aria-label={
+                                showNewPassword
+                                  ? "Hide new password"
+                                  : "Show new password"
+                              }
+                            >
+                              {showNewPassword ? (
+                                <EyeOff className="h-5 w-5" />
+                              ) : (
+                                <Eye className="h-5 w-5" />
+                              )}
+                            </button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-babyshopSky hover:bg-babyshopSky/90 text-babyshopWhite transition-all"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="animate-spin h-4 w-4"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8H4z"
-                        />
-                      </svg>
-                      Changing...
-                    </span>
-                  ) : (
-                    <>
-                      <Shield className="h-4 w-4 mr-2" />
-                      Change Password
-                    </>
-                  )}
-                </Button>
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Confirm New Password{" "}
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              type={showConfirmPassword ? "text" : "password"}
+                              disabled={isLoading}
+                              placeholder="Re-enter new password"
+                              className="pr-10"
+                              autoComplete="new-password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                              aria-label={
+                                showConfirmPassword
+                                  ? "Hide confirm password"
+                                  : "Show confirm password"
+                              }
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOff className="h-5 w-5" />
+                              ) : (
+                                <Eye className="h-5 w-5" />
+                              )}
+                            </button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </section>
               </form>
             </Form>
+            <SheetFooter className="border-t px-5 py-4 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isLoading}
+                onClick={() => setIsPasswordSidebarOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="password-sheet-form"
+                disabled={isLoading}
+                className="bg-babyshopSky text-babyshopWhite transition-all hover:bg-babyshopSky/90"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="h-4 w-4 animate-spin"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8H4z"
+                      />
+                    </svg>
+                    Updating...
+                  </span>
+                ) : (
+                  <>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Update Password
+                  </>
+                )}
+              </Button>
+            </SheetFooter>
           </SheetContent>
         </Sheet>
       </Container>

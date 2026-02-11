@@ -54,13 +54,16 @@ const FavoritesList = () => {
                         </button>
                         {product?.images && (
                           <Link href={`/product/${product?.slug?.current}`}>
-                            <Image
-                              src={urlFor(product?.images[0]).url()}
-                              alt="Product-Image"
-                              width={80}
-                              height={90}
-                              className="object-cover"
-                            />
+                            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-white sm:h-24 sm:w-24 md:h-28 md:w-28">
+                              <Image
+                                src={urlFor(product?.images[0]).url()}
+                                alt={product?.name ?? "Product image"}
+                                fill
+                                loading="lazy"
+                                sizes="(max-width: 640px) 64px, (max-width: 1024px) 96px, 112px"
+                                className="object-contain p-1 group-hover:scale-105 hoverEffect"
+                              />
+                            </div>
                           </Link>
                         )}
                         <p className="capitalize hidden md:block text-lg font-semibold text-gray-700">
