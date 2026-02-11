@@ -1,6 +1,5 @@
-import React, { Suspense } from "react";
+import React from "react";
 import ShopData from "@/components/ShopData";
-import ShopSkeleton from "@/components/skeleton/ShopSkeleton";
 import Container from "@/components/Container";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb";
 
@@ -12,9 +11,7 @@ const ShopPage = () => {
       <Container>
         <PageBreadcrumb items={[]} currentPage="Shop" />
       </Container>
-      <Suspense fallback={<ShopSkeleton />}>
-        <ShopData />
-      </Suspense>
+      <ShopData />
     </div>
   );
 };

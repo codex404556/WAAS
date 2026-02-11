@@ -10,20 +10,6 @@ const OrderSummary = () => {
   const { getSubTotalPrice, getPromoDiscount, getTotalPrice } = useStore();
   const [ loading, setLoading ] = useState(false);
   const router = useRouter();
-  
- 
-  //featch data using strip or whatever tools you need 
-  {/*const handleCheckout =  () => {
-  *setLoading(true);
-   try {
-    
-
-    catch (error) {
-
-   finally {
-  setLoading(false)
-    }
-  } */}
   return (
     <div className="hidden md:block border rounded-lg w-full bg-white p-8 pb-6 md:pb-8">
       <Title className="text-darkColor mb-7">Order Summary</Title>

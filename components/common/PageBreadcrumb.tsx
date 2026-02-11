@@ -19,12 +19,22 @@ interface PageBreadcrumbProps {
     url: string;
   };
 }
+
+const formatBreadcrumbLabel = (value: string, maxWords = 3): string => {
+  const normalizedValue = value.replace(/[-_]+/g, " ").trim();
+  if (!normalizedValue) return "";
+
+  return normalizedValue.split(/\s+/).slice(0, maxWords).join(" ");
+};
+
 const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
   items,
   currentPage,
   showSocialShare = false,
   shareData,
 }) => {
+  const displayCurrentPage = formatBreadcrumbLabel(currentPage, 3);
+
   const handleShare = async (platform: string) => {
     if (!shareData) {
       toast.error("No share data available");
@@ -49,7 +59,6 @@ const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
           )}&url=${encodeURIComponent(url)}`;
           break;
         case "instagram":
-          // Instagram doesn't support direct URL sharing, so we'll copy to clipboard
           await navigator.clipboard.writeText(`${shareText} ${url}`);
           toast.success(
             "Copied to clipboard! You can now paste it on Instagram"
@@ -71,76 +80,94 @@ const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
       toast.error("Failed to share. Please try again.");
     }
   };
+
   return (
-    <div className="bg-babyshopWhite rounded-2xl border border-gray-100 shadow-sm p-4 mb-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Link href={"/"}>
-            <Home className="w-4 h-4" />
-          </Link>
-          {/* Dynamic link */}
-          {items?.map((item, index) => (
-            <React.Fragment key={index}>
-              <span>/</span>
-              {item?.href ? (
-                <Link
-                  href={item?.href}
-                  className="hover:text-gray-700 hoverEffect"
-                >
-                  {item?.label}
-                </Link>
-              ) : (
-                <span>{item?.label}</span>
-              )}
-            </React.Fragment>
-          ))}
-          {/* current page */}
-          <span>/</span>
-          <span className="text-gray-700 font-medium">{currentPage}</span>
+    <div className="mb-6 rounded-2xl border border-gray-100 bg-babyshopWhite p-3 shadow-sm sm:mb-8 sm:p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="-mx-1 overflow-x-auto px-1">
+          <div className="flex min-w-max items-center gap-1.5 whitespace-nowrap text-xs text-gray-500 sm:gap-2 sm:text-sm">
+            <Link href="/" className="shrink-0 rounded-sm p-1 hover:bg-gray-100">
+              <Home className="h-4 w-4" />
+            </Link>
+            {items?.map((item, index) => {
+              const displayLabel = formatBreadcrumbLabel(item?.label, 3);
+
+              return (
+                <React.Fragment key={`${item?.label}-${index}`}>
+                  <span className="text-gray-300">/</span>
+                  {item?.href ? (
+                    <Link
+                      href={item?.href}
+                      className="max-w-28 truncate hover:text-gray-700 sm:max-w-40"
+                      title={item?.label}
+                    >
+                      {displayLabel}
+                    </Link>
+                  ) : (
+                    <span
+                      className="max-w-28 truncate sm:max-w-40"
+                      title={item?.label}
+                    >
+                      {displayLabel}
+                    </span>
+                  )}
+                </React.Fragment>
+              );
+            })}
+            <span className="text-gray-300">/</span>
+            <span
+              className="max-w-32 truncate font-medium text-gray-700 sm:max-w-48"
+              title={currentPage}
+            >
+              {displayCurrentPage || "Page"}
+            </span>
+          </div>
         </div>
-        {/* Social Share Icons */}
+
         {showSocialShare && shareData && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 mr-2">Share:</span>
+          <div className="flex items-center gap-1.5 self-end sm:gap-2">
+            <span className="mr-1 text-[11px] text-gray-500 sm:mr-2 sm:text-xs">
+              Share:
+            </span>
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleShare("facebook")}
-              className="w-8 h-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              className="h-8 w-8 p-0 transition-colors hover:bg-blue-50 hover:text-blue-600"
               title="Share on Facebook"
             >
-              <Facebook className="w-4 h-4" />
+              <Facebook className="h-4 w-4" />
             </Button>
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleShare("twitter")}
-              className="w-8 h-8 p-0 hover:bg-sky-50 hover:text-sky-600 transition-colors"
+              className="h-8 w-8 p-0 transition-colors hover:bg-sky-50 hover:text-sky-600"
               title="Share on Twitter"
             >
-              <Twitter className="w-4 h-4" />
+              <Twitter className="h-4 w-4" />
             </Button>
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleShare("instagram")}
-              className="w-8 h-8 p-0 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+              className="h-8 w-8 p-0 transition-colors hover:bg-pink-50 hover:text-pink-600"
               title="Share on Instagram"
             >
-              <Instagram className="w-4 h-4" />
+              <Instagram className="h-4 w-4" />
             </Button>
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleShare("copy")}
-              className="w-8 h-8 p-0 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+              className="h-8 w-8 p-0 transition-colors hover:bg-gray-50 hover:text-gray-700"
               title="Copy Link"
             >
-              <LinkIcon className="w-4 h-4" />
+              <LinkIcon className="h-4 w-4" />
             </Button>
           </div>
         )}

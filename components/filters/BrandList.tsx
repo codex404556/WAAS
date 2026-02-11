@@ -13,17 +13,15 @@ interface Props {
 
 const BrandList = ({ brands, selectedBrand, setSelectedBrand }: Props) => {
   return (
-    <div className="flex flex-col gap-2 mt-5">
-      <Title className="font-bold text-darkColor/80">Brands</Title>
-      <RadioGroup value={selectedBrand || ""}>
+    <div className="flex flex-col gap-3">
+      <Title className="text-sm font-semibold text-gray-900">Brands</Title>
+      <RadioGroup value={selectedBrand || ""} className="space-y-2">
         {brands?.map((brand) => (
-          <div
-            className="flex items-center space-x-2 cursor-pointer"
-            key={brand?._id}
-          >
+          <div className="relative" key={brand?._id}>
             <RadioGroupItem
               id={brand?.slug?.current}
               value={brand?.slug?.current as string}
+              className="peer sr-only"
               onClick={() => {
                 if (selectedBrand === (brand?.slug?.current as string)) {
                   setSelectedBrand(null);
@@ -34,7 +32,7 @@ const BrandList = ({ brands, selectedBrand, setSelectedBrand }: Props) => {
             />
             <Label
               htmlFor={brand?.slug?.current}
-              className={`text-xs cursor-pointer transition-all duration-75 ${selectedBrand === brand?.slug?.current ? "font-semibold text-shop_dark_yellow" : "font-normal"}`}
+              className="block w-full cursor-pointer rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-gray-400 hover:text-black peer-focus-visible:ring-2 peer-focus-visible:ring-black/20 peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white"
             >
               {brand?.title}
             </Label>

@@ -1,5 +1,6 @@
 import AddToCartButton from "@/components/AddToCartButton";
 import AddToFavorites from "@/components/AddToFavorites";
+import BuyNowButton from "@/components/BuyNowButton";
 import Container from "@/components/Container";
 import ImagesView from "@/components/ImagesView";
 import PriceView from "@/components/PriceView";
@@ -84,12 +85,18 @@ const SingleProductPage = async ({ params }: Props) => {
   }
 
   const isStock = product?.stock;
+  const productBreadcrumbLabel = (product?.name ?? "Product")
+    .replace(/[-_]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 3)
+    .join(" ");
 
   return (
-    <div className="mt-16 sm:mt-20">
+    <div className="mt-22 sm:mt-24">
       <Container className="px-3 sm:px-4 lg:px-6">
         <PageBreadcrumb
-          currentPage={product?.name ?? "Product"}
+          currentPage={productBreadcrumbLabel || "Product"}
           items={breadcrumbItems}
         />
       </Container>
@@ -138,8 +145,9 @@ const SingleProductPage = async ({ params }: Props) => {
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div className="w-full">
+            <div className="w-full flex flex-col items-center gap-3">
               <AddToCartButton showProduct={true} product={product} />
+              <BuyNowButton product={product} className="w-full" />
             </div>
             <AddToFavorites
               product={product}

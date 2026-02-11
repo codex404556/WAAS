@@ -16,20 +16,15 @@ const CatergoryList = ({
   setSelectedCategory,
 }: Props) => {
   return (
-    <div className="gap-2 flex flex-col mt-5">
-      <Title className="text-base text-darkColor/80 font-bold">
-        Categories
-      </Title>
-      <RadioGroup value={selectedCategory || ""} className="mt-2 space-y-1">
+    <div className="flex flex-col gap-3">
+      <Title className="text-sm font-semibold text-gray-900">Categories</Title>
+      <RadioGroup value={selectedCategory || ""} className="space-y-2">
         {categories?.map((category) => (
-          <div
-            className="flex items-center space-x-2 cursor-pointer"
-            key={category?._id}
-          >
+          <div className="relative" key={category?._id}>
             <RadioGroupItem
               value={(category?.slug?.current as string) || ""}
               id={category?.slug?.current}
-              className="rounded-sm hover:scale-105"
+              className="peer sr-only"
               onClick={() => {
                 if (selectedCategory === (category?.slug?.current as string)) {
                   setSelectedCategory(null);
@@ -40,9 +35,12 @@ const CatergoryList = ({
             />
             <Label
               htmlFor={category?.slug?.current}
-              className={`text-xs cursor-pointer transition-all duration-75 ${selectedCategory === category?.slug?.current ? "font-semibold text-shop_dark_yellow" : "font-normal"}`}
+              className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-gray-400 hover:text-black peer-focus-visible:ring-2 peer-focus-visible:ring-black/20 peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white"
             >
-              {category?.title}
+              <span>{category?.title}</span>
+              <span className="text-xs text-gray-400 peer-data-[state=checked]:text-white/90">
+                {category?.productCount ?? 0}
+              </span>
             </Label>
           </div>
         ))}

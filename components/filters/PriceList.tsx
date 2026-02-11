@@ -18,17 +18,15 @@ interface Props {
 
 const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
   return (
-    <div className="flex flex-col gap-2 mt-5">
-      <Title className="font-bold text-darkColor/80">Price</Title>
-      <RadioGroup value={selectedPrice || ""}>
+    <div className="flex flex-col gap-3">
+      <Title className="text-sm font-semibold text-gray-900">Price Range</Title>
+      <RadioGroup value={selectedPrice || ""} className="space-y-2">
         {priceArray?.map((price, index) => (
-          <div
-            key={index}
-            className="flex items-center space-x-2 hover:cursor-pointer"
-          >
+          <div key={index} className="relative">
             <RadioGroupItem
               value={price?.value}
               id={price?.value}
+              className="peer sr-only"
               onClick={() => {
                 if (selectedPrice === (price?.value as string)) {
                   setSelectedPrice(null);
@@ -38,7 +36,7 @@ const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
               }}
             />
             <Label
-              className={`text-xs cursor-pointer transition-all duration-75 ${selectedPrice === price?.value ? "font-semibold text-shop_dark_yellow" : "font-normal"}`}
+              className="block w-full cursor-pointer rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-gray-400 hover:text-black peer-focus-visible:ring-2 peer-focus-visible:ring-black/20 peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white"
               htmlFor={price?.value}
             >
               {price?.title}
