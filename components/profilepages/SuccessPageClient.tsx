@@ -19,13 +19,16 @@ import { getOrderById, type Order } from "@/lib/orderApi";
 import PriceFormatter from "@/components/common/PriceFormatter";
 import Container from "@/components/common/Container";
 import { useUser } from "@clerk/nextjs";
+import { useCartStore } from "@/store/useCartStore";
 
 const SuccessPageClient = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasClearedCart, setHasClearedCart] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
+  const { clearCart } = useCartStore();
 
   const orderId = searchParams.get("orderId");
 
@@ -65,6 +68,19 @@ const SuccessPageClient = () => {
       toast.success("Payment completed successfully!");
     }
   }, [loading]);
+
+  useEffect(() => {
+    const clearCartAfterPaidOrder = async () => {
+      if (hasClearedCart || !order) return;
+      const isPaid = order.paymentStatus === "paid" || order.status === "paid";
+      if (!isPaid) return;
+
+      await clearCart();
+      setHasClearedCart(true);
+    };
+
+    clearCartAfterPaidOrder();
+  }, [order, clearCart, hasClearedCart]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

@@ -69,6 +69,7 @@ import Container from "../common/Container";
 import { AddressSheet, type AddressFormData } from "../shared/AddressSheet";
 import { getUserOrders, Order } from "@/lib/orderApi";
 import type { Address as AddressType } from "@/types/address";
+import ProfilePageSkeleton from "../skeleton/ProfilePageSkeleton";
 
 const updateProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -293,11 +294,7 @@ const ProfilePage = () => {
   };
 
   if (!isLoaded) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <ProfilePageSkeleton />;
   }
 
   if (isLoaded && !authUser) {
@@ -1217,7 +1214,7 @@ const ProfilePage = () => {
                 type="submit"
                 form="profile-sheet-form"
                 disabled={isLoading || isUploadingAvatar}
-                className="bg-darkColor text-shop_light_yellow transition-all hover:bg-shop_light_yellow hover:text-darkColor"
+                className="bg-shop_light_yellow text-darkColor transition-all hover:bg-darkColor hover:text-white"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
@@ -1429,7 +1426,7 @@ const ProfilePage = () => {
                 type="submit"
                 form="password-sheet-form"
                 disabled={isLoading}
-                className="bg-babyshopSky text-babyshopWhite transition-all hover:bg-babyshopSky/90"
+                className="bg-shop_light_yellow text-darkColor transition-all hover:bg-darkColor hover:text-white"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">

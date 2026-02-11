@@ -23,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import PriceFormatter from "@/components/common/PriceFormatter";
 import {
@@ -39,9 +38,10 @@ import {
 import Image from "next/image";
 import { getOrderById, deleteOrder, type Order } from "@/lib/orderApi";
 import {
+  buildStripeChargeItems,
+  buildStripeCheckoutItems,
   createCheckoutSession,
   redirectToCheckout,
-  type StripeCheckoutItem,
 } from "@/lib/stripe";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
@@ -52,9 +52,6 @@ const OrderDetailsPage = () => {
   const [deleting, setDeleting] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
-  const [paymentGateway, setPaymentGateway] = useState<
-    "stripe" | "sslcommerz" | null
-  >(null);
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -246,79 +243,20 @@ const OrderDetailsPage = () => {
   };
 
   const handlePayNow = async () => {
-    if (!order || !paymentGateway) {
-      toast.error("Please select a payment method");
-      return;
-    }
+    if (!order) return;
 
     setShowPaymentConfirm(false); // Close the modal first
     setProcessingPayment(true);
     try {
-      if (paymentGateway === "sslcommerz") {
-        // Handle SSLCommerz payment
-        const total = order.total;
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/payments/sslcommerz/init`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              orderId: order._id,
-              amount: total,
-              currency: "BDT",
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (data.success && data.gatewayUrl) {
-          // Redirect to SSLCommerz payment page
-          window.location.href = data.gatewayUrl;
-        } else {
-          throw new Error(
-            data.message || "Failed to initialize SSLCommerz payment"
-          );
-        }
-        return;
-      }
-
       // Stripe payment flow
       // Convert order items to Stripe format
-      const stripeItems: StripeCheckoutItem[] = order.items.map((item) => ({
-        name: item.name,
-        description: `Quantity: ${item.quantity}`,
-        amount: Math.round(item.price * 100),
-        currency: "usd",
-        quantity: item.quantity,
-        images: item.image ? [item.image] : undefined,
-      }));
+      const stripeItems = buildStripeCheckoutItems(order.items);
 
       // Add shipping and tax
       const shipping = calculateShipping();
       const tax = calculateTax();
 
-      if (shipping > 0) {
-        stripeItems.push({
-          name: "Shipping",
-          description: "Standard shipping",
-          amount: Math.round(shipping * 100),
-          currency: "usd",
-          quantity: 1,
-        });
-      }
-
-      if (tax > 0) {
-        stripeItems.push({
-          name: "Tax",
-          description: "Sales tax",
-          amount: Math.round(tax * 100),
-          currency: "usd",
-          quantity: 1,
-        });
-      }
+      stripeItems.push(...buildStripeChargeItems({ shipping, tax }));
 
       const result = await createCheckoutSession({
         items: stripeItems,
@@ -932,7 +870,7 @@ const OrderDetailsPage = () => {
           </Button>
           <Button
             onClick={() => router.push("/shop")}
-            className="flex-1 bg-babyshopSky hover:bg-babyshopSky/90 text-babyshopWhite"
+            className="flex-1 bg-darkColor hover:bg-shop_light_yellow/90 text-white"
           >
             Continue Shopping
           </Button>
@@ -979,10 +917,11 @@ const OrderDetailsPage = () => {
               <CreditCard className="w-8 h-8 text-babyshopSky" />
             </div>
             <DialogTitle className="text-center text-xl">
-              Select Payment Gateway
+              Confirm Payment
             </DialogTitle>
             <DialogDescription className="text-center">
-              Choose your preferred payment method to complete your order
+              You will be redirected to Stripe to complete your payment
+              securely.
             </DialogDescription>
           </DialogHeader>
 
@@ -997,93 +936,36 @@ const OrderDetailsPage = () => {
           </div>
 
           <div className="py-4">
-            <RadioGroup
-              value={paymentGateway || ""}
-              onValueChange={(value) =>
-                setPaymentGateway(value as "stripe" | "sslcommerz")
-              }
-            >
-              {/* Stripe Option */}
-              <div
-                className={`relative flex items-start space-x-3 rounded-lg border-2 p-4 cursor-pointer transition-all ${
-                  paymentGateway === "stripe"
-                    ? "border-babyshopSky bg-babyshopSky/5"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setPaymentGateway("stripe")}
-              >
-                <RadioGroupItem value="stripe" id="stripe" className="mt-1" />
-                <Label htmlFor="stripe" className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-sm font-medium">Stripe</div>
-                    <div className="flex items-center gap-1">
-                      <Image
-                        src="/images/stripe-logo.png"
-                        alt="Stripe"
-                        width={50}
-                        height={20}
-                        className="h-5 w-auto"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Pay with Credit/Debit Card (USD)
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    Secure international payment gateway
-                  </div>
+            <div className="rounded-lg border border-shop_dark_yellow bg-shop_light_yellow/40 p-4">
+              <div className="mb-1 flex items-center justify-between">
+                <Label className="text-sm font-medium text-babyshopBlack">
+                  Stripe
                 </Label>
-              </div>
-
-              {/* SSLCommerz Option */}
-              <div
-                className={`relative flex items-start space-x-3 rounded-lg border-2 p-4 cursor-pointer transition-all ${
-                  paymentGateway === "sslcommerz"
-                    ? "border-babyshopSky bg-babyshopSky/5"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setPaymentGateway("sslcommerz")}
-              >
-                <RadioGroupItem
-                  value="sslcommerz"
-                  id="sslcommerz"
-                  className="mt-1"
+                <Image
+                  src="/images/stripe-logo.png"
+                  alt="Stripe"
+                  width={50}
+                  height={20}
+                  className="h-5 w-auto"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
-                <Label htmlFor="sslcommerz" className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-sm font-medium">SSLCommerz</div>
-                    <div className="flex items-center gap-1">
-                      <Image
-                        src="/images/sslcommerz-logo.png"
-                        alt="SSLCommerz"
-                        width={50}
-                        height={20}
-                        className="h-5 w-auto"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    bKash, Nagad, Rocket, Card (BDT)
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    Bangladesh&apos;s trusted payment gateway
-                  </div>
-                </Label>
               </div>
-            </RadioGroup>
+              <p className="text-xs text-gray-700">
+                Pay with Credit/Debit Card (USD)
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                Secure international payment gateway.
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
             <Button
               onClick={handlePayNow}
-              disabled={processingPayment || !paymentGateway}
-              className="w-full bg-babyshopSky hover:bg-babyshopSky/90 text-white"
+              disabled={processingPayment}
+              className="w-full bg-shop_light_yellow text-darkColor hover:bg-darkColor hover:text-white"
             >
               {processingPayment ? (
                 <>
@@ -1101,7 +983,6 @@ const OrderDetailsPage = () => {
               variant="outline"
               onClick={() => {
                 setShowPaymentConfirm(false);
-                setPaymentGateway(null);
               }}
               disabled={processingPayment}
               className="w-full"

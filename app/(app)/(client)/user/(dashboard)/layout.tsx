@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import UserDashboardLayout from "@/components/layouts/UserDashboardLayout";
+import ProfilePageSkeleton from "@/components/skeleton/ProfilePageSkeleton";
 
 export default function DashboardLayout({
   children,
@@ -21,11 +22,7 @@ export default function DashboardLayout({
   }, [isLoaded, userId, router]);
 
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <ProfilePageSkeleton />;
   }
 
   if (!userId) {

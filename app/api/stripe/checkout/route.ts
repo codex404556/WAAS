@@ -27,21 +27,53 @@ type CheckoutPayload = {
   metadata?: Record<string, string>;
 };
 
-const normalizeImageUrl = (url: string) => {
+const getBaseOrigin = (fallbackOrigin: string) => {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_PAYLOAD_URL ||
+    fallbackOrigin
+  );
+};
+
+const normalizeImageUrl = (rawUrl: string, fallbackOrigin: string) => {
+  const url = rawUrl.trim();
+  if (!url) return undefined;
+
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
-  if (!url.startsWith("/")) {
-    return undefined;
+
+  // Protocol-relative URL: //cdn.example.com/image.png
+  if (url.startsWith("//")) {
+    return `https:${url}`;
   }
-  const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL;
-  if (!baseUrl) return undefined;
-  return `${baseUrl.replace(/\/$/, "")}${url}`;
+
+  // Root-relative URL: /media/image.png
+  if (url.startsWith("/")) {
+    const base = getBaseOrigin(fallbackOrigin).replace(/\/$/, "");
+    return `${base}${url}`;
+  }
+
+  // Relative path without leading slash: media/image.png
+  const base = getBaseOrigin(fallbackOrigin).replace(/\/$/, "");
+  const normalizedPath = url.replace(/^\.?\/*/, "");
+  if (normalizedPath) {
+    return `${base}/${normalizedPath}`;
+  }
+
+  return undefined;
+};
+
+const getFallbackImageUrl = (fallbackOrigin: string) => {
+  const raw = process.env.NEXT_PUBLIC_STRIPE_FALLBACK_IMAGE_URL?.trim();
+  if (!raw) return undefined;
+  return normalizeImageUrl(raw, fallbackOrigin);
 };
 
 export const POST = async (request: Request) => {
   try {
     const payload = (await request.json()) as CheckoutPayload;
+    const requestOrigin = new URL(request.url).origin;
     const items = Array.isArray(payload.items) ? payload.items : [];
 
     if (!payload.successUrl || !payload.cancelUrl) {
@@ -52,21 +84,46 @@ export const POST = async (request: Request) => {
       return new Response("Missing items", { status: 400 });
     }
 
+    const fallbackImage = getFallbackImageUrl(requestOrigin);
+
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(
-      (item) => ({
-        price_data: {
-          currency: item.currency,
-          product_data: {
-            name: item.name,
-            description: item.description,
-            images: (item.images || [])
-              .map((img) => normalizeImageUrl(img))
-              .filter((img): img is string => Boolean(img)),
+      (item, index) => {
+        const normalizedImages = (item.images || [])
+          .map((img) => normalizeImageUrl(img, requestOrigin))
+          .filter((img): img is string => Boolean(img));
+
+        const checkoutImages =
+          normalizedImages.length > 0
+            ? normalizedImages
+            : fallbackImage
+              ? [fallbackImage]
+              : [];
+
+        if (
+          process.env.NODE_ENV !== "production" &&
+          (item.images?.length ?? 0) > 0 &&
+          checkoutImages.length === 0
+        ) {
+          console.warn("Stripe checkout image dropped", {
+            itemIndex: index,
+            itemName: item.name,
+            rawImages: item.images,
+          });
+        }
+
+        return {
+          price_data: {
+            currency: item.currency,
+            product_data: {
+              name: item.name,
+              description: item.description,
+              images: checkoutImages,
+            },
+            unit_amount: item.amount,
           },
-          unit_amount: item.amount,
-        },
-        quantity: item.quantity,
-      })
+          quantity: item.quantity,
+        };
+      }
     );
 
     const stripe = getStripe();

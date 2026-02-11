@@ -41,9 +41,10 @@ import OrderDetailsModal from "@/components/profilepages/OrderDetailsModal";
 import PriceFormatter from "@/components/common/PriceFormatter";
 import { OrderTableSkeleton } from "../skeleton/OrderSkeleton";
 import {
+  buildStripeChargeItems,
+  buildStripeCheckoutItems,
   createCheckoutSession,
   redirectToCheckout,
-  type StripeCheckoutItem,
 } from "@/lib/stripe";
 
 const OrdersPageContent = () => {
@@ -193,40 +194,13 @@ const OrdersPageContent = () => {
     try {
       const customerEmail = user?.primaryEmailAddress?.emailAddress;
       // Convert order items to Stripe format
-      const stripeItems: StripeCheckoutItem[] = orderToPay.items.map(
-        (item) => ({
-          name: item.name,
-          description: `Quantity: ${item.quantity}`,
-          amount: Math.round(item.price * 100),
-          currency: "usd",
-          quantity: item.quantity,
-          images: item.image ? [item.image] : undefined,
-        })
-      );
+      const stripeItems = buildStripeCheckoutItems(orderToPay.items);
 
       // Add shipping and tax
       const shipping = calculateShipping(orderToPay);
       const tax = calculateTax(orderToPay);
 
-      if (shipping > 0) {
-        stripeItems.push({
-          name: "Shipping",
-          description: "Standard shipping",
-          amount: Math.round(shipping * 100),
-          currency: "usd",
-          quantity: 1,
-        });
-      }
-
-      if (tax > 0) {
-        stripeItems.push({
-          name: "Tax",
-          description: "Sales tax",
-          amount: Math.round(tax * 100),
-          currency: "usd",
-          quantity: 1,
-        });
-      }
+      stripeItems.push(...buildStripeChargeItems({ shipping, tax }));
 
       const result = await createCheckoutSession({
         items: stripeItems,

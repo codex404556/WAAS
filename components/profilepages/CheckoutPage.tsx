@@ -20,9 +20,10 @@ import {
 import Image from "next/image";
 import { getOrderById, type Order, createOrderFromCart } from "@/lib/orderApi";
 import {
+  buildStripeChargeItems,
+  buildStripeCheckoutItems,
   createCheckoutSession,
   redirectToCheckout,
-  type StripeCheckoutItem,
 } from "@/lib/stripe";
 import useStore from "@/store";
 import { useCartStore } from "@/store/useCartStore";
@@ -37,6 +38,7 @@ const CheckoutPageContent = () => {
   const [processing, setProcessing] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("card");
   const searchParams = useSearchParams();
@@ -54,6 +56,8 @@ const CheckoutPageContent = () => {
   const orderId = searchParams.get("orderId");
 
   useEffect(() => {
+    let isMounted = true;
+
     if (!isLoaded) {
       return;
     }
@@ -65,17 +69,26 @@ const CheckoutPageContent = () => {
     }
 
     const loadAddresses = async () => {
+      setIsLoadingAddresses(true);
       try {
         const userAddresses = await getUserAddresses();
+        if (!isMounted) return;
+
         setAddresses(userAddresses);
         if (userAddresses.length === 1) {
           setSelectedAddress(userAddresses[0]);
         } else if (userAddresses.length > 1) {
           const defaultAddress = userAddresses.find((addr) => addr.defaulte);
           setSelectedAddress(defaultAddress || userAddresses[0]);
+        } else {
+          setSelectedAddress(null);
         }
       } catch (error) {
         console.error("Failed to load addresses:", error);
+      } finally {
+        if (isMounted) {
+          setIsLoadingAddresses(false);
+        }
       }
     };
 
@@ -86,6 +99,7 @@ const CheckoutPageContent = () => {
           // If orderId is provided, load existing order
           console.log("Checkout: Fetching order", orderId);
           const orderData = await getOrderById(orderId);
+          if (!isMounted) return;
           if (orderData) {
             console.log("Checkout: Order fetched successfully");
             setOrder(orderData);
@@ -131,19 +145,27 @@ const CheckoutPageContent = () => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
+          if (!isMounted) return;
           setOrder(tempOrder);
         }
       } catch (error) {
         console.error("Error initializing checkout:", error);
+        if (!isMounted) return;
         toast.error("Failed to load checkout details");
         router.push("/cart");
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     initializeCheckout();
     loadAddresses();
+
+    return () => {
+      isMounted = false;
+    };
   }, [
     orderId,
     router,
@@ -231,47 +253,17 @@ const CheckoutPageContent = () => {
 
         finalOrder = response.order;
         setOrder(finalOrder);
-
-        // Clear cart after successful order creation
-        await clearCart();
         setIsCreatingOrder(false);
       }
 
       // Stripe payment
-      const stripeItems: StripeCheckoutItem[] = finalOrder.items.map(
-        (item) => ({
-          name: item.name,
-          description: `Quantity: ${item.quantity}`,
-          amount: Math.round(item.price * 100), // Convert to cents
-          currency: "usd",
-          quantity: item.quantity,
-          images: item.image ? [item.image] : undefined,
-        })
-      );
+      const stripeItems = buildStripeCheckoutItems(finalOrder.items);
 
       // Add shipping and tax as separate line items if applicable
       const shipping = calculateShipping();
       const tax = calculateTax();
 
-      if (shipping > 0) {
-        stripeItems.push({
-          name: "Shipping",
-          description: "Standard shipping",
-          amount: Math.round(shipping * 100),
-          currency: "usd",
-          quantity: 1,
-        });
-      }
-
-      if (tax > 0) {
-        stripeItems.push({
-          name: "Tax",
-          description: "Sales tax",
-          amount: Math.round(tax * 100),
-          currency: "usd",
-          quantity: 1,
-        });
-      }
+      stripeItems.push(...buildStripeChargeItems({ shipping, tax }));
 
       // Create checkout session
       console.log(
@@ -494,12 +486,22 @@ const CheckoutPageContent = () => {
         {/* Order Details */}
         <div className="space-y-6 lg:col-span-2">
           {/* Shipping Address */}
-          <AddressSelection
-            selectedAddress={selectedAddress}
-            onAddressSelect={setSelectedAddress}
-            addresses={addresses}
-            onAddressesUpdate={handleAddressesUpdate}
-          />
+          {isLoadingAddresses ? (
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+              <Skeleton className="mb-4 h-6 w-36" />
+              <div className="space-y-3">
+                <Skeleton className="h-20 w-full rounded-lg" />
+                <Skeleton className="h-20 w-full rounded-lg" />
+              </div>
+            </div>
+          ) : (
+            <AddressSelection
+              selectedAddress={selectedAddress}
+              onAddressSelect={setSelectedAddress}
+              addresses={addresses}
+              onAddressesUpdate={handleAddressesUpdate}
+            />
+          )}
 
           {/* Order Items */}
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
@@ -628,7 +630,7 @@ const CheckoutPageContent = () => {
                   <div
                     className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
                       paymentMethod === "card"
-                        ? "border-babyshopSky bg-babyshopSky/5"
+                        ? "border-shop_dark_yellow bg-shop_light_yellow"
                         : "border-gray-200 bg-white hover:border-gray-300"
                     }`}
                     onClick={() => setPaymentMethod("card")}
@@ -637,7 +639,7 @@ const CheckoutPageContent = () => {
                     <CreditCard
                       className={`w-4 h-4 ${
                         paymentMethod === "card"
-                          ? "text-babyshopSky"
+                          ? "text-darkColor"
                           : "text-gray-600"
                       }`}
                     />
@@ -653,7 +655,7 @@ const CheckoutPageContent = () => {
                       </div>
                     </Label>
                     {paymentMethod === "card" && (
-                      <CheckCircle className="w-4 h-4 text-babyshopSky" />
+                      <CheckCircle className="w-4 h-4 text-darkColor" />
                     )}
                   </div>
 
@@ -662,7 +664,7 @@ const CheckoutPageContent = () => {
                 <div
                   className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
                     paymentMethod === "cod"
-                      ? "border-babyshopSky bg-babyshopSky/5"
+                      ? "border-shop_dark_yellow bg-shop_light_yellow"
                       : "border-gray-200 bg-white hover:border-gray-300"
                   }`}
                   onClick={() => setPaymentMethod("cod")}
@@ -671,7 +673,7 @@ const CheckoutPageContent = () => {
                   <Banknote
                     className={`w-4 h-4 ${
                       paymentMethod === "cod"
-                        ? "text-babyshopSky"
+                        ? "text-darkColor"
                         : "text-gray-600"
                     }`}
                   />
@@ -682,12 +684,9 @@ const CheckoutPageContent = () => {
                     <div className="font-medium text-sm text-babyshopBlack">
                       Cash on Delivery
                     </div>
-                    <div className="text-xs text-babyshopTextLight">
-                      Pay when you receive
-                    </div>
                   </Label>
                   {paymentMethod === "cod" && (
-                    <CheckCircle className="w-4 h-4 text-babyshopSky" />
+                    <CheckCircle className="w-4 h-4 text-darkColor" />
                   )}
                 </div>
               </RadioGroup>

@@ -196,7 +196,11 @@ export const AddressSheet: React.FC<AddressSheetProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" form={formId}>
+          <Button
+            type="submit"
+            form={formId}
+            className="bg-shop_light_yellow text-darkColor transition-all hover:bg-darkColor hover:text-white"
+          >
             Save Address
           </Button>
         </SheetFooter>
