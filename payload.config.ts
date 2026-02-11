@@ -143,7 +143,43 @@ export default buildConfig({
           );
         }
 
-        const totalRevenue = 0;
+        let totalRevenue = 0;
+        if (hasCollection("orders")) {
+          let page = 1;
+          const limit = 200;
+
+          while (true) {
+            const paidOrders = await req.payload.find({
+              collection: "orders" as never,
+              where: {
+                paymentStatus: {
+                  equals: "paid",
+                },
+              },
+              depth: 0,
+              limit,
+              page,
+              req,
+            });
+
+            for (const order of paidOrders.docs as Array<{
+              totalAmount?: number;
+              stripeAmountTotal?: number;
+            }>) {
+              const amount = Number(
+                order.stripeAmountTotal ?? order.totalAmount ?? 0
+              );
+              if (Number.isFinite(amount) && amount > 0) {
+                totalRevenue += amount;
+              }
+            }
+
+            if (page >= (paidOrders.totalPages || 1)) {
+              break;
+            }
+            page += 1;
+          }
+        }
 
         return Response.json({
           counts: {

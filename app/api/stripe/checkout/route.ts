@@ -85,6 +85,9 @@ export const POST = async (request: Request) => {
     }
 
     const fallbackImage = getFallbackImageUrl(requestOrigin);
+    const orderReference = payload.metadata?.orderId?.trim() || undefined;
+    const clientReferenceId =
+      orderReference && orderReference.length <= 200 ? orderReference : undefined;
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(
       (item, index) => {
@@ -133,6 +136,7 @@ export const POST = async (request: Request) => {
       success_url: payload.successUrl,
       cancel_url: payload.cancelUrl,
       customer_email: payload.customerEmail || undefined,
+      client_reference_id: clientReferenceId,
       metadata: payload.metadata || undefined,
     });
 

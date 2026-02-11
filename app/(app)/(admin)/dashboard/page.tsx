@@ -110,7 +110,7 @@ export default function DashboardPage() {
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6"
+      className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6"
       variants={containerVariants}
       initial={false}
       animate="visible"
@@ -201,40 +201,48 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="h-96">
                       {isMounted && chartsReady && (
-                        <div className="h-full w-full min-h-[24rem]">
+                        <div className="h-full w-full min-h-96">
                           <ResponsiveContainer width="100%" height={320}>
-                          <BarChart
-                            data={stats.categories}
-                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                          >
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="#e5e7eb"
-                          />
-                          <XAxis dataKey="name" tick={{ fill: "#4b5563" }} />
-                          <YAxis tick={{ fill: "#4b5563" }} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "white",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "8px",
-                            }}
-                          />
-                          <Legend />
-                          <Bar
-                            dataKey="value"
-                            name="Products"
-                            radius={[4, 4, 0, 0]}
-                            animationDuration={1000}
-                          >
-                            {stats.categories.map((_, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
+                            <BarChart
+                              data={stats.categories}
+                              margin={{
+                                top: 20,
+                                right: 30,
+                                left: 20,
+                                bottom: 5,
+                              }}
+                            >
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="#e5e7eb"
                               />
-                            ))}
-                          </Bar>
-                        </BarChart>
+                              <XAxis
+                                dataKey="name"
+                                tick={{ fill: "#4b5563" }}
+                              />
+                              <YAxis tick={{ fill: "#4b5563" }} />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: "white",
+                                  border: "1px solid #e5e7eb",
+                                  borderRadius: "8px",
+                                }}
+                              />
+                              <Legend />
+                              <Bar
+                                dataKey="value"
+                                name="Products"
+                                radius={[4, 4, 0, 0]}
+                                animationDuration={1000}
+                              >
+                                {stats.categories.map((_, index) => (
+                                  <Cell
+                                    key={`cell-${index}`}
+                                    fill={COLORS[index % COLORS.length]}
+                                  />
+                                ))}
+                              </Bar>
+                            </BarChart>
                           </ResponsiveContainer>
                         </div>
                       )}
@@ -251,37 +259,37 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="h-96">
                       {isMounted && chartsReady && (
-                        <div className="h-full w-full min-h-[24rem]">
+                        <div className="h-full w-full min-h-96">
                           <ResponsiveContainer width="100%" height={320}>
-                        <PieChart>
-                          <Pie
-                            data={stats.roles}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={true}
-                            label={({ name, percent }) =>
-                              `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                            }
-                            outerRadius={100}
-                            animationDuration={1000}
-                            dataKey="value"
-                          >
-                            {stats.roles.map((_, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
+                            <PieChart>
+                              <Pie
+                                data={stats.roles}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={true}
+                                label={({ name, percent }) =>
+                                  `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                                }
+                                outerRadius={100}
+                                animationDuration={1000}
+                                dataKey="value"
+                              >
+                                {stats.roles.map((_, index) => (
+                                  <Cell
+                                    key={`cell-${index}`}
+                                    fill={COLORS[index % COLORS.length]}
+                                  />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: "white",
+                                  border: "1px solid #e5e7eb",
+                                  borderRadius: "8px",
+                                }}
                               />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "white",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "8px",
-                            }}
-                          />
-                          <Legend />
-                        </PieChart>
+                              <Legend />
+                            </PieChart>
                           </ResponsiveContainer>
                         </div>
                       )}
@@ -301,40 +309,48 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="h-96">
                       {isMounted && chartsReady && (
-                        <div className="h-full w-full min-h-[24rem]">
+                        <div className="h-full w-full min-h-96">
                           <ResponsiveContainer width="100%" height={320}>
-                        <BarChart
-                          data={stats.brands}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="#e5e7eb"
-                          />
-                          <XAxis dataKey="name" tick={{ fill: "#4b5563" }} />
-                          <YAxis tick={{ fill: "#4b5563" }} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "white",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "8px",
-                            }}
-                          />
-                          <Legend />
-                          <Bar
-                            dataKey="value"
-                            name="Products"
-                            radius={[4, 4, 0, 0]}
-                            animationDuration={1000}
-                          >
-                            {stats.brands.map((_, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
+                            <BarChart
+                              data={stats.brands}
+                              margin={{
+                                top: 20,
+                                right: 30,
+                                left: 20,
+                                bottom: 5,
+                              }}
+                            >
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="#e5e7eb"
                               />
-                            ))}
-                          </Bar>
-                        </BarChart>
+                              <XAxis
+                                dataKey="name"
+                                tick={{ fill: "#4b5563" }}
+                              />
+                              <YAxis tick={{ fill: "#4b5563" }} />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: "white",
+                                  border: "1px solid #e5e7eb",
+                                  borderRadius: "8px",
+                                }}
+                              />
+                              <Legend />
+                              <Bar
+                                dataKey="value"
+                                name="Products"
+                                radius={[4, 4, 0, 0]}
+                                animationDuration={1000}
+                              >
+                                {stats.brands.map((_, index) => (
+                                  <Cell
+                                    key={`cell-${index}`}
+                                    fill={COLORS[index % COLORS.length]}
+                                  />
+                                ))}
+                              </Bar>
+                            </BarChart>
                           </ResponsiveContainer>
                         </div>
                       )}

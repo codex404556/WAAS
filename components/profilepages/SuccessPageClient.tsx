@@ -25,6 +25,7 @@ const SuccessPageClient = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasClearedCart, setHasClearedCart] = useState(false);
+  const [isPollingPayment, setIsPollingPayment] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
@@ -61,6 +62,43 @@ const SuccessPageClient = () => {
 
     fetchOrder();
   }, [orderId, router, isLoaded, isSignedIn]);
+
+  useEffect(() => {
+    if (!orderId || !order || hasClearedCart) return;
+
+    const isPaid = order.paymentStatus === "paid" || order.status === "paid";
+    if (isPaid) return;
+
+    let attempts = 0;
+    const maxAttempts = 30; // 60 seconds total at 2s interval
+    setIsPollingPayment(true);
+
+    const intervalId = window.setInterval(async () => {
+      attempts += 1;
+      try {
+        const latestOrder = await getOrderById(orderId);
+        if (!latestOrder) return;
+
+        setOrder(latestOrder);
+        const latestPaid =
+          latestOrder.paymentStatus === "paid" || latestOrder.status === "paid";
+        if (latestPaid || attempts >= maxAttempts) {
+          window.clearInterval(intervalId);
+          setIsPollingPayment(false);
+        }
+      } catch {
+        if (attempts >= maxAttempts) {
+          window.clearInterval(intervalId);
+          setIsPollingPayment(false);
+        }
+      }
+    }, 2000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      setIsPollingPayment(false);
+    };
+  }, [orderId, order, hasClearedCart]);
 
   useEffect(() => {
     // Show success toast when component mounts
@@ -149,6 +187,12 @@ const SuccessPageClient = () => {
             Thank you for your purchase. Your order has been confirmed and is
             being processed.
           </p>
+
+          {isPollingPayment && (
+            <p className="text-sm text-gray-500 mb-6">
+              Verifying payment confirmation...
+            </p>
+          )}
 
           {order && (
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 mb-8 animate-fade-in delay-200">

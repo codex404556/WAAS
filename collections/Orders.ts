@@ -77,6 +77,32 @@ export const Orders: CollectionConfig = {
       ],
     },
     {
+      name: "stripeSessionId",
+      type: "text",
+    },
+    {
+      name: "stripePaymentIntentId",
+      type: "text",
+    },
+    {
+      name: "stripeAmountTotal",
+      type: "number",
+      min: 0,
+    },
+    {
+      name: "stripeAmountTotalCents",
+      type: "number",
+      min: 0,
+    },
+    {
+      name: "stripeCurrency",
+      type: "text",
+    },
+    {
+      name: "paidAt",
+      type: "date",
+    },
+    {
       name: "shippingAddress",
       type: "group",
       fields: [
