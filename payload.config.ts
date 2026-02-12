@@ -594,6 +594,12 @@ type ResolvePayloadUserResult =
 const resolvePayloadUserFromClerk = async (
   req: PayloadRequest
 ): Promise<ResolvePayloadUserResult> => {
+  type MinimalUserDoc = {
+    id?: string | number;
+    _id?: string | number;
+    clerkId?: string | null;
+  };
+
   const { userId } = await auth();
   if (!userId) {
     return { ok: false, error: new Response("Unauthorized", { status: 401 }) };
@@ -607,28 +613,98 @@ const resolvePayloadUserFromClerk = async (
     req,
   });
 
-  const existing = (userResult.docs || [])[0] as
-    | { id?: string | number; _id?: string | number }
-    | undefined;
+  const existing = (userResult.docs || [])[0] as MinimalUserDoc | undefined;
   let payloadUserId = toNumericId(existing?.id ?? existing?._id);
 
-  if (!payloadUserId) {
-    const clerkUser = await (await clerkClient()).users.getUser(userId);
-    const primaryEmail =
-      clerkUser.emailAddresses.find(
-        (email) => email.id === clerkUser.primaryEmailAddressId
-      )?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress;
+  if (payloadUserId) {
+    return { ok: true, payloadUserId };
+  }
 
-    if (!primaryEmail) {
+  const clerkUser = await (await clerkClient()).users.getUser(userId);
+  const primaryEmail =
+    clerkUser.emailAddresses.find(
+      (email) => email.id === clerkUser.primaryEmailAddressId
+    )?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress;
+
+  if (!primaryEmail) {
+    return {
+      ok: false,
+      error: new Response("Missing email for Clerk user", { status: 400 }),
+    };
+  }
+
+  const name = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim();
+
+  const byEmailResult = await req.payload.find({
+    collection: "users",
+    where: { email: { equals: primaryEmail } },
+    limit: 1,
+    depth: 0,
+    req,
+  });
+
+  const existingByEmail = (byEmailResult.docs || [])[0] as
+    | MinimalUserDoc
+    | undefined;
+
+  if (existingByEmail) {
+    const existingByEmailId = toNumericId(
+      existingByEmail.id ?? existingByEmail._id
+    );
+    if (!existingByEmailId) {
       return {
         ok: false,
-        error: new Response("Missing email for Clerk user", { status: 400 }),
+        error: new Response("Missing Payload user id", { status: 500 }),
       };
     }
 
-    const name = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim();
-    const randomPassword = crypto.randomBytes(24).toString("hex");
+    const existingClerkId =
+      typeof existingByEmail.clerkId === "string"
+        ? existingByEmail.clerkId.trim()
+        : "";
 
+    if (existingClerkId && existingClerkId !== userId) {
+      console.error("Clerk to Payload user conflict", {
+        payloadUserId: existingByEmailId,
+        primaryEmail,
+        existingClerkId,
+        incomingClerkId: userId,
+      });
+      return { ok: false, error: new Response("Account conflict", { status: 409 }) };
+    }
+
+    if (!existingClerkId) {
+      try {
+        await req.payload.update({
+          collection: "users",
+          id: existingByEmailId,
+          data: {
+            clerkId: userId,
+            avatar: clerkUser.imageUrl || "",
+            name: name || undefined,
+          },
+          overrideAccess: true,
+          req,
+        });
+      } catch (error) {
+        console.error("Failed to link clerkId to existing Payload user", {
+          primaryEmail,
+          incomingClerkId: userId,
+          payloadUserId: existingByEmailId,
+          error,
+        });
+        return {
+          ok: false,
+          error: new Response("Failed to link customer account", { status: 500 }),
+        };
+      }
+    }
+
+    return { ok: true, payloadUserId: existingByEmailId };
+  }
+
+  const randomPassword = crypto.randomBytes(24).toString("hex");
+  try {
     const created = (await req.payload.create({
       collection: "users",
       data: {
@@ -639,10 +715,21 @@ const resolvePayloadUserFromClerk = async (
         role: "user",
         password: randomPassword,
       },
+      overrideAccess: true,
       req,
     })) as { id?: string | number; _id?: string | number } | null;
 
     payloadUserId = toNumericId(created?.id ?? created?._id);
+  } catch (error) {
+    console.error("Failed to create Payload user for Clerk customer", {
+      primaryEmail,
+      incomingClerkId: userId,
+      error,
+    });
+    return {
+      ok: false,
+      error: new Response("Failed to provision customer account", { status: 500 }),
+    };
   }
 
   if (!payloadUserId) {
@@ -957,7 +1044,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/addresses/me",
+      path: "/customer-addresses/me",
       method: "get",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -977,7 +1064,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/addresses/me",
+      path: "/customer-addresses/me",
       method: "post",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1017,7 +1104,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/addresses/me",
+      path: "/customer-addresses/me",
       method: "patch",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1108,7 +1195,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/addresses/me",
+      path: "/customer-addresses/me",
       method: "delete",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);

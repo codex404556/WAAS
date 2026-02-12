@@ -14,7 +14,7 @@ const normalizeAddress = (address: PayloadAddress): Address => ({
 
 const fetchUserAddresses = async (): Promise<Address[]> => {
   const response =
-    await payloadFetch<PayloadDocs<PayloadAddress>>("/api/addresses/me");
+    await payloadFetch<PayloadDocs<PayloadAddress>>("/api/customer-addresses/me");
   return (response.docs || []).map(normalizeAddress);
 };
 
@@ -24,7 +24,7 @@ export const addAddress = async (
   _userId: string,
   input: AddressInput
 ): Promise<{ addresses: Address[]; message: string }> => {
-  await payloadFetch<PayloadAddress>("/api/addresses/me", {
+  await payloadFetch<PayloadAddress>("/api/customer-addresses/me", {
     method: "POST",
     body: {
       name: input.name,
@@ -45,7 +45,7 @@ export const updateAddress = async (
   addressId: string,
   input: AddressInput
 ): Promise<{ addresses: Address[]; message: string }> => {
-  await payloadFetch<PayloadAddress>(`/api/addresses/me`, {
+  await payloadFetch<PayloadAddress>(`/api/customer-addresses/me`, {
     method: "PATCH",
     body: {
       addressId,
@@ -66,7 +66,7 @@ export const deleteAddress = async (
   _userId: string,
   addressId: string
 ): Promise<{ addresses: Address[]; message: string }> => {
-  await payloadFetch<void>(`/api/addresses/me`, {
+  await payloadFetch<void>(`/api/customer-addresses/me`, {
     method: "DELETE",
     body: { addressId },
   });

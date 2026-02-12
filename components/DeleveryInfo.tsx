@@ -79,7 +79,7 @@ const DeleveryInfo = () => {
       if (!payloadUserId) {
         throw new Error("Missing Payload user id");
       }
-      const res = await fetch("/api/addresses/me", {
+      const res = await fetch("/api/customer-addresses/me", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -116,7 +116,7 @@ const DeleveryInfo = () => {
     if (addr) setSelectedAddress(addr);
 
     try {
-      await fetch("/api/addresses/me", {
+      await fetch("/api/customer-addresses/me", {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

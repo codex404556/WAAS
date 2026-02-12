@@ -408,7 +408,7 @@ export const listRelatedProductsByCategory = async (
 };
 
 export const listAddresses = async (): Promise<Address[]> => {
-  const res = await fetch("/api/addresses/me", { cache: "no-store" });
+  const res = await fetch("/api/customer-addresses/me", { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Address request failed: ${res.status}`);
   }
