@@ -1020,7 +1020,7 @@ export default buildConfig({
   },
   endpoints: [
     {
-      path: "/orders/me",
+      path: "/customer-orders/me",
       method: "get",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1238,7 +1238,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/orders/me",
+      path: "/customer-orders/me",
       method: "post",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1325,7 +1325,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/orders/me-item",
+      path: "/customer-orders/item",
       method: "get",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1356,7 +1356,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/orders/me-item",
+      path: "/customer-orders/item",
       method: "delete",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1622,7 +1622,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/notifications",
+      path: "/customer-notifications",
       method: "get",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1670,7 +1670,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/notifications",
+      path: "/customer-notifications",
       method: "delete",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1705,7 +1705,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/notifications/unread-count",
+      path: "/customer-notifications/unread-count",
       method: "get",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1728,7 +1728,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/notifications/read-all",
+      path: "/customer-notifications/read-all",
       method: "put",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1767,7 +1767,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/notifications/item/read",
+      path: "/customer-notifications/item/read",
       method: "put",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);
@@ -1807,7 +1807,7 @@ export default buildConfig({
       },
     },
     {
-      path: "/notifications/item",
+      path: "/customer-notifications/item",
       method: "delete",
       handler: async (req) => {
         const resolved = await resolvePayloadUserFromClerk(req);

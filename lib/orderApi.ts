@@ -77,13 +77,13 @@ const request = async <T>(input: string, init?: RequestInit): Promise<T> => {
 };
 
 export const getUserOrders = async (): Promise<Order[]> => {
-  const data = await request<OrdersResponse>("/api/orders/me");
+  const data = await request<OrdersResponse>("/api/customer-orders/me");
   return data.orders || [];
 };
 
 export const getOrderById = async (orderId: string): Promise<Order | null> => {
   const data = await request<OrderResponse>(
-    `/api/orders/me-item?id=${encodeURIComponent(orderId)}`
+    `/api/customer-orders/item?id=${encodeURIComponent(orderId)}`
   );
   return data.order ?? null;
 };
@@ -92,7 +92,7 @@ export const deleteOrder = async (
   orderId: string
 ): Promise<DeleteResponse> => {
   try {
-    await request(`/api/orders/me-item?id=${encodeURIComponent(orderId)}`, {
+    await request(`/api/customer-orders/item?id=${encodeURIComponent(orderId)}`, {
       method: "DELETE",
     });
     return { success: true };
@@ -126,7 +126,7 @@ export const createOrderFromCart = async (
       items,
       shippingAddress,
     };
-    const data = await request<CreateOrderResponse>("/api/orders/me", {
+    const data = await request<CreateOrderResponse>("/api/customer-orders/me", {
       method: "POST",
       body: JSON.stringify(payload),
     });

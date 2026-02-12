@@ -88,7 +88,7 @@ export const getNotifications = async (
   });
 
   const data = await request<NotificationListResponse>(
-    `/api/notifications?${params}`
+    `/api/customer-notifications?${params}`
   );
 
   return {
@@ -101,33 +101,38 @@ export const getNotifications = async (
 };
 
 export const getUnreadCount = async (): Promise<number> => {
-  const data = await request<{ count: number }>("/api/notifications/unread-count");
+  const data = await request<{ count: number }>(
+    "/api/customer-notifications/unread-count"
+  );
   return data.count || 0;
 };
 
 export const markAsRead = async (notificationId: string): Promise<boolean> => {
   await request(
-    `/api/notifications/item/read?id=${encodeURIComponent(notificationId)}`,
+    `/api/customer-notifications/item/read?id=${encodeURIComponent(notificationId)}`,
     { method: "PUT" }
   );
   return true;
 };
 
 export const markAllAsRead = async (): Promise<boolean> => {
-  await request("/api/notifications/read-all", { method: "PUT" });
+  await request("/api/customer-notifications/read-all", { method: "PUT" });
   return true;
 };
 
 export const deleteNotification = async (
   notificationId: string
 ): Promise<boolean> => {
-  await request(`/api/notifications/item?id=${encodeURIComponent(notificationId)}`, {
-    method: "DELETE",
-  });
+  await request(
+    `/api/customer-notifications/item?id=${encodeURIComponent(notificationId)}`,
+    {
+      method: "DELETE",
+    }
+  );
   return true;
 };
 
 export const deleteAllNotifications = async (): Promise<boolean> => {
-  await request("/api/notifications", { method: "DELETE" });
+  await request("/api/customer-notifications", { method: "DELETE" });
   return true;
 };
