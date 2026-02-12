@@ -221,7 +221,7 @@ export default function OrdersPage() {
     setIsUpdating(true);
     try {
       const orderId = updatedOrder.id || updatedOrder._id;
-      await payloadFetch(`/api/admin/orders/${orderId}`, {
+      await payloadFetch(`/api/admin/order?id=${encodeURIComponent(orderId)}`, {
         method: "PATCH",
         body: { status: updatedOrder.status },
       });
@@ -242,7 +242,7 @@ export default function OrdersPage() {
   const handleDeleteOrder = async (orderId: string) => {
     setIsDeleting(true);
     try {
-      await payloadFetch(`/api/admin/orders/${orderId}`, {
+      await payloadFetch(`/api/admin/order?id=${encodeURIComponent(orderId)}`, {
         method: "DELETE",
       });
 

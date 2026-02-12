@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import {
   Bookmark,
   Package,
   DollarSign,
+  AlertCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -76,6 +77,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [chartsReady, setChartsReady] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -84,22 +86,26 @@ export default function DashboardPage() {
     }).format(amount);
   };
 
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await payloadFetch<StatsData>("/api/stats");
+      setStats(response);
+    } catch (error) {
+      setStats(null);
+      setErrorMessage("Failed to load dashboard statistics.");
+      toast.error("Failed to load dashboard statistics");
+      console.log("Error: ", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     setIsMounted(true);
-    const fetchStats = async () => {
-      try {
-        const response = await payloadFetch<StatsData>("/api/stats");
-        setStats(response);
-      } catch (error) {
-        toast.error("Failed to load dashboard statistics");
-        console.log("Error: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
+    void fetchStats();
+  }, [fetchStats]);
 
   useEffect(() => {
     if (!loading) {
@@ -117,6 +123,24 @@ export default function DashboardPage() {
     >
       {loading ? (
         <DashboardSkeleton />
+      ) : errorMessage ? (
+        <div className="max-w-3xl mx-auto rounded-xl border border-red-200 bg-red-50 p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-red-800">
+                Unable to load dashboard data
+              </h2>
+              <p className="text-red-700">{errorMessage}</p>
+              <button
+                onClick={() => void fetchStats()}
+                className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="space-y-6 max-w-7xl mx-auto">
           <motion.h1

@@ -20,6 +20,7 @@ import PriceFormatter from "@/components/common/PriceFormatter";
 import Container from "@/components/common/Container";
 import { useUser } from "@clerk/nextjs";
 import { useCartStore } from "@/store/useCartStore";
+import useStore from "@/store";
 
 const SuccessPageClient = () => {
   const [order, setOrder] = useState<Order | null>(null);
@@ -30,6 +31,7 @@ const SuccessPageClient = () => {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
   const { clearCart } = useCartStore();
+  const hasHydrated = useStore((state) => state.hasHydrated);
 
   const orderId = searchParams.get("orderId");
 
@@ -109,16 +111,19 @@ const SuccessPageClient = () => {
 
   useEffect(() => {
     const clearCartAfterPaidOrder = async () => {
-      if (hasClearedCart || !order) return;
+      if (hasClearedCart || !order || !hasHydrated) return;
       const isPaid = order.paymentStatus === "paid" || order.status === "paid";
       if (!isPaid) return;
 
+      console.info("[success-page] Clearing cart for paid order", {
+        orderId: order._id,
+      });
       await clearCart();
       setHasClearedCart(true);
     };
 
     clearCartAfterPaidOrder();
-  }, [order, clearCart, hasClearedCart]);
+  }, [order, clearCart, hasClearedCart, hasHydrated]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

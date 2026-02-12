@@ -36,6 +36,9 @@ export const useCartStore = () => {
     cartItemsWithQuantities,
     clearCart: async () => {
       resetCart();
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("cart-store");
+      }
     },
     removeFromCart: async (productId: string) => {
       setState((state) => ({

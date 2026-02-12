@@ -46,11 +46,15 @@ import {
   createCheckoutSession,
   redirectToCheckout,
 } from "@/lib/stripe";
+import { useCartStore } from "@/store/useCartStore";
+import useStore from "@/store";
 
 const OrdersPageContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
+  const { clearCart } = useCartStore();
+  const hasHydrated = useStore((state) => state.hasHydrated);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +64,7 @@ const OrdersPageContent = () => {
   const [orderToPay, setOrderToPay] = useState<Order | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [deletingOrder, setDeletingOrder] = useState<string | null>(null);
+  const [hasClearedCart, setHasClearedCart] = useState(false);
 
   const success = searchParams.get("success");
   const orderId = searchParams.get("orderId");
@@ -93,6 +98,12 @@ const OrdersPageContent = () => {
       toast.success(
         "Payment completed successfully! Your order has been placed."
       );
+
+      if (!hasClearedCart && hasHydrated) {
+        void clearCart();
+        setHasClearedCart(true);
+      }
+
       // Remove the success params from URL
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete("success");
@@ -104,7 +115,15 @@ const OrdersPageContent = () => {
         fetchOrders();
       }, 1000); // Wait a second for the webhook to process
     }
-  }, [success, searchParams, router, fetchOrders]);
+  }, [
+    success,
+    searchParams,
+    router,
+    fetchOrders,
+    clearCart,
+    hasHydrated,
+    hasClearedCart,
+  ]);
 
   useEffect(() => {
     if (!isLoaded) return;

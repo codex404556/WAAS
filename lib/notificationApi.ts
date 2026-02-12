@@ -106,7 +106,10 @@ export const getUnreadCount = async (): Promise<number> => {
 };
 
 export const markAsRead = async (notificationId: string): Promise<boolean> => {
-  await request(`/api/notifications/${notificationId}/read`, { method: "PUT" });
+  await request(
+    `/api/notifications/item/read?id=${encodeURIComponent(notificationId)}`,
+    { method: "PUT" }
+  );
   return true;
 };
 
@@ -118,7 +121,9 @@ export const markAllAsRead = async (): Promise<boolean> => {
 export const deleteNotification = async (
   notificationId: string
 ): Promise<boolean> => {
-  await request(`/api/notifications/${notificationId}`, { method: "DELETE" });
+  await request(`/api/notifications/item?id=${encodeURIComponent(notificationId)}`, {
+    method: "DELETE",
+  });
   return true;
 };
 

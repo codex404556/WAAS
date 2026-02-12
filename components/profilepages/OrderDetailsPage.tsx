@@ -45,6 +45,8 @@ import {
 } from "@/lib/stripe";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
+import { useCartStore } from "@/store/useCartStore";
+import useStore from "@/store";
 
 const OrderDetailsPage = () => {
   const [order, setOrder] = useState<Order | null>(null);
@@ -52,10 +54,13 @@ const OrderDetailsPage = () => {
   const [deleting, setDeleting] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [hasClearedCart, setHasClearedCart] = useState(false);
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const { clearCart } = useCartStore();
+  const hasHydrated = useStore((state) => state.hasHydrated);
   const orderId = params.id as string;
   const success = searchParams.get("success");
   const paymentParam = searchParams.get("payment");
@@ -101,6 +106,25 @@ const OrderDetailsPage = () => {
     };
     fetchOrder();
   }, [orderId, router, success, paymentParam]);
+
+  useEffect(() => {
+    if (
+      hasClearedCart ||
+      !hasHydrated ||
+      success !== "true" ||
+      !order ||
+      order.paymentStatus !== "paid"
+    ) {
+      return;
+    }
+
+    const clearPaidOrderCart = async () => {
+      await clearCart();
+      setHasClearedCart(true);
+    };
+
+    void clearPaidOrderCart();
+  }, [success, order, clearCart, hasHydrated, hasClearedCart]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

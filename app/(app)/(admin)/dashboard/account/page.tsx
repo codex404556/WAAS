@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { payloadFetch } from "@/lib/payload-client";
+import { toast } from "sonner";
 import {
   Users,
   ShoppingBag,
@@ -89,6 +91,10 @@ interface InventoryAlerts {
   noSalesProducts: InventoryAlert[];
 }
 
+interface AccountOverviewResponse extends OverviewData {
+  inventoryAlerts: InventoryAlerts;
+}
+
 const COLORS = [
   "hsl(217, 91%, 60%)", // Blue
   "hsl(221, 83%, 53%)", // Indigo
@@ -117,7 +123,41 @@ export default function AccountPage() {
   const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
   const [inventoryAlerts, setInventoryAlerts] =
     useState<InventoryAlerts | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchOverview = async () => {
+      try {
+        setLoading(true);
+        const data = await payloadFetch<AccountOverviewResponse>(
+          "/api/account-overview"
+        );
+        if (!isMounted) return;
+
+        setOverviewData({
+          overview: data.overview,
+          sales: data.sales,
+        });
+        setInventoryAlerts(data.inventoryAlerts);
+      } catch (error) {
+        console.error("Failed to load account overview:", error);
+        if (!isMounted) return;
+        toast.error("Failed to load account overview data.");
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchOverview();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
