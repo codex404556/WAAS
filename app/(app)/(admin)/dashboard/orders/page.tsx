@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { payloadFetch } from "@/lib/payload-client";
@@ -95,7 +95,7 @@ export default function OrdersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
 
-  const buildOrdersQuery = () => {
+  const buildOrdersQuery = useCallback(() => {
     const searchParams = new URLSearchParams({
       page: String(page),
       limit: String(perPage),
@@ -111,9 +111,9 @@ export default function OrdersPage() {
     }
 
     return searchParams.toString();
-  };
+  }, [page, perPage, statusFilter, paymentFilter]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       // Add a small delay to demonstrate the skeleton loading state
@@ -134,7 +134,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [buildOrdersQuery]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -159,7 +159,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, [page, statusFilter, paymentFilter]);
+  }, [fetchOrders]);
 
   const handlePreviousPage = () => {
     if (page > 1) {

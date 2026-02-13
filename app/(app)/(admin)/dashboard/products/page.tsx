@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
@@ -137,6 +137,11 @@ const parseRelationId = (value: string) => {
 const normalizeVariant = (value?: string) =>
   value && value !== "none" ? value : undefined;
 
+const getBrandLabel = (brand: Brand) => brand.title ?? brand.name ?? "";
+
+const getCategoryLabel = (category: Category) =>
+  category.title ?? category.name ?? "";
+
 const toSlug = (value: string) =>
   value
     .toLowerCase()
@@ -261,7 +266,7 @@ export default function ProductsPage() {
     },
   });
 
-  const fetchProducts = async (resetPage = false) => {
+  const fetchProducts = useCallback(async (resetPage = false) => {
     setLoading(true);
     try {
       const currentPage = resetPage ? 1 : page;
@@ -331,7 +336,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, perPage, sortOrder]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -354,7 +359,7 @@ export default function ProductsPage() {
     }
   };
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await payloadFetch<{ docs?: Category[] }>(
         "/api/categories?limit=100&sort=title&depth=0"
@@ -369,14 +374,9 @@ export default function ProductsPage() {
       console.log("Failed to load categories", error);
       toast.error("Failed to load categories");
     }
-  };
+  }, []);
 
-  const getBrandLabel = (brand: Brand) => brand.title ?? brand.name ?? "";
-
-  const getCategoryLabel = (category: Category) =>
-    category.title ?? category.name ?? "";
-
-  const fetchBrands = async () => {
+  const fetchBrands = useCallback(async () => {
     try {
       const response = await payloadFetch<{ docs?: Brand[] }>(
         "/api/brands?limit=100&sort=title&depth=0"
@@ -391,16 +391,16 @@ export default function ProductsPage() {
       console.log("Failed to load brands", error);
       toast.error("Failed to load brands");
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchProducts();
-  }, [page, sortOrder]);
+  }, [fetchProducts]);
 
   useEffect(() => {
     fetchCategories();
     fetchBrands();
-  }, []);
+  }, [fetchCategories, fetchBrands]);
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
@@ -657,9 +657,7 @@ export default function ProductsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-b border-border/50 bg-muted/30">
-                    <TableHead className="w-[80px] font-semibold">
-                      Image
-                    </TableHead>
+                    <TableHead className="w-20font-semibold">Image</TableHead>
                     <TableHead className="font-semibold min-w-[200px]">
                       Name
                     </TableHead>
@@ -685,7 +683,7 @@ export default function ProductsPage() {
                       }`}
                     >
                       <TableCell className="py-3">
-                        <div className="relative h-12 w-12 rounded-md overflow-hidden bg-muted shadow-sm border flex-shrink-0">
+                        <div className="relative h-12 w-12 rounded-md overflow-hidden bg-muted shadow-sm border shrink-0">
                           <Image
                             src={
                               product?.imageUrl ??
@@ -716,7 +714,9 @@ export default function ProductsPage() {
                             ${Number(product.oldPrice).toFixed(2)}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">
+                            —
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -759,7 +759,7 @@ export default function ProductsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(product)}
-                              className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600 flex-shrink-0"
+                              className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600 shrink-0"
                               title="Edit product"
                             >
                               <Edit className="h-4 w-4" />
@@ -768,7 +768,7 @@ export default function ProductsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDelete(product)}
-                              className="h-8 w-8 hover:bg-red-50 hover:text-red-600 flex-shrink-0"
+                              className="h-8 w-8 hover:bg-red-50 hover:text-red-600 shrink-0"
                               title="Delete product"
                             >
                               <Trash className="h-4 w-4" />
@@ -1123,14 +1123,14 @@ export default function ProductsPage() {
                 )}
               />
               <DialogFooter>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setIsAddModalOpen(false)}
-                              disabled={formLoading}
-                            >
-                              Cancel
-                            </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddModalOpen(false)}
+                  disabled={formLoading}
+                >
+                  Cancel
+                </Button>
                 <Button type="submit" disabled={formLoading}>
                   {formLoading ? (
                     <>

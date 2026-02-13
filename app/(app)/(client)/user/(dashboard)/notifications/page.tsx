@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   getNotifications,
@@ -134,11 +135,7 @@ export default function NotificationsPage() {
 
   const ITEMS_PER_PAGE = 10;
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async (
+  const fetchNotifications = useCallback(async (
     page: number = 1,
     append: boolean = false
   ) => {
@@ -175,7 +172,11 @@ export default function NotificationsPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  };
+  }, [ITEMS_PER_PAGE, router]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleLoadMore = () => {
     if (hasMore && !loadingMore) {
@@ -243,16 +244,6 @@ export default function NotificationsPage() {
     } catch (error) {
       console.error("Failed to delete all notifications:", error);
     }
-  };
-
-  const handleNotificationClick = (notification: Notification) => {
-    if (!notification.isRead) {
-      handleMarkAsRead(notification._id);
-    }
-
-    // Open detail sheet
-    setSelectedNotification(notification);
-    setIsDetailSheetOpen(true);
   };
 
   const handleViewDetails = (
@@ -511,14 +502,13 @@ export default function NotificationsPage() {
               <div className="mt-6 space-y-6">
                 {/* Notification Image */}
                 {selectedNotification.image && (
-                  <div className="rounded-lg overflow-hidden border">
-                    <img
+                  <div className="relative rounded-lg overflow-hidden border h-48">
+                    <Image
                       src={selectedNotification.image}
                       alt={selectedNotification.title}
-                      className="w-full h-48 object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                   </div>
                 )}

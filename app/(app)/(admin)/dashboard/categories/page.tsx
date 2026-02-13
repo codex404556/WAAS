@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
@@ -203,7 +203,7 @@ export default function CategoriesPage() {
     },
   });
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
       const query = buildCategoriesQuery(page, perPage, sortOrder);
@@ -239,7 +239,7 @@ export default function CategoriesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, perPage, sortOrder]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -282,7 +282,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     fetchCategories();
-  }, [page, sortOrder]); // Re-fetch when page or sortOrder changes
+  }, [fetchCategories]); // Re-fetch when query dependencies change
 
   const handleEdit = (category: Category) => {
     setSelectedCategory(category);
@@ -491,7 +491,7 @@ export default function CategoriesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px]">Image</TableHead>
+                  <TableHead className="w-20">Image</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Created At</TableHead>
@@ -503,18 +503,18 @@ export default function CategoriesPage() {
               <TableBody>
                 {categories.map((category) => (
                   <TableRow key={getDocId(category) ?? category.name}>
-                  <TableCell>
-                    {category.imageUrl ? (
-                      <div className="relative h-12 w-12 rounded overflow-hidden bg-muted">
-                        <Image
-                          src={category.imageUrl}
-                          alt={category.name}
-                          fill
-                          sizes="48px"
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
+                    <TableCell>
+                      {category.imageUrl ? (
+                        <div className="relative h-12 w-12 rounded overflow-hidden bg-muted">
+                          <Image
+                            src={category.imageUrl}
+                            alt={category.name}
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
                         <div className="h-12 w-12 rounded bg-muted flex items-center justify-center text-muted-foreground">
                           No Image
                         </div>
