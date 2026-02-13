@@ -120,7 +120,7 @@ type Brand = {
   title?: string;
 };
 
-type FormData = z.infer<typeof productSchema>;
+type FormData = z.input<typeof productSchema>;
 
 const getDocId = (doc?: { id?: number | string; _id?: string }) =>
   doc?.id ?? doc?._id;
