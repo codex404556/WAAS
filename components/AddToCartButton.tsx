@@ -68,7 +68,7 @@ const AddToCartButton = ({
             </div>
           ) : (
             <Button
-              className="w-full flex items center gap-4 hover:scale-105"
+              className={`w-full flex items-center gap-4 hover:scale-105 ${className ?? ""}`}
               onClick={HandleAddToCart}
             >
               <ShoppingCart />

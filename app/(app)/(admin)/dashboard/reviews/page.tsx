@@ -1,7 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
@@ -149,7 +148,7 @@ export default function ReviewsPage() {
     },
   });
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
       const query = buildReviewsQuery(page, perPage);
@@ -169,7 +168,7 @@ export default function ReviewsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, perPage]);
 
   const fetchProducts = async () => {
     try {
@@ -267,7 +266,7 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     fetchReviews();
-  }, [page]);
+  }, [fetchReviews]);
 
   useEffect(() => {
     fetchProducts();

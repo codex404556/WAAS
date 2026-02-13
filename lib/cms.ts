@@ -1,6 +1,5 @@
 import type {
   Address,
-  Blog,
   Brand,
   Category,
   Image,
@@ -55,6 +54,8 @@ type PayloadProduct = {
   variant?: string;
   description?: string;
   additionalInformation?: string;
+  keyFeatures?: Array<{ title?: string }>;
+  specifications?: Array<{ name?: string; title?: string }>;
   images?: (PayloadMedia | string | null)[];
   category?: PayloadCategory | string | null;
   brand?: PayloadBrand | string | null;
@@ -125,6 +126,14 @@ const mapProduct = (product: PayloadProduct): Product => ({
   status: product.status,
   variant: product.variant,
   description: product.description,
+  additionalInformation: product.additionalInformation,
+  keyFeatures:
+    product.keyFeatures?.map((item) => ({ title: item.title })) ?? [],
+  specifications:
+    product.specifications?.map((item) => ({
+      name: item.name,
+      title: item.title,
+    })) ?? [],
   images:
     product.images
       ?.map(mapImage)
@@ -198,10 +207,6 @@ export const getAllBrands = async (): Promise<Brand[]> => {
     `/api/brands?limit=100`
   );
   return data.docs.map(mapBrand);
-};
-
-export const getLatestBlog = async (): Promise<Blog[]> => {
-  return [];
 };
 
 export const getDealProducts = async (): Promise<Product[]> => {

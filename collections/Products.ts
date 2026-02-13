@@ -102,6 +102,44 @@ const Products: CollectionConfig = {
       required: false,
     },
 
+    // Key Features
+    {
+      name: "keyFeatures",
+      label: "Key Features",
+      type: "array",
+      required: false,
+      fields: [
+        {
+          name: "title",
+          label: "Title",
+          type: "text",
+          required: true,
+        },
+      ],
+    },
+
+    // Specifications
+    {
+      name: "specifications",
+      label: "Specifications",
+      type: "array",
+      required: false,
+      fields: [
+        {
+          name: "name",
+          label: "Specification Name",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "title",
+          label: "Title",
+          type: "text",
+          required: true,
+        },
+      ],
+    },
+
     // Price (required, min 0)
     {
       name: "price",

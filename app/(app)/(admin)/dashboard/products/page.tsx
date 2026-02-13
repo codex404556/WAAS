@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { productSchema } from "@/lib/validation";
 import { payloadFetch } from "@/lib/payload-client";
@@ -76,10 +76,13 @@ type Product = {
   name: string;
   description: string;
   additionalInformation?: string;
+  keyFeatures?: Array<{ title: string }>;
+  specifications?: Array<{ name: string; title: string }>;
   price: number;
   oldPrice?: number;
   stock: number;
   averageRating: number;
+  status?: "new" | "hot" | "sale" | null;
   variant?: string;
   image?: string;
   imageId?: number | string;
@@ -136,6 +139,22 @@ const parseRelationId = (value: string) => {
 
 const normalizeVariant = (value?: string) =>
   value && value !== "none" ? value : undefined;
+
+const normalizeKeyFeatures = (features?: Array<{ title: string }>) =>
+  (features || [])
+    .map((feature) => feature.title.trim())
+    .filter((title) => title.length > 0)
+    .map((title) => ({ title }));
+
+const normalizeSpecifications = (
+  specifications?: Array<{ name: string; title: string }>
+) =>
+  (specifications || [])
+    .map((item) => ({
+      name: item.name.trim(),
+      title: item.title.trim(),
+    }))
+    .filter((item) => item.name.length > 0 && item.title.length > 0);
 
 const getBrandLabel = (brand: Brand) => brand.title ?? brand.name ?? "";
 
@@ -227,6 +246,8 @@ export default function ProductsPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [showOldPriceAdd, setShowOldPriceAdd] = useState(false);
   const [showOldPriceEdit, setShowOldPriceEdit] = useState(false);
+  const [showDealAdd, setShowDealAdd] = useState(false);
+  const [showDealEdit, setShowDealEdit] = useState(false);
   const [selectedProductImageIds, setSelectedProductImageIds] = useState<
     Array<number | string>
   >([]);
@@ -246,6 +267,8 @@ export default function ProductsPage() {
       category: "",
       brand: "",
       variant: "",
+      keyFeatures: [],
+      specifications: [],
       images: [],
     },
   });
@@ -262,8 +285,46 @@ export default function ProductsPage() {
       category: "",
       brand: "",
       variant: "",
+      keyFeatures: [],
+      specifications: [],
       images: [],
     },
+  });
+
+  const {
+    fields: addKeyFeatureFields,
+    append: appendAddKeyFeature,
+    remove: removeAddKeyFeature,
+  } = useFieldArray({
+    control: formAdd.control,
+    name: "keyFeatures",
+  });
+
+  const {
+    fields: editKeyFeatureFields,
+    append: appendEditKeyFeature,
+    remove: removeEditKeyFeature,
+  } = useFieldArray({
+    control: formEdit.control,
+    name: "keyFeatures",
+  });
+
+  const {
+    fields: addSpecificationFields,
+    append: appendAddSpecification,
+    remove: removeAddSpecification,
+  } = useFieldArray({
+    control: formAdd.control,
+    name: "specifications",
+  });
+
+  const {
+    fields: editSpecificationFields,
+    append: appendEditSpecification,
+    remove: removeEditSpecification,
+  } = useFieldArray({
+    control: formEdit.control,
+    name: "specifications",
   });
 
   const fetchProducts = useCallback(async (resetPage = false) => {
@@ -415,12 +476,16 @@ export default function ProductsPage() {
       category: getDocIdString(product.category),
       brand: getDocIdString(product.brand),
       variant: product.variant ?? "",
+      keyFeatures: normalizeKeyFeatures(product.keyFeatures),
+      specifications: normalizeSpecifications(product.specifications),
       images: product.imageUrls ?? [],
     });
     const hasOldPrice = Number(product.oldPrice) > 0;
     setShowOldPriceEdit(hasOldPrice);
+    setShowDealEdit(hasOldPrice && product.status === "hot");
     if (!hasOldPrice) {
       formEdit.setValue("oldPrice", 0);
+      setShowDealEdit(false);
     }
     setIsEditModalOpen(true);
   };
@@ -441,6 +506,9 @@ export default function ProductsPage() {
         )
       );
 
+      const nextStatus =
+        showOldPriceAdd && showDealAdd ? "hot" : undefined;
+
       await payloadFetch("/api/products", {
         method: "POST",
         body: {
@@ -450,13 +518,17 @@ export default function ProductsPage() {
         stock: Number(data.stock),
         category: parseRelationId(data.category),
         brand: parseRelationId(data.brand),
+        status: nextStatus,
         variant: normalizeVariant(data.variant),
+        keyFeatures: normalizeKeyFeatures(data.keyFeatures),
+        specifications: normalizeSpecifications(data.specifications),
         images: imageIds.length ? imageIds : undefined,
         },
       });
       toast.success("Product created successfully");
       formAdd.reset();
       setShowOldPriceAdd(false);
+      setShowDealAdd(false);
       setIsAddModalOpen(false);
       fetchProducts(true); // Reset to page 1 and refetch
     } catch (error: unknown) {
@@ -506,6 +578,13 @@ export default function ProductsPage() {
         );
       }
 
+      const nextStatus =
+        showOldPriceEdit && showDealEdit
+          ? "hot"
+          : selectedProduct.status === "hot"
+            ? null
+            : selectedProduct.status;
+
       await payloadFetch(`/api/products/${productId}`, {
         method: "PATCH",
         body: {
@@ -515,13 +594,17 @@ export default function ProductsPage() {
         stock: Number(data.stock),
         category: parseRelationId(data.category),
         brand: parseRelationId(data.brand),
+        status: nextStatus,
         variant: normalizeVariant(data.variant),
+        keyFeatures: normalizeKeyFeatures(data.keyFeatures),
+        specifications: normalizeSpecifications(data.specifications),
         images,
         },
       });
       toast.success("Product updated successfully");
       setIsEditModalOpen(false);
       setShowOldPriceEdit(false);
+      setShowDealEdit(false);
       fetchProducts();
     } catch (error: unknown) {
       console.log("Failed to update product", error);
@@ -632,6 +715,7 @@ export default function ProductsPage() {
             <Button
               onClick={() => {
                 setShowOldPriceAdd(false);
+                setShowDealAdd(false);
                 formAdd.setValue("oldPrice", 0);
                 setIsAddModalOpen(true);
               }}
@@ -922,6 +1006,133 @@ export default function ProductsPage() {
                   </FormItem>
                 )}
               />
+              <div className="space-y-3 rounded-md border p-4">
+                <div className="flex items-center justify-between">
+                  <FormLabel className="m-0">Key Features</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendAddKeyFeature({ title: "" })}
+                    disabled={formLoading}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    Add Feature
+                  </Button>
+                </div>
+                {addKeyFeatureFields.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Click Add Feature to add product highlights.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {addKeyFeatureFields.map((field, index) => (
+                      <div key={field.id} className="flex items-start gap-2">
+                        <FormField
+                          control={formAdd.control}
+                          name={`keyFeatures.${index}.title` as const}
+                          render={({ field: titleField }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <Input
+                                  {...titleField}
+                                  placeholder="Feature title"
+                                  disabled={formLoading}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeAddKeyFeature(index)}
+                          disabled={formLoading}
+                          aria-label="Remove feature"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 rounded-md border p-4">
+                <div className="flex items-center justify-between">
+                  <FormLabel className="m-0">Specifications</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      appendAddSpecification({ name: "", title: "" })
+                    }
+                    disabled={formLoading}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    Add Specification
+                  </Button>
+                </div>
+                {addSpecificationFields.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Click Add Specification to add name and title pairs.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {addSpecificationFields.map((field, index) => (
+                      <div
+                        key={field.id}
+                        className="grid grid-cols-[1fr_1fr_auto] gap-2"
+                      >
+                        <FormField
+                          control={formAdd.control}
+                          name={`specifications.${index}.name` as const}
+                          render={({ field: nameField }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  {...nameField}
+                                  placeholder="Specification name"
+                                  disabled={formLoading}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={formAdd.control}
+                          name={`specifications.${index}.title` as const}
+                          render={({ field: titleField }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  {...titleField}
+                                  placeholder="Title"
+                                  disabled={formLoading}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeAddSpecification(index)}
+                          disabled={formLoading}
+                          aria-label="Remove specification"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={formAdd.control}
@@ -954,6 +1165,7 @@ export default function ProductsPage() {
                         setShowOldPriceAdd(next);
                         if (!next) {
                           formAdd.setValue("oldPrice", 0);
+                          setShowDealAdd(false);
                         }
                       }}
                       disabled={formLoading}
@@ -985,6 +1197,20 @@ export default function ProductsPage() {
                       </FormItem>
                     )}
                   />
+                  <FormItem className="flex items-center gap-3 space-y-0 pt-7">
+                    <FormControl>
+                      <Switch
+                        checked={showDealAdd}
+                        onCheckedChange={(checked) =>
+                          setShowDealAdd(Boolean(checked))
+                        }
+                        disabled={formLoading}
+                      />
+                    </FormControl>
+                    <FormLabel className="leading-none">
+                      Add to deals page
+                    </FormLabel>
+                  </FormItem>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
@@ -1206,6 +1432,133 @@ export default function ProductsPage() {
                   </FormItem>
                 )}
               />
+              <div className="space-y-3 rounded-md border p-4">
+                <div className="flex items-center justify-between">
+                  <FormLabel className="m-0">Key Features</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendEditKeyFeature({ title: "" })}
+                    disabled={formLoading}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    Add Feature
+                  </Button>
+                </div>
+                {editKeyFeatureFields.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Click Add Feature to add product highlights.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {editKeyFeatureFields.map((field, index) => (
+                      <div key={field.id} className="flex items-start gap-2">
+                        <FormField
+                          control={formEdit.control}
+                          name={`keyFeatures.${index}.title` as const}
+                          render={({ field: titleField }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <Input
+                                  {...titleField}
+                                  placeholder="Feature title"
+                                  disabled={formLoading}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeEditKeyFeature(index)}
+                          disabled={formLoading}
+                          aria-label="Remove feature"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 rounded-md border p-4">
+                <div className="flex items-center justify-between">
+                  <FormLabel className="m-0">Specifications</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      appendEditSpecification({ name: "", title: "" })
+                    }
+                    disabled={formLoading}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    Add Specification
+                  </Button>
+                </div>
+                {editSpecificationFields.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Click Add Specification to add name and title pairs.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {editSpecificationFields.map((field, index) => (
+                      <div
+                        key={field.id}
+                        className="grid grid-cols-[1fr_1fr_auto] gap-2"
+                      >
+                        <FormField
+                          control={formEdit.control}
+                          name={`specifications.${index}.name` as const}
+                          render={({ field: nameField }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  {...nameField}
+                                  placeholder="Specification name"
+                                  disabled={formLoading}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={formEdit.control}
+                          name={`specifications.${index}.title` as const}
+                          render={({ field: titleField }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  {...titleField}
+                                  placeholder="Title"
+                                  disabled={formLoading}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeEditSpecification(index)}
+                          disabled={formLoading}
+                          aria-label="Remove specification"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={formEdit.control}
@@ -1238,6 +1591,7 @@ export default function ProductsPage() {
                         setShowOldPriceEdit(next);
                         if (!next) {
                           formEdit.setValue("oldPrice", 0);
+                          setShowDealEdit(false);
                         }
                       }}
                       disabled={formLoading}
@@ -1269,6 +1623,20 @@ export default function ProductsPage() {
                       </FormItem>
                     )}
                   />
+                  <FormItem className="flex items-center gap-3 space-y-0 pt-7">
+                    <FormControl>
+                      <Switch
+                        checked={showDealEdit}
+                        onCheckedChange={(checked) =>
+                          setShowDealEdit(Boolean(checked))
+                        }
+                        disabled={formLoading}
+                      />
+                    </FormControl>
+                    <FormLabel className="leading-none">
+                      Add to deals page
+                    </FormLabel>
+                  </FormItem>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">

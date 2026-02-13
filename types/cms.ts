@@ -40,6 +40,9 @@ export type Product = {
   status?: string;
   variant?: string;
   description?: string;
+  additionalInformation?: string;
+  keyFeatures?: Array<{ title?: string }>;
+  specifications?: Array<{ name?: string; title?: string }>;
   images?: Image[];
   categories?: (Category | string | null)[];
   brand?: Brand;
@@ -61,14 +64,5 @@ export type Author = {
   image?: Image;
 };
 
-export type Blog = {
-  _id: string;
-  title?: string;
-  slug?: Slug;
-  mainImage?: Image;
-  publishedAt?: string;
-  author?: Author;
-};
 
 export type BRANDS_QUERYResult = Brand[];
-export type LATEST_BLOG_QUERYResult = Blog[];

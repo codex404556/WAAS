@@ -57,6 +57,21 @@ export const productSchema = z
     category: z.string().min(1, { message: "Please select a category" }),
     brand: z.string().min(1, { message: "Please select a brand" }),
     variant: z.string().optional(),
+    keyFeatures: z
+      .array(
+        z.object({
+          title: z.string().min(1, { message: "Feature title is required" }),
+        })
+      )
+      .default([]),
+    specifications: z
+      .array(
+        z.object({
+          name: z.string().min(1, { message: "Specification name is required" }),
+          title: z.string().min(1, { message: "Title is required" }),
+        })
+      )
+      .default([]),
     images: z
       .array(z.string())
       .min(1, { message: "Please upload at least one image" }),

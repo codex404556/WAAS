@@ -1,7 +1,7 @@
 import Container from "@/components/Container";
 import HomeBanner from "@/components/HomeBanner";
 import HomeCategories from "@/components/HomeCategories";
-import LatestBlog from "@/components/LatestBlog";
+import HomeDealSection from "@/components/HomeDealSection";
 import ProductGrid from "@/components/ProductGrid";
 import ShopByBrands from "@/components/ShopByBrands";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +25,25 @@ const Home = async () => {
       </Suspense>
       <Suspense fallback={null}>
         <HomeCategories />
+      </Suspense>
+      <Suspense
+        fallback={
+          <section className="px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl rounded-2xl border border-shop_light_yellow/20 bg-white p-4 sm:p-6 lg:p-8">
+              <div className="mb-5 flex items-center justify-between">
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="h-9 w-28" />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
+                {Array.from({ length: 10 }).map((_, index) => (
+                  <ProductCardSkeleton key={`deal-skeleton-${index}`} />
+                ))}
+              </div>
+            </div>
+          </section>
+        }
+      >
+        <HomeDealSection />
       </Suspense>
       <Suspense
         fallback={
@@ -77,7 +96,6 @@ const Home = async () => {
           </div>
         }
       >
-        <LatestBlog />
       </Suspense>
     </Container>
   );
