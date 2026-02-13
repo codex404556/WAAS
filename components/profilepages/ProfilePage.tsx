@@ -93,7 +93,6 @@ const changePasswordSchema = z
 type ProfileFormData = z.infer<typeof updateProfileSchema>;
 type PasswordFormData = z.infer<typeof changePasswordSchema>;
 type Address = AddressType;
-type AddressWithOptionalId = Omit<Address, "_id"> & { _id?: string };
 
 const getStatusColor = (status: string) => {
   const statusColors: Record<string, string> = {
@@ -120,7 +119,6 @@ const ProfilePage = () => {
     null
   );
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -449,7 +447,7 @@ const ProfilePage = () => {
     setIsAddressSidebarOpen(true);
   };
 
-  const onPasswordSubmit = async (data: PasswordFormData) => {
+  const onPasswordSubmit = async () => {
     setIsLoading(true);
 
     try {
