@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/useAuthStore";
@@ -150,7 +150,7 @@ export default function UsersPage() {
     },
   });
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       // Add a small delay to demonstrate the skeleton loading state
@@ -180,7 +180,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, perPage, roleFilter]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -214,7 +214,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [page, roleFilter]);
+  }, [fetchUsers]);
 
   const handlePreviousPage = () => {
     if (page > 1) {

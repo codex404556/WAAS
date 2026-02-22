@@ -5,7 +5,7 @@ import { getCategories } from "@/lib/cms";
 
 import React from "react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const CategoryPage = async ({
   params,

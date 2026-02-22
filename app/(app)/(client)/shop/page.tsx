@@ -3,7 +3,7 @@ import ShopData from "@/components/ShopData";
 import Container from "@/components/Container";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const ShopPage = () => {
   return (
