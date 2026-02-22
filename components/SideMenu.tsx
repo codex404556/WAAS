@@ -19,7 +19,7 @@ const SideMenu = ({ isOpen, onClose }: Props) => {
   const overlayTransition = shouldReduceMotion ? { duration: 0 } : { duration: 0.2 };
   const panelTransition = shouldReduceMotion
     ? { duration: 0 }
-    : { type: "spring", stiffness: 320, damping: 30 };
+    : { type: "spring" as const, stiffness: 320, damping: 30 };
   const listTransition = shouldReduceMotion
     ? { staggerChildren: 0, delayChildren: 0 }
     : { staggerChildren: 0.05, delayChildren: 0.08 };

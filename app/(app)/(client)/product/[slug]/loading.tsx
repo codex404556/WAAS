@@ -10,10 +10,13 @@ const ProductLoadingPage = () => {
 
       <Container className="flex flex-col gap-8 px-3 sm:px-4 lg:flex-row lg:gap-10 lg:px-6 xl:gap-12">
         <div className="w-full lg:w-1/2">
-          <Skeleton className="h-[500px] w-full rounded-md" />
+          <Skeleton className="h-125 w-full rounded-md" />
           <div className="mt-5 grid grid-cols-4 gap-3">
             {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={`thumb-skeleton-${index}`} className="h-24 w-full rounded-md" />
+              <Skeleton
+                key={`thumb-skeleton-${index}`}
+                className="h-24 w-full rounded-md"
+              />
             ))}
           </div>
         </div>
@@ -58,7 +61,10 @@ const ProductLoadingPage = () => {
           <Skeleton className="mb-5 h-6 w-44" />
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={`related-skeleton-${index}`} className="aspect-[3/4] w-full rounded-md" />
+              <Skeleton
+                key={`related-skeleton-${index}`}
+                className="aspect-3/4 w-full rounded-md"
+              />
             ))}
           </div>
         </section>
