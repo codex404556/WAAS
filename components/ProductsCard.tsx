@@ -20,6 +20,15 @@ interface Props {
 }
 
 const ProductsCard = ({ product, clasName = "" }: Props) => {
+  const categoryLabel = (product?.categories ?? [])
+    .map((cat) => {
+      if (!cat) return "";
+      if (typeof cat === "string") return cat;
+      return cat.title ?? cat.slug?.current ?? "";
+    })
+    .filter((value) => value.length > 0)
+    .join(", ");
+
   return (
     <div className="text-sm border border-dark_blue/10 shadow-md rounded-md group bg-white overflow-hidden">
       <div className="relative group overflow-hidden">
@@ -72,12 +81,7 @@ const ProductsCard = ({ product, clasName = "" }: Props) => {
       </div>
       <div className="p-3">
         <p className="uppercase line-clamp-1 text-xs text-lightColor">
-          {product?.categories &&
-            product?.categories
-              ?.filter(
-                (cat): cat is string => typeof cat === "string" && cat !== null
-              )
-              .join(", ")}
+          {categoryLabel}
         </p>
         <Title className="!text-sm line-clamp-1">{product?.name}</Title>
         <div className="">

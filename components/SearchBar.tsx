@@ -31,7 +31,9 @@ const SearchBar = ({ isScrolled }: { isScrolled: boolean }) => {
 
   // featch result besed on debouncedSearchTerm
   useEffect(() => {
+    const controller = new AbortController();
     let cancelled = false;
+
     async function run() {
       const term = debouncedSearchTerm;
       if (term.trim().length === 0) {
@@ -42,10 +44,11 @@ const SearchBar = ({ isScrolled }: { isScrolled: boolean }) => {
 
       setLoading(true);
       try {
-        const data = await searchProducts(term);
+        const data = await searchProducts(term, controller.signal);
 
         if (!cancelled) setResolts(data ?? []);
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.log("Error searching products:", error);
         if (!cancelled) setResolts([]);
       } finally {
@@ -56,6 +59,7 @@ const SearchBar = ({ isScrolled }: { isScrolled: boolean }) => {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [debouncedSearchTerm]);
   useEffect(() => {
@@ -168,6 +172,8 @@ const SearchBar = ({ isScrolled }: { isScrolled: boolean }) => {
                                     alt="product-image"
                                     width={40}
                                     height={40}
+                                    loading="lazy"
+                                    sizes="40px"
                                     className="h-10 w-10 object-cover"
                                   />
                                 ) : null}

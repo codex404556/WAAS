@@ -58,6 +58,8 @@ const ShopByBrands = async () => {
                   alt="brand-image"
                   width={250}
                   height={250}
+                  loading="lazy"
+                  sizes="(min-width: 1024px) 144px, (min-width: 768px) 120px, 45vw"
                   className="h-14 w-full object-contain group-hover:scale-105 hoverEffect sm:h-16"
                 />
               )}

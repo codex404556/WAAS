@@ -40,6 +40,8 @@ const HomeCategories = async ({
                   alt="category-image"
                   width={500}
                   height={500}
+                  loading="lazy"
+                  sizes="(min-width: 1024px) 96px, (min-width: 640px) 80px, 72px"
                   className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
                 />
               </div>

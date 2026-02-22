@@ -1,5 +1,4 @@
 import { Product } from "@/types/cms";
-import { getBrand } from "@/lib/cms";
 import React from "react";
 import {
   Accordion,
@@ -13,12 +12,12 @@ type ProductWithFlexibleCategories = Omit<Product, "categories"> & {
   categories?: Product["categories"] | (string | null)[] | null;
 };
 
-const ProductsCharacteristics = async ({
+const ProductsCharacteristics = ({
   product,
 }: {
   product: Product | ProductWithFlexibleCategories | null;
 }) => {
-  const brandName = await getBrand(product?.slug?.current as string);
+  const brandName = product?.brand?.title ?? product?.brand?.brandName ?? "";
   return (
     <Accordion type="single" collapsible>
       <AccordionItem value="item-1">

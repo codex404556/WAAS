@@ -15,7 +15,12 @@ const Logo: React.FC<LogoProps> = ({ className, isScrolled }) => {
       <div
         className={`flex items-center hoverEffect ${isScrolled ? "scale-80" : "scale-110"}`}
       >
-        <Image src={logo} alt="logo" className="w-9 h-9 mb-3" />
+        <Image
+          src={logo}
+          alt="logo"
+          sizes="36px"
+          className="w-9 h-9 mb-3"
+        />
         <h2
           className={cn(
             "text-xl md:block font-black font-sans tracking-wider uppercase max-[500px]:hidden",

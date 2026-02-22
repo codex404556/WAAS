@@ -46,6 +46,13 @@ export type Product = {
   images?: Image[];
   categories?: (Category | string | null)[];
   brand?: Brand;
+  reviews?: Array<{
+    userName: string;
+    rating: number;
+    comment: string;
+    date: string;
+    userImage?: Image;
+  }>;
 };
 
 export type Address = {

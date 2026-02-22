@@ -218,6 +218,8 @@ const ProductTab = ({
                           width={40}
                           height={40}
                           alt={item.userName || "Reviewer"}
+                          loading="lazy"
+                          sizes="40px"
                           className="rounded-full"
                         />
                       ) : (

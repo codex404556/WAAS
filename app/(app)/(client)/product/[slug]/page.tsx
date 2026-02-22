@@ -6,20 +6,15 @@ import ImagesView from "@/components/ImagesView";
 import ProductsCharacteristics from "@/components/ProductsCharacteristics";
 import RelatedProduct from "@/components/RelatedProduct";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb";
-import {
-  getCategories,
-  getProductBySlug,
-  getProductInfo,
-  getProductReview,
-} from "@/lib/cms";
-import { Category } from "@/types/cms";
+import ProductTab from "@/components/ProductTab";
+import { getProductBySlug } from "@/lib/cms";
 import { StarIcon, Truck, CornerDownLeft } from "lucide-react";
-import React from "react";
+import { notFound } from "next/navigation";
+import React, { Suspense } from "react";
 import { RxBorderSplit } from "react-icons/rx";
 import { FaRegQuestionCircle } from "react-icons/fa";
 import { TbTruckDelivery } from "react-icons/tb";
 import { FiShare2 } from "react-icons/fi";
-import ProductTab from "@/components/ProductTab";
 
 export const revalidate = 300;
 
@@ -32,61 +27,69 @@ type BreadcrumbItem = {
   href?: string;
 };
 
-const normalize = (value?: string | null): string =>
-  (value ?? "").trim().toLowerCase();
-
 const formatSkuFromSlug = (slug?: string) =>
   (slug ?? "")
     .trim()
     .replace(/[^a-zA-Z0-9-]/g, "")
     .toUpperCase() || "N/A";
 
-const resolveCategoryByName = (
-  categoryName?: string,
-  categories: Category[] = []
-): Category | null => {
-  if (!categoryName) return null;
+const ProductTabFallback = () => (
+  <div className="mt-10 w-full animate-pulse rounded-b-md border border-gray-200 bg-white p-4 sm:p-6">
+    <div className="mb-4 h-6 w-40 rounded bg-gray-100" />
+    <div className="space-y-3">
+      <div className="h-4 w-full rounded bg-gray-100" />
+      <div className="h-4 w-11/12 rounded bg-gray-100" />
+      <div className="h-4 w-10/12 rounded bg-gray-100" />
+    </div>
+  </div>
+);
 
-  const normalizedName = normalize(categoryName);
-
-  return (
-    categories.find((category) => {
-      const title = normalize(category.title);
-      const slug = normalize(category.slug?.current);
-      return title === normalizedName || slug === normalizedName;
-    }) ?? null
-  );
-};
+const RelatedProductsFallback = () => (
+  <section className="pb-10 pt-8 sm:pt-10">
+    <div className="mb-5 h-6 w-40 animate-pulse rounded bg-gray-100" />
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div
+          key={`related-fallback-${index}`}
+          className="aspect-[3/4] animate-pulse rounded-md border border-gray-100 bg-white"
+        />
+      ))}
+    </div>
+  </section>
+);
 
 const SingleProductPage = async ({ params }: Props) => {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  const [allCategories, reviews] = await Promise.all([
-    getCategories(),
-    getProductReview(slug),
-  ]);
+  if (!product) {
+    notFound();
+  }
 
-  const titleInfo =
-    (await getProductInfo(slug)) ?? {
-      description: "",
-      additionalInformation: "",
-    };
+  const reviews = product?.reviews ?? [];
+  const titleInfo = {
+    description: product?.description ?? "",
+    additionalInformation: product?.additionalInformation ?? "",
+  };
 
-  const productCategoryName =
-    typeof product?.categories?.[0] === "string"
-      ? product.categories[0]
-      : product?.categories?.[0]?.title;
-  const matchedCategory = resolveCategoryByName(productCategoryName, allCategories);
+  const primaryCategory = product?.categories?.[0];
+  const categorySlug =
+    typeof primaryCategory === "string"
+      ? undefined
+      : primaryCategory?.slug?.current;
+  const categoryTitle =
+    typeof primaryCategory === "string"
+      ? primaryCategory
+      : primaryCategory?.title;
 
   const breadcrumbItems: BreadcrumbItem[] = [{ label: "Shop", href: "/shop" }];
 
-  if (matchedCategory?.slug?.current) {
+  if (categorySlug) {
     breadcrumbItems.push({
-      label: matchedCategory.title ?? "Category",
-      href: `/category/${matchedCategory.slug.current}`,
+      label: categoryTitle ?? "Category",
+      href: `/category/${categorySlug}`,
     });
-  } else if (productCategoryName) {
-    breadcrumbItems.push({ label: productCategoryName });
+  } else if (categoryTitle) {
+    breadcrumbItems.push({ label: categoryTitle });
   }
 
   const isStock = product?.stock;
@@ -277,19 +280,20 @@ const SingleProductPage = async ({ params }: Props) => {
       </Container>
 
       <Container className="px-3 sm:px-4 lg:px-6">
-        <ProductTab
-          titleInfo={titleInfo}
-          keyFeatures={product?.keyFeatures}
-          specifications={product?.specifications}
-          reviews={reviews}
-        />
+        <Suspense fallback={<ProductTabFallback />}>
+          <ProductTab
+            titleInfo={titleInfo}
+            keyFeatures={product?.keyFeatures}
+            specifications={product?.specifications}
+            reviews={reviews}
+          />
+        </Suspense>
       </Container>
 
       <Container className="px-3 sm:px-4 lg:px-6">
-        <RelatedProduct
-          categorySlug={matchedCategory?.slug?.current}
-          currentProductId={product?._id}
-        />
+        <Suspense fallback={<RelatedProductsFallback />}>
+          <RelatedProduct categorySlug={categorySlug} currentProductId={product?._id} />
+        </Suspense>
       </Container>
     </div>
   );

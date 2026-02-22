@@ -14,7 +14,12 @@ const HomeBanner = () => {
         <Link href={"/shop"} className="bg-shop_light_yellow/90 text-darkColor px-5 py-2 rounded-md text-sm font-semibold hover:text-white hover:bg-darkColor hoverEffect">Buy Now</Link>
       </div>
       <div className="">
-        <Image src={bannerImage} alt="banner-image" className="h-60 w-60 hidden md:inline-flex" />
+        <Image
+          src={bannerImage}
+          alt="banner-image"
+          sizes="(min-width: 1024px) 240px, (min-width: 768px) 200px, 0px"
+          className="h-60 w-60 hidden md:inline-flex"
+        />
       </div>
     </div>
   )

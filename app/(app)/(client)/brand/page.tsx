@@ -295,6 +295,8 @@ const BrandPage = async ({
                           alt={section.brand.name}
                           width={56}
                           height={56}
+                          loading="lazy"
+                          sizes="56px"
                           className="h-12 w-12 object-contain"
                         />
                       ) : (

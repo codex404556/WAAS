@@ -9,6 +9,8 @@ import type {
 type PayloadListResponse<T> = {
   docs: T[];
   totalDocs?: number;
+  hasNextPage?: boolean;
+  nextPage?: number | null;
 };
 
 type PayloadMedia = {
@@ -65,10 +67,34 @@ type PayloadProduct = {
 const getPayloadBaseUrl = (): string =>
   process.env.NEXT_PUBLIC_PAYLOAD_URL ?? "";
 
-const fetchFromPayload = async <T>(path: string): Promise<T> => {
-  const res = await fetch(`${getPayloadBaseUrl()}${path}`, {
-    cache: "no-store",
-  });
+const DEFAULT_REVALIDATE_SECONDS = 300;
+
+type FetchFromPayloadOptions = {
+  cache?: RequestCache;
+  revalidate?: number;
+  signal?: AbortSignal;
+};
+
+const fetchFromPayload = async <T>(
+  path: string,
+  options: FetchFromPayloadOptions = {}
+): Promise<T> => {
+  const {
+    cache = "force-cache",
+    revalidate = DEFAULT_REVALIDATE_SECONDS,
+    signal,
+  } = options;
+
+  const requestInit: RequestInit = { cache, signal };
+  if (cache !== "no-store") {
+    (
+      requestInit as RequestInit & {
+        next?: { revalidate: number };
+      }
+    ).next = { revalidate };
+  }
+
+  const res = await fetch(`${getPayloadBaseUrl()}${path}`, requestInit);
 
   if (!res.ok) {
     throw new Error(`Payload request failed: ${res.status} ${res.statusText}`);
@@ -142,13 +168,14 @@ const mapProduct = (product: PayloadProduct): Product => ({
     ? [
         typeof product.category === "string"
           ? product.category
-          : product.category.title ?? product.category.slug ?? null,
+          : mapCategory(product.category),
       ]
     : [],
   brand:
     product.brand && typeof product.brand !== "string"
       ? mapBrand(product.brand)
       : undefined,
+  reviews: product.reviews ?? [],
 });
 
 export type SearchItem = {
@@ -179,23 +206,34 @@ export const getCategories = async (quantity?: number): Promise<Category[]> => {
   const data = await fetchFromPayload<PayloadListResponse<PayloadCategory>>(
     `/api/categories?limit=${limit}`
   );
-  const productCountEntries = await Promise.all(
-    data.docs.map(async (category) => {
-      const productsData =
-        await fetchFromPayload<PayloadListResponse<PayloadProduct>>(
-          `/api/products?where[category][equals]=${encodeURIComponent(
-            category.id
-          )}&limit=1`
-        );
 
-      return [
-        category.id,
-        productsData.totalDocs ?? productsData.docs.length,
-      ] as const;
-    })
-  );
+  const productCountByCategory = new Map<string, number>();
+  let page = 1;
 
-  const productCountByCategory = new Map(productCountEntries);
+  while (true) {
+    const productsData = await fetchFromPayload<PayloadListResponse<PayloadProduct>>(
+      `/api/products?depth=0&limit=200&page=${page}`
+    );
+
+    for (const product of productsData.docs) {
+      const categoryId =
+        typeof product.category === "string"
+          ? product.category
+          : product.category?.id;
+
+      if (!categoryId) continue;
+      productCountByCategory.set(
+        categoryId,
+        (productCountByCategory.get(categoryId) ?? 0) + 1
+      );
+    }
+
+    if (!productsData.hasNextPage) {
+      break;
+    }
+
+    page = productsData.nextPage ?? page + 1;
+  }
 
   return data.docs.map((category) =>
     mapCategory(category, productCountByCategory.get(category.id) ?? 0)
@@ -270,7 +308,8 @@ export const getProductReview = async (
 };
 
 export const searchProducts = async (
-  _term: string
+  _term: string,
+  signal?: AbortSignal
 ): Promise<SearchItem[]> => {
   const trimmed = _term.trim();
   if (!trimmed) return [];
@@ -280,7 +319,8 @@ export const searchProducts = async (
   const data = await fetchFromPayload<PayloadListResponse<PayloadProduct>>(
     `/api/products?where[name][like]=${encodeURIComponent(
       term
-    )}&depth=2&limit=20`
+    )}&depth=2&limit=20`,
+    { cache: "no-store", signal }
   );
 
   return data.docs.map((product) => ({
@@ -331,30 +371,31 @@ export const listProductsByFilters = async (_filters: {
     addFilter("price", "less_than_equal", String(_filters.maxPrice));
   }
 
-  if (_filters.selectedCategory) {
-    const categoryData =
-      await fetchFromPayload<PayloadListResponse<PayloadCategory>>(
-        `/api/categories?where[slug][equals]=${encodeURIComponent(
-          _filters.selectedCategory
-        )}&limit=1`
-      );
-    const categoryId = categoryData.docs?.[0]?.id;
-    if (categoryId) {
-      addFilter("category", "equals", categoryId);
-    }
+  const [categoryData, brandData] = await Promise.all([
+    _filters.selectedCategory
+      ? fetchFromPayload<PayloadListResponse<PayloadCategory>>(
+          `/api/categories?where[slug][equals]=${encodeURIComponent(
+            _filters.selectedCategory
+          )}&limit=1`
+        )
+      : Promise.resolve(null),
+    _filters.selectedBrand
+      ? fetchFromPayload<PayloadListResponse<PayloadBrand>>(
+          `/api/brands?where[slug][equals]=${encodeURIComponent(
+            _filters.selectedBrand
+          )}&limit=1`
+        )
+      : Promise.resolve(null),
+  ]);
+
+  const categoryId = categoryData?.docs?.[0]?.id;
+  if (categoryId) {
+    addFilter("category", "equals", categoryId);
   }
 
-  if (_filters.selectedBrand) {
-    const brandData =
-      await fetchFromPayload<PayloadListResponse<PayloadBrand>>(
-        `/api/brands?where[slug][equals]=${encodeURIComponent(
-          _filters.selectedBrand
-        )}&limit=1`
-      );
-    const brandId = brandData.docs?.[0]?.id;
-    if (brandId) {
-      addFilter("brand", "equals", brandId);
-    }
+  const brandId = brandData?.docs?.[0]?.id;
+  if (brandId) {
+    addFilter("brand", "equals", brandId);
   }
 
   const query = params.toString();
@@ -405,11 +446,32 @@ export const listRelatedProductsByCategory = async (
 ): Promise<Product[]> => {
   if (!_categorySlug) return [];
 
-  const products = await listProductsByCategory(_categorySlug);
+  const categoryResult =
+    await fetchFromPayload<PayloadListResponse<PayloadCategory>>(
+      `/api/categories?where[slug][equals]=${encodeURIComponent(
+        _categorySlug
+      )}&limit=1`,
+      { revalidate: 300 }
+    );
 
-  return products
-    .filter((product) => product._id !== _currentProductId)
-    .slice(0, _limit);
+  const categoryId = categoryResult.docs?.[0]?.id;
+  if (!categoryId) return [];
+
+  const params = new URLSearchParams();
+  params.set("depth", "1");
+  params.set("limit", String(_limit));
+  params.set("where[and][0][category][equals]", categoryId);
+  if (_currentProductId) {
+    params.set("where[and][1][id][not_equals]", _currentProductId);
+  }
+
+  const productsResult =
+    await fetchFromPayload<PayloadListResponse<PayloadProduct>>(
+      `/api/products?${params.toString()}`,
+      { revalidate: 300 }
+    );
+
+  return productsResult.docs.map(mapProduct).slice(0, _limit);
 };
 
 export const listAddresses = async (): Promise<Address[]> => {

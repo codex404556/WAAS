@@ -13,6 +13,13 @@ interface Props {
 
 const ImagesView = ({ images = [], isStock }: Props) => {
   const [isActive, setIsActive] = useState(images[0]);
+  const firstImageUrl = images[0] ? urlFor(images[0]).url() : "";
+  const activeImageUrl = isActive ? urlFor(isActive).url() : "";
+
+  if (!activeImageUrl) {
+    return null;
+  }
+
   return (
     <div>
       <AnimatePresence mode="wait">
@@ -25,11 +32,12 @@ const ImagesView = ({ images = [], isStock }: Props) => {
           className="w-full max-h-[550px] min-h-[450px] rounded-md group"
         >
           <Image
-            src={urlFor(isActive).url()}
+            src={activeImageUrl}
             alt="product-image"
             width={700}
             height={700}
-            priority
+            priority={activeImageUrl === firstImageUrl}
+            sizes="(min-width: 1280px) 46vw, (min-width: 1024px) 44vw, 100vw"
             className={`w-full h-96 max-h-[550px] min-h-[500px] object-contain group-hover:scale-107 hoverEffect rounded-md ${isStock === 0 && "opacity-50"}`}
           />
         </motion.div>
@@ -46,6 +54,8 @@ const ImagesView = ({ images = [], isStock }: Props) => {
               alt={`Thumbnail ${image?._key}`}
               width={100}
               height={100}
+              loading="lazy"
+              sizes="120px"
               className="w-30 h-30 object-contain"
             />
           </button>
