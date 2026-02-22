@@ -5,13 +5,34 @@ import PageBreadcrumb from "@/components/common/PageBreadcrumb";
 
 export const revalidate = 300;
 
-const ShopPage = () => {
+type ShopPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const pickParam = (value: string | string[] | undefined): string | null => {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+};
+
+const ShopPage = async ({ searchParams }: ShopPageProps) => {
+  const resolvedSearchParams = (searchParams ? await searchParams : {}) as Record<
+    string,
+    string | string[] | undefined
+  >;
+  const initialCategory = pickParam(resolvedSearchParams.category);
+  const initialBrand = pickParam(resolvedSearchParams.brand);
+  const initialSearchTerm = (pickParam(resolvedSearchParams.search) ?? "").trim();
+
   return (
     <div className="mt-20">
       <Container>
         <PageBreadcrumb items={[]} currentPage="Shop" />
       </Container>
-      <ShopData />
+      <ShopData
+        initialCategory={initialCategory}
+        initialBrand={initialBrand}
+        initialSearchTerm={initialSearchTerm}
+      />
     </div>
   );
 };

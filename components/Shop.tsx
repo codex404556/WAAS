@@ -1,10 +1,9 @@
 "use client";
 import { BRANDS_QUERYResult, Category } from "@/types/cms";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Container from "./Container";
 import { Title } from "./ui/text";
 import ShopFiltersPanel from "./filters/ShopFiltersPanel";
-import { useSearchParams } from "next/navigation";
 import { Button } from "./ui/button";
 import {
   Sheet,
@@ -20,22 +19,31 @@ import ShopProductsSection from "./ShopProductsSection";
 interface Props {
   categories: Category[];
   brands: BRANDS_QUERYResult;
+  initialCategory: string | null;
+  initialBrand: string | null;
+  initialSearchTerm: string;
 }
 
-const Shop = ({ categories, brands }: Props) => {
-  const searchParams = useSearchParams();
-  const categoryParams = searchParams?.get("category");
-  const brandParams = searchParams?.get("brand");
-  const searchTerm = (searchParams?.get("search") || "").trim();
+const Shop = ({
+  categories,
+  brands,
+  initialCategory,
+  initialBrand,
+  initialSearchTerm,
+}: Props) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    categoryParams || null
+    initialCategory
   );
-
   const [selectedBrand, setSelectedBrand] = useState<string | null>(
-    brandParams || null
+    initialBrand
   );
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    setSelectedCategory(initialCategory);
+    setSelectedBrand(initialBrand);
+  }, [initialBrand, initialCategory]);
 
   const hasActiveFilters =
     selectedBrand !== null ||
@@ -132,7 +140,7 @@ const Shop = ({ categories, brands }: Props) => {
             selectedCategory={selectedCategory}
             selectedBrand={selectedBrand}
             selectedPrice={selectedPrice}
-            searchTerm={searchTerm}
+            searchTerm={initialSearchTerm}
           />
         </div>
       </div>
