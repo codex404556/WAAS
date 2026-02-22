@@ -5,6 +5,7 @@ import { Product } from "@/types/cms";
 import useStore from "@/store";
 import { Heart } from "lucide-react";
 import toast from "react-hot-toast";
+import { memo, useCallback } from "react";
 
 // Type that allows categories to be either reference objects or strings (dereferenced)
 type ProductWithFlexibleCategories = Omit<Product, "categories"> & {
@@ -18,13 +19,15 @@ interface Props {
 }
 
 const AddToFavorites = ({ showProduct, product, className }: Props) => {
-  const { favoriteProduct, addToFavorite } = useStore();
-
-  const existingProduct = favoriteProduct?.some(
-    (item) => item?._id === product?._id
+  const productId = product?._id ?? "";
+  const addToFavorite = useStore((state) => state.addToFavorite);
+  const existingProduct = useStore((state) =>
+    productId
+      ? state.favoriteProduct.some((item) => item?._id === productId)
+      : false
   );
 
-  const handleFavorite = () => {
+  const handleFavorite = useCallback(() => {
     if (product?._id) {
       addToFavorite(product).then(() =>
         toast.success(
@@ -34,7 +37,8 @@ const AddToFavorites = ({ showProduct, product, className }: Props) => {
         )
       );
     }
-  };
+  }, [addToFavorite, existingProduct, product]);
+
   return (
     <>
       {!showProduct ? (
@@ -70,4 +74,4 @@ const AddToFavorites = ({ showProduct, product, className }: Props) => {
   );
 };
 
-export default AddToFavorites;
+export default memo(AddToFavorites);

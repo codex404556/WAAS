@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { AlignLeft } from "lucide-react";
 import React, { useState } from "react";
+import { AnimatePresence } from "motion/react";
 
 const SideMenu = dynamic(() => import("./SideMenu"), {
   ssr: false,
@@ -21,9 +22,14 @@ const MobileMenu = () => {
         <AlignLeft className="hover:text-darkColor text-lightColor hoverEffect md:hidden" />
       </button>
       <div className="md:hidden">
-        {isSidebarOpen ? (
-          <SideMenu isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-        ) : null}
+        <AnimatePresence>
+          {isSidebarOpen ? (
+            <SideMenu
+              isOpen={isSidebarOpen}
+              onClose={() => setIsSidebarOpen(false)}
+            />
+          ) : null}
+        </AnimatePresence>
       </div>
     </>
   );

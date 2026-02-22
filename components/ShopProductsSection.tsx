@@ -2,8 +2,7 @@
 
 import { listProductsByFilters } from "@/lib/cms";
 import { Product } from "@/types/cms";
-import { AnimatePresence, motion } from "framer-motion";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ProductsCard from "./ProductsCard";
 import ShopNoProductsState from "./ShopNoProductsState";
 import ProductCardSkeleton from "./skeleton/ProductCardSkeleton";
@@ -24,8 +23,10 @@ function ShopProductsSection({
   const [loading, setLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const resultsCacheRef = useRef<Record<string, Product[]>>({});
+  const requestKeyRef = useRef("");
 
-  const animationKey = useMemo(
+  const filterKey = useMemo(
     () =>
       [
         selectedCategory ?? "all",
@@ -36,93 +37,72 @@ function ShopProductsSection({
     [selectedBrand, selectedCategory, selectedPrice, searchTerm]
   );
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      let minPrice = 0;
-      let maxPrice = 10000;
-
-      if (selectedPrice) {
-        const [min, max] = selectedPrice.split("-").map(Number);
-        minPrice = min;
-        maxPrice = max;
-      }
-
-      const data = await listProductsByFilters({
-        selectedCategory,
-        selectedBrand,
-        minPrice,
-        maxPrice,
-        searchTerm: searchTerm ? `${searchTerm}*` : "",
-      });
-
-      setProducts(data);
-    } catch (error) {
-      console.log("Shop Product fetching error", error);
-    } finally {
-      setLoading(false);
-      setHasLoaded(true);
-    }
-  }, [selectedBrand, selectedCategory, selectedPrice, searchTerm]);
-
   useEffect(() => {
+    requestKeyRef.current = filterKey;
+    const cachedProducts = resultsCacheRef.current[filterKey];
+    if (cachedProducts) {
+      setProducts(cachedProducts);
+      setHasLoaded(true);
+      setLoading(false);
+      return;
+    }
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        let minPrice = 0;
+        let maxPrice = 10000;
+
+        if (selectedPrice) {
+          const [min, max] = selectedPrice.split("-").map(Number);
+          minPrice = min;
+          maxPrice = max;
+        }
+
+        const data = await listProductsByFilters({
+          selectedCategory,
+          selectedBrand,
+          minPrice,
+          maxPrice,
+          searchTerm: searchTerm ? `${searchTerm}*` : "",
+        });
+
+        if (requestKeyRef.current !== filterKey) return;
+
+        resultsCacheRef.current[filterKey] = data;
+        setProducts(data);
+      } catch (error) {
+        console.log("Shop Product fetching error", error);
+      } finally {
+        if (requestKeyRef.current !== filterKey) return;
+        setLoading(false);
+        setHasLoaded(true);
+      }
+    };
+
     fetchProducts();
-  }, [fetchProducts]);
+  }, [filterKey, searchTerm, selectedBrand, selectedCategory, selectedPrice]);
 
   return (
     <div className="mt-10">
-      <AnimatePresence mode="wait">
-        {!hasLoaded || loading ? (
-          <motion.div
-            key="shop-skeleton"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4"
-          >
-            {Array.from({ length: 12 }).map((_, index) => (
-              <ProductCardSkeleton key={`shop-skeleton-${index}`} />
-            ))}
-          </motion.div>
-        ) : products?.length > 0 ? (
-          <motion.div
-            key={`shop-grid-${animationKey}`}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: { staggerChildren: 0.04 },
-              },
-            }}
-            className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4"
-          >
-            {products?.map((product) => (
-              <motion.div
-                key={product._id}
-                variants={{
-                  hidden: { opacity: 0, y: 8 },
-                  show: { opacity: 1, y: 0 },
-                }}
-                layout
-              >
-                <ProductsCard product={product} />
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="shop-empty"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <ShopNoProductsState />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hasLoaded || loading ? (
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <ProductCardSkeleton key={`shop-skeleton-${index}`} />
+          ))}
+        </div>
+      ) : products?.length > 0 ? (
+        <div
+          key={`shop-grid-${filterKey}`}
+          className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4"
+        >
+          {products?.map((product) => (
+            <ProductsCard key={product._id} product={product} />
+          ))}
+        </div>
+      ) : (
+        <ShopNoProductsState />
+      )}
     </div>
   );
 }

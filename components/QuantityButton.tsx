@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Minus, Plus } from "lucide-react";
 import useStore from "@/store";
@@ -18,26 +18,29 @@ interface Props {
 }
 
 const QuantityButton = ({ product, className, showProduct }: Props) => {
-  const { getItemCount, addItem, removeItem } = useStore();
-  const itemCount = getItemCount(product._id);
+  const productId = product._id;
+  const addItem = useStore((state) => state.addItem);
+  const removeItem = useStore((state) => state.removeItem);
+  const itemCount = useStore((state) => state.getItemCount(productId));
   const isOutOfStock = product?.stock === 0;
 
-  const handlePlusButton = () => {
+  const handlePlusButton = useCallback(() => {
     if ((product?.stock as number) > itemCount) {
       addItem(product);
       toast.success(`${product?.name?.substring(0, 12)}Increased`);
     } else {
       toast.error("Can't add more then availble stock!");
     }
-  };
-  const handleRemoveButton = () => {
-    removeItem(product._id);
+  }, [addItem, itemCount, product]);
+  const handleRemoveButton = useCallback(() => {
+    removeItem(productId);
     if (itemCount > 1) {
       toast.success("Quantity Decreased successfully!");
     } else {
       toast.success(`${product?.name?.substring(0, 12)}removed successfully!`);
     }
-  };
+  }, [itemCount, product?.name, productId, removeItem]);
+
   return (
     <div
       className={cn(
@@ -69,4 +72,4 @@ const QuantityButton = ({ product, className, showProduct }: Props) => {
   );
 };
 
-export default QuantityButton;
+export default memo(QuantityButton);

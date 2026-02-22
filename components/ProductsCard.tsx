@@ -1,9 +1,12 @@
+"use client";
+
 import { Product } from "@/types/cms";
 import { urlFor } from "@/lib/image";
 import { Flame, StarIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { memo, useMemo } from "react";
+import useStore from "@/store";
 import AddToFavorites from "./AddToFavorites";
 import { Title } from "./ui/text";
 import PriceView from "./PriceView";
@@ -20,14 +23,26 @@ interface Props {
 }
 
 const ProductsCard = ({ product, clasName = "" }: Props) => {
-  const categoryLabel = (product?.categories ?? [])
-    .map((cat) => {
-      if (!cat) return "";
-      if (typeof cat === "string") return cat;
-      return cat.title ?? cat.slug?.current ?? "";
-    })
-    .filter((value) => value.length > 0)
-    .join(", ");
+  const productId = product?._id ?? "";
+  const hasHydrated = useStore((state) => state.hasHydrated);
+  const itemCount = useStore((state) =>
+    productId ? state.getItemCount(productId) : 0
+  );
+  const visibleItemCount = hasHydrated ? itemCount : 0;
+  const isCartOpen = visibleItemCount > 0;
+
+  const categoryLabel = useMemo(
+    () =>
+      (product?.categories ?? [])
+        .map((cat) => {
+          if (!cat) return "";
+          if (typeof cat === "string") return cat;
+          return cat.title ?? cat.slug?.current ?? "";
+        })
+        .filter((value) => value.length > 0)
+        .join(", "),
+    [product?.categories]
+  );
 
   return (
     <div className="text-sm border border-dark_blue/10 shadow-md rounded-md group bg-white overflow-hidden">
@@ -83,7 +98,7 @@ const ProductsCard = ({ product, clasName = "" }: Props) => {
         <p className="uppercase line-clamp-1 text-xs text-lightColor">
           {categoryLabel}
         </p>
-        <Title className="!text-sm line-clamp-1">{product?.name}</Title>
+        <Title className="text-sm! line-clamp-1">{product?.name}</Title>
         <div className="">
           <div className="flex items-center mt-1.5">
             {[...Array(5)].map((_, index) =>
@@ -105,22 +120,28 @@ const ProductsCard = ({ product, clasName = "" }: Props) => {
             )}
           </div>
           <div className="flex items-center justify-between">
-            <div className="">
-              <div className="flex items-center mt-2">
-                {(product?.stock as number) > 0 ? (
-                  <p className="font-medium text-xs">
-                    <span className="text-darkColor font-semibold bg-amber-400/40 rounded-full px-2">
-                      {product?.stock}
-                    </span>{" "}
-                    In Stock
-                  </p>
-                ) : (
-                  <p className="text-xs font-semibold bg-red-600/40 rounded-full px-2">
-                    Unvailable
-                  </p>
-                )}
+            <div className="min-h-10">
+              <div className="mt-2 min-h-5">
+                {!isCartOpen ? (
+                  (product?.stock as number) > 0 ? (
+                    <p className="font-medium text-xs">
+                      <span className="text-darkColor font-semibold bg-amber-400/40 rounded-full px-2">
+                        {product?.stock}
+                      </span>{" "}
+                      In Stock
+                    </p>
+                  ) : (
+                    <p className="text-xs font-semibold bg-red-600/40 rounded-full px-2">
+                      Unvailable
+                    </p>
+                  )
+                ) : null}
               </div>
-              <PriceView price={product?.price} oldPrice={product?.oldPrice} />
+              <PriceView
+                price={product?.price}
+                oldPrice={product?.oldPrice}
+                showOldPrice={!isCartOpen}
+              />
             </div>
             <AddToCartButton product={product} />
           </div>
@@ -130,4 +151,9 @@ const ProductsCard = ({ product, clasName = "" }: Props) => {
   );
 };
 
-export default ProductsCard;
+export default memo(
+  ProductsCard,
+  (prevProps, nextProps) =>
+    prevProps.product === nextProps.product &&
+    prevProps.clasName === nextProps.clasName
+);

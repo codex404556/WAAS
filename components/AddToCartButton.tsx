@@ -1,7 +1,7 @@
 "use client";
 
 import { Product } from "@/types/cms";
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { Button } from "./ui/button";
 import { ShoppingCart } from "lucide-react";
 import useStore from "@/store";
@@ -25,40 +25,56 @@ const AddToCartButton = ({
   showProduct,
   className,
 }: AddToCartButtonProps) => {
+  const productId = product?._id ?? "";
+  const isProductLayout = showProduct === true;
   const isOutOfStock = product?.stock === 0;
-  const { addItem, getItemCount } = useStore();
-  if (!product) return null;
-  const itemCount = getItemCount(product?._id);
-  const HandleAddToCart = () => {
-    if ((product?.stock as number) > itemCount) {
+  const hasHydrated = useStore((state) => state.hasHydrated);
+  const addItem = useStore((state) => state.addItem);
+  const itemCount = useStore((state) =>
+    productId ? state.getItemCount(productId) : 0
+  );
+  const visibleItemCount = hasHydrated ? itemCount : 0;
+  const HandleAddToCart = useCallback(() => {
+    if (!product) return;
+    if ((product.stock as number) > itemCount) {
       addItem(product);
-      toast.success(`${product?.name?.substring(0, 12)} ...add successfully!`);
+      toast.success(`${product.name?.substring(0, 12)} ...add successfully!`);
     } else {
       toast.error("Can not add more than availabe stock");
     }
-  };
+  }, [addItem, itemCount, product]);
+
+  if (!product) return null;
 
   return (
-    <div className={`${showProduct && "w-full"}`}>
-      {itemCount ? (
+    <div className={isProductLayout ? "w-full" : ""}>
+      {visibleItemCount > 0 ? (
         <div className="flex flex-col">
-          <div className="text-sm w-full flex flex-col gap-1">
-            <QuantityButton product={product} className={className} showProduct={showProduct || false} />
+          <div
+            className={`text-sm w-full flex flex-col ${isProductLayout ? "gap-1" : ""}`}
+          >
+            <QuantityButton
+              product={product}
+              className={className}
+              showProduct={isProductLayout}
+            />
 
-            <div className="flex items-center justify-between gap-1 border-t pt-1">
-              <span className="text-xs font-semibold text-lightColor">
-                subTotal
-              </span>
-              <PriceFormatter
-                className="text-xs font-semibold text-lightColor"
-                amount={product?.price && product?.price * itemCount}
-              />
-            </div>
+            {isProductLayout ? (
+              <div className="flex items-center justify-between gap-1 border-t pt-1">
+                <span className="text-xs font-semibold text-lightColor">
+                  subTotal
+                </span>
+                <PriceFormatter
+                  className="text-xs font-semibold text-lightColor"
+                  amount={product?.price && product?.price * visibleItemCount}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       ) : (
         <>
-          {!showProduct ? (
+          {!isProductLayout ? (
             <div>
               {!isOutOfStock && (
                 <Button onClick={HandleAddToCart}>
@@ -81,4 +97,4 @@ const AddToCartButton = ({
   );
 };
 
-export default AddToCartButton;
+export default memo(AddToCartButton);

@@ -51,7 +51,7 @@ const RelatedProductsFallback = () => (
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={`related-fallback-${index}`}
-          className="aspect-[3/4] animate-pulse rounded-md border border-gray-100 bg-white"
+          className="aspect-3/4 animate-pulse rounded-md border border-gray-100 bg-white"
         />
       ))}
     </div>
@@ -207,7 +207,7 @@ const SingleProductPage = async ({ params }: Props) => {
               <AddToCartButton
                 showProduct={true}
                 product={product}
-                className="h-14 rounded-xl bg-shop_orange text-base font-semibold hover:bg-darkColor hover:text-white hoverEffect"
+                className="h-14 rounded-xl text-base font-semibold"
               />
               <AddToFavorites
                 product={product}
@@ -225,7 +225,7 @@ const SingleProductPage = async ({ params }: Props) => {
             </div>
             <BuyNowButton
               product={product}
-              className="h-14 w-full rounded-xl bg-darkColor text-base font-semibold text-white hover:bg-shop_light_yellow hoverEffect"
+              className="h-14 w-full rounded-xl bg-shop_orange text-base font-semibold text-white hover:bg-shop_light_yellow hoverEffect"
             />
           </div>
           <ProductsCharacteristics product={product} />

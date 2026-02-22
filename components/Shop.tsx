@@ -1,6 +1,6 @@
 "use client";
 import { BRANDS_QUERYResult, Category } from "@/types/cms";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useTransition } from "react";
 import Container from "./Container";
 import { Title } from "./ui/text";
 import ShopFiltersPanel from "./filters/ShopFiltersPanel";
@@ -39,6 +39,7 @@ const Shop = ({
   );
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     setSelectedCategory(initialCategory);
@@ -50,10 +51,39 @@ const Shop = ({
     selectedPrice !== null ||
     selectedCategory !== null;
   const resetFilters = () => {
-    setSelectedBrand(null);
-    setSelectedCategory(null);
-    setSelectedPrice(null);
+    startTransition(() => {
+      setSelectedBrand(null);
+      setSelectedCategory(null);
+      setSelectedPrice(null);
+    });
   };
+
+  const onCategoryChange = useCallback(
+    (value: React.SetStateAction<string | null>) => {
+      startTransition(() => {
+        setSelectedCategory(value);
+      });
+    },
+    []
+  );
+
+  const onBrandChange = useCallback(
+    (value: React.SetStateAction<string | null>) => {
+      startTransition(() => {
+        setSelectedBrand(value);
+      });
+    },
+    []
+  );
+
+  const onPriceChange = useCallback(
+    (value: React.SetStateAction<string | null>) => {
+      startTransition(() => {
+        setSelectedPrice(value);
+      });
+    },
+    []
+  );
 
   return (
     <Container>
@@ -95,12 +125,12 @@ const Shop = ({
             <ShopFiltersPanel
               categories={categories}
               selectedPrice={selectedPrice}
-              setSelectedPrice={setSelectedPrice}
+              setSelectedPrice={onPriceChange}
               brands={brands}
               selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
+              setSelectedCategory={onCategoryChange}
               selectedBrand={selectedBrand}
-              setSelectedBrand={setSelectedBrand}
+              setSelectedBrand={onBrandChange}
               showBorder={false}
             />
           </div>
@@ -126,12 +156,12 @@ const Shop = ({
           <ShopFiltersPanel
             categories={categories}
             selectedPrice={selectedPrice}
-            setSelectedPrice={setSelectedPrice}
+            setSelectedPrice={onPriceChange}
             brands={brands}
             selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
+            setSelectedCategory={onCategoryChange}
             selectedBrand={selectedBrand}
-            setSelectedBrand={setSelectedBrand}
+            setSelectedBrand={onBrandChange}
             showBorder
           />
         </div>

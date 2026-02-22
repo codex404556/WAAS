@@ -7,8 +7,13 @@ import ShopByBrands from "@/components/ShopByBrands";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCardSkeleton from "@/components/skeleton/ProductCardSkeleton";
 import React, { Suspense } from "react";
+import { listProductsByVariant } from "@/lib/cms";
+import { productType } from "@/constants/data";
 
 const Home = async () => {
+  const defaultTab = productType[0]?.value || "best-sellers";
+  const initialProducts = await listProductsByVariant(defaultTab);
+
   return (
     <Container className="bg-shop-light-pink ">
       <HomeBanner />
@@ -21,7 +26,7 @@ const Home = async () => {
           </div>
         }
       >
-        <ProductGrid />
+        <ProductGrid initialProducts={initialProducts} initialTab={defaultTab} />
       </Suspense>
       <Suspense fallback={null}>
         <HomeCategories />
