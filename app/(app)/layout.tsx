@@ -6,8 +6,8 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-poppins antialiased" suppressHydrationWarning>
-        {children}
-        <Toaster />
+         {children}
+        <Toaster /> 
         <Analytics />
         <SpeedInsights />
       </body>
