@@ -1,0 +1,171 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "req_0_status_2xx": {
+                    "path": "::req_0_status_2xx",
+                    "id": "3382062b67ad736dafaf1c8b6e536fef",
+                    "passes": 1,
+                    "fails": 0,
+                    "name": "req_0_status_2xx"
+                },
+                "req_1_status_2xx": {
+                    "name": "req_1_status_2xx",
+                    "path": "::req_1_status_2xx",
+                    "id": "09b1a6ce49d754d2661a549f6dd8ba76",
+                    "passes": 1,
+                    "fails": 0
+                },
+                "req_2_status_2xx": {
+                    "id": "825f27c9f888698ff24238c94dfa4816",
+                    "passes": 1,
+                    "fails": 0,
+                    "name": "req_2_status_2xx",
+                    "path": "::req_2_status_2xx"
+                },
+                "req_3_status_2xx": {
+                    "name": "req_3_status_2xx",
+                    "path": "::req_3_status_2xx",
+                    "id": "3f1d71df948645275c07d12c8a6d14b6",
+                    "passes": 1,
+                    "fails": 0
+                },
+                "req_4_status_2xx": {
+                    "passes": 1,
+                    "fails": 0,
+                    "name": "req_4_status_2xx",
+                    "path": "::req_4_status_2xx",
+                    "id": "527a9926b20e9827529bb0516411ec89"
+                },
+                "pdp_status_2xx": {
+                    "id": "29918db6ed7749ee1fa54397911485e4",
+                    "passes": 1,
+                    "fails": 0,
+                    "name": "pdp_status_2xx",
+                    "path": "::pdp_status_2xx"
+                }
+            }
+    },
+    "metrics": {
+        "http_req_connecting": {
+            "min": 0,
+            "med": 0,
+            "max": 21.663,
+            "p(90)": 21.582,
+            "p(95)": 21.6225,
+            "avg": 6.170142857142857
+        },
+        "http_reqs": {
+            "count": 7,
+            "rate": 1.1542068117658522
+        },
+        "data_sent": {
+            "count": 12368,
+            "rate": 2039.3185497028658
+        },
+        "iterations": {
+            "count": 1,
+            "rate": 0.16488668739512174
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 7,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_receiving": {
+            "min": 0.108,
+            "med": 44.928,
+            "max": 218.194,
+            "p(90)": 203.9824,
+            "p(95)": 211.0882,
+            "avg": 78.95671428571428
+        },
+        "http_req_blocked": {
+            "avg": 36.41571428571429,
+            "min": 0,
+            "med": 0.001,
+            "max": 167.291,
+            "p(90)": 119.486,
+            "p(95)": 143.38849999999996
+        },
+        "checks": {
+            "passes": 6,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_waiting": {
+            "p(95)": 2469.7672999999995,
+            "avg": 1040.4897142857142,
+            "min": 348.743,
+            "med": 726.725,
+            "max": 3018.686,
+            "p(90)": 1920.8486000000003
+        },
+        "iteration_duration": {
+            "med": 2955.467875,
+            "max": 2955.467875,
+            "p(90)": 2955.467875,
+            "p(95)": 2955.467875,
+            "avg": 2955.467875,
+            "min": 2955.467875
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(90)": 1921.7806000000003,
+            "p(95)": 2470.8417999999992,
+            "avg": 1120.0164285714284,
+            "min": 543.296,
+            "med": 771.944,
+            "max": 3019.903
+        },
+        "vus_max": {
+            "min": 1,
+            "max": 1,
+            "value": 1
+        },
+        "http_req_sending": {
+            "avg": 0.5700000000000001,
+            "min": 0.249,
+            "med": 0.291,
+            "max": 1.389,
+            "p(90)": 1.1466,
+            "p(95)": 1.2677999999999998
+        },
+        "data_received": {
+            "count": 752494,
+            "rate": 124076.24294470475
+        },
+        "http_req_tls_handshaking": {
+            "p(90)": 77.61680000000001,
+            "p(95)": 111.66439999999996,
+            "avg": 25.418857142857142,
+            "min": 0,
+            "med": 0,
+            "max": 145.712
+        },
+        "http_req_duration": {
+            "p(95)": 2470.8417999999992,
+            "avg": 1120.0164285714284,
+            "min": 543.296,
+            "med": 771.944,
+            "max": 3019.903,
+            "p(90)": 1921.7806000000003,
+            "thresholds": {
+                "p(95)<1200": true
+            }
+        },
+        "vus": {
+            "value": 1,
+            "min": 0,
+            "max": 1
+        }
+    },
+    "setup_data": {
+        "productSlug": "geschwungener-dell-ultrasharp-38-usb-c-hub-monitor-u3824dw"
+    }
+}

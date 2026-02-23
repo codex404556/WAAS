@@ -1,43 +1,56 @@
 <div align="center">
-  <div>
-    <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="nextdotjs" />
-    <img src="https://img.shields.io/badge/Clerk-3B82F6?style=for-the-badge&logo=clerk&logoColor=white" alt="clerk" />
-    <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="tailwindcss" />
-    <img src="https://img.shields.io/badge/Zustand-1E293B?style=for-the-badge&logo=react&logoColor=white" alt="zustand" />
-    <img src="https://img.shields.io/badge/Radix_UI-111827?style=for-the-badge&logo=radixui&logoColor=white" alt="radixui" />
-  </div>
-  <h3 align="center">E-Store</h3>
-  <p align="center">
-    A modern e-commerce storefront built with Next.js App Router and a polished shopping flow.
+  <img src="./images/logo.svg" alt="E-Store Logo" width="120" />
+  <h1>E-Store: Modern Full-Stack E-Commerce Platform</h1>
+  <p>Production-ready e-commerce application built with Next.js App Router, Payload CMS, and Stripe.</p>
+  <p>
+    <img src="https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+    <img src="https://img.shields.io/badge/Payload_CMS-3-111827?style=for-the-badge&logo=payloadcms&logoColor=white" alt="Payload CMS" />
+    <img src="https://img.shields.io/badge/Stripe-Payments-635BFF?style=for-the-badge&logo=stripe&logoColor=white" alt="Stripe" />
+    <img src="https://img.shields.io/badge/Clerk-Auth-3B82F6?style=for-the-badge&logo=clerk&logoColor=white" alt="Clerk" />
+    <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
   </p>
 </div>
 
-## Introduction
+This project includes a customer storefront, authenticated user dashboard, and admin management area.
 
-E-Store is a production-style e-commerce frontend that combines server-driven content with a fast client shopping experience. The app delivers category and brand browsing, deal pages, product detail views, favorites, and a full cart flow. Client state is handled with Zustand for a smooth UX.
+## Highlights
 
-## Engineering Stack
+- Modern storefront with category, brand, and deal-based browsing
+- Product detail pages with media gallery and structured product data
+- Shopping cart, favorites, checkout, and order tracking flows
+- Auth-enabled user dashboard (profile, orders, notifications, analytics)
+- Admin dashboard for products, categories, brands, users, orders, reviews, and banners
+- CMS integration using Payload collections for core commerce entities
+- Stripe checkout and webhook integration
 
-- Next.js 16 (App Router), React 19, TypeScript
-- Payload CMS (setup pending)
-- Tailwind CSS, Radix UI, Lucide icons
-- Clerk authentication (optional)
-- Zustand state management
+## Tech Stack
 
-## Features
+- Next.js 15 (App Router)
+- React 19 + TypeScript
+- Payload CMS 3
+- Stripe
+- Clerk (authentication)
+- Tailwind CSS 4 + Radix UI
+- Zustand (client state)
 
-- Home page with featured products, categories, brands, and latest blog posts
-- Product catalog with category and brand filtering
-- Product detail pages with image gallery and product info tabs
-- Favorites and cart flow with persistent client state
-- Deal page and category-specific product views
+## Core Modules
+
+- `app/` - route groups for storefront, user dashboard, admin, and APIs
+- `collections/` - Payload CMS schema definitions
+- `components/` - reusable UI and feature components
+- `lib/` - service clients, API helpers, validation, and utilities
+- `store/` + `store.ts` - client state stores
+- `performance/` - smoke/load testing scripts and summaries
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ recommended
-- A Clerk application if you want auth-gated experiences
+- Node.js 18+
+- npm 9+
+- PostgreSQL instance (for Payload CMS)
+- Stripe account (for checkout/webhook)
+- Clerk app (if authentication is enabled)
 
 ### Installation
 
@@ -45,36 +58,44 @@ E-Store is a production-style e-commerce frontend that combines server-driven co
 npm install
 ```
 
-### Environment Variables
+### Environment Setup
 
-If you use Clerk, add your keys following the Clerk Next.js setup guide.
+Create a `.env.local` file and define required variables for:
 
-### Run the App
+- Database connection
+- Payload secret/config
+- Stripe keys + webhook secret
+- Clerk keys
+- Public site URL values used by Next.js
+
+Use `.env.example` if available in your workflow, or mirror the variable names referenced in `payload.config.ts` and API routes under `app/api/`.
+
+### Run in Development
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000` in your browser.
+Application runs at `http://localhost:3000`.
 
 ## Scripts
 
-- `npm run dev` - start the dev server
-- `npm run build` - build for production
-- `npm run start` - run the production server
-- `npm run lint` - run ESLint
+- `npm run dev` - start development server
+- `npm run build` - create production build
+- `npm run start` - start production server
+- `npm run lint` - run ESLint checks
 
-## Project Structure
+## Deployment Notes
 
-- `app/` - Next.js routes and layouts
-- `components/` - UI and feature components
-- `constants/`, `lib/`, `hooks/` - shared utilities and data
-- `store.ts` - Zustand cart and favorites store
+- Configure environment variables in your hosting provider before deployment.
+- Register Stripe webhook endpoint to `app/api/stripe/webhook`.
+- Ensure Payload database access is available from the deployed environment.
 
-## Author
+## Status
 
-Ali Hussein  
-Frontend Web Developer  
-GitHub: https://github.com/codex404556  
-Portfolio: https://https://e-store-wliz.vercel.app/  
-LinkedIn: https://linkedin.com/in/error-best-381303331
+This repository is structured for professional delivery and extension.  
+It can be used as:
+
+- A freelance portfolio-grade project base
+- A client starter for custom e-commerce development
+- A reference architecture for Next.js + Payload + Stripe commerce apps
