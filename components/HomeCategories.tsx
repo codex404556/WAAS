@@ -12,7 +12,15 @@ const HomeCategories = async ({
 }: {
   categories?: Category[];
 }) => {
-  const resolvedCategories = categories ?? (await getCategories());
+  let resolvedCategories = categories ?? [];
+  if (!categories) {
+    try {
+      resolvedCategories = await getCategories();
+    } catch (error) {
+      console.error("Failed to load categories for home page:", error);
+      resolvedCategories = [];
+    }
+  }
   return (
     <section className="my-10 px-4 sm:px-6 md:my-16 lg:my-20 lg:px-8">
       <div className="mx-auto max-w-7xl rounded-2xl border border-shop_light_yellow/20 bg-white p-4 sm:p-6 lg:p-8">

@@ -9,10 +9,18 @@ import ProductCardSkeleton from "@/components/skeleton/ProductCardSkeleton";
 import React, { Suspense } from "react";
 import { listProductsByVariant } from "@/lib/cms";
 import { productType } from "@/constants/data";
+import type { Product } from "@/types/cms";
+
+export const dynamic = "force-dynamic";
 
 const Home = async () => {
   const defaultTab = productType[0]?.value || "best-sellers";
-  const initialProducts = await listProductsByVariant(defaultTab);
+  let initialProducts: Product[] = [];
+  try {
+    initialProducts = await listProductsByVariant(defaultTab);
+  } catch (error) {
+    console.error("Failed to load initial products for home page:", error);
+  }
 
   return (
     <Container className="bg-shop-light-pink ">

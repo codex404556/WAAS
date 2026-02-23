@@ -31,7 +31,13 @@ const orderData = [
 ];
 
 const ShopByBrands = async () => {
-  const brands = await getAllBrands();
+  let brands: Brand[] = [];
+  try {
+    brands = await getAllBrands();
+  } catch (error) {
+    console.error("Failed to load brands for home page:", error);
+    return null;
+  }
   return (
     <section className="mb-12 px-4 sm:px-6 lg:mb-20 lg:px-8">
       <div className="mx-auto max-w-7xl rounded-2xl bg-shop_light_bg p-4 sm:p-6 lg:p-8">

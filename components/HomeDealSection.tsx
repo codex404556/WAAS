@@ -41,7 +41,13 @@ const sortDeals = (products: Product[]): Product[] => {
 };
 
 const HomeDealSection = async () => {
-  const products = await getDealProducts();
+  let products: Product[] = [];
+  try {
+    products = await getDealProducts();
+  } catch (error) {
+    console.error("Failed to load deal products for home page:", error);
+    return null;
+  }
 
   const deals = sortDeals(products.filter(isValidDealProduct)).slice(0, MAX_VISIBLE_DEALS);
 
