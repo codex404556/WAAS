@@ -132,7 +132,11 @@ const SingleProductPage = async ({ params }: Props) => {
       <Container className="flex flex-col gap-8 px-3 sm:px-4 lg:flex-row lg:gap-10 lg:px-6 xl:gap-12">
         <div className="flex w-full flex-col lg:w-1/2">
           {product?.images && (
-            <ImagesView images={product?.images} isStock={isStock} />
+            <ImagesView
+              images={product?.images}
+              isStock={isStock}
+              productName={product?.name}
+            />
           )}
         </div>
         <div className="flex w-full flex-col gap-4 lg:w-1/2">
